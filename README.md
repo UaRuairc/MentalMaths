@@ -8,3 +8,5 @@ Currently, `simulator.py` contains a rough implementation of:
 - Multiplication of integers
 
 More functionality (e.g. UI, stats tracking, and game modes) will be added soon.
+
+Goal: To create an application using LLM integration, suggesting ways for the user to optimise their mental maths training
