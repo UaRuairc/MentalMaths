@@ -5,6 +5,11 @@ from datetime import datetime
 import json
 import uuid
 import sqlite3
+from Core.simulator import CoreProblem
+import random
+
+from streamlit import session_state
+
 
 # from Core import CoreProblem
 
@@ -30,56 +35,87 @@ def load_from_database(session_id):
 
     return data
 
-create_db()
+def initialise():
+    create_db()
+    query_params = st.query_params
+    session_id = query_params.get("session_id")
+    if not session_id:
+        st.session_state["session_id"] = str(uuid.uuid4())
+    else:
+        data = load_from_database(session_id)
 
-query_params = st.query_params
-session_id = query_params.get("session_id")
+def setup_screen():
 
-if not session_id:
-    st.session_state["session_id"] = str(uuid.uuid4())
-else:
-    data = load_from_database(session_id)
+    st.title("Mental Maths Application")
+    st.markdown("Problem Types")
+    problem_type_columns = st.columns(3)
+    problem_range_columns = st.columns(3)
+    game_button = st.columns(3)
+
+    # for col in problem_type_columns:
+    # addition = st.checkbox("Addition", value = True)
+
+    if "addition" not in st.session_state:
+        with problem_type_columns[0]:
+            addition = st.checkbox("Addition", key="add_ints", value=True)
+            substraction = st.checkbox("Substraction", key="subtract_ints", value=True)
+        with problem_type_columns[1]:
+            multiplication = st.checkbox("Multiplication", key="mult_ints", value=True)
+            division = st.checkbox("Division", key="div_ints", value=True)
+        with problem_type_columns[2]:
+            duration = st.number_input("Duration in seconds", key="duration_ints", value=120)
+
+    if addition:
+        addition_range = st.slider("Range for addition problems", min_value=0, max_value=999, value=(1, 99), step=1,
+                                   key="add_ints_range")
+    if substraction:
+        subtraction_range = st.slider("Range for subtraction problems", min_value=0, max_value=999, value=(1, 99),
+                                      step=1, key="sub_ints_range")
+    if multiplication:
+        multiplication = st.slider("Range for multiplication problems", min_value=0, max_value=999, value=(1, 99),
+                                   step=1, key="mult_ints_range")
+    if division:
+        division_range = st.slider("Range for division problems", min_value=0, max_value=999, value=(1, 99), step=1,
+                                   key="div_ints_range")
+
+    start_game_button = st.button("Start", on_click=start_game)
+
+    if start_game_button:
+        st.session_state.page = "game"
+
+def run_game():
+    st.title("Running game")
+
+    end_game_button = st.button("End", on_click=end_game)
+
+
+    if end_game_button:
+        st.session_state.page = "setup"
+
+def start_game():
+
+    st.session_state.page = "game"
+
+def end_game():
+
+    st.session_state.page = "setup"
+
+
+
+layout = initialise()
+
+if "page" not in session_state:
+    st.session_state.page = "setup"
+
+{
+    "setup": setup_screen,
+    "game": run_game
+}[st.session_state.page]()
 
 
 
 
 
-st.title("Mental Maths Application")
-
-
-
-
-
-st.markdown("Problem Types")
-problem_type_settings = st.columns(3)
-problem_range_settings = st.columns(3)
-
-
-
-
-#for col in problem_type_settings:
-    #addition = st.checkbox("Addition", value = True)
-
-if "addition" not in st.session_state:
-    with problem_type_settings[0]:
-        addition = st.checkbox("Addition", key="add_ints", value=True)
-        substraction = st.checkbox("Substraction", key="subtract_ints", value=True)
-    with problem_type_settings[1]:
-        multiplication = st.checkbox("Multiplication", key="mult_ints", value=True)
-        division = st.checkbox("Division", key="div_ints", value=True)
-    with problem_type_settings[2]:
-        duration = st.number_input("Duration in seconds", key="duration_ints", value=120)
-
-
-
-if addition:
-    addition_range = st.slider("Range for addition problems", min_value=0, max_value=999, value=(1,99), step=1, key="add_ints_range")
-if substraction:
-    subtraction_range = st.slider("Range for subtraction problems", min_value=0, max_value=999, value=(1,99), step=1, key="sub_ints_range")
-if multiplication:
-    multiplication = st.slider("Range for multiplication problems", min_value=0, max_value=999, value=(1,99), step=1, key="mult_ints_range")
-if division:
-    division_range = st.slider("Range for division problems", min_value=0, max_value=999, value=(1,99), step=1, key="div_ints_range")
 
 
 
