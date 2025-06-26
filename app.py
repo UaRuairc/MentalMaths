@@ -1,3 +1,4 @@
+import streamlit
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -12,6 +13,23 @@ from streamlit import session_state
 
 
 # from Core import CoreProblem
+
+class Sliders():
+
+    def __init__(self, tag):
+        self.cols = st.columns(3, vertical_alignment="center")
+        self.tag = tag
+
+    def render_sliders(self):
+        with self.cols[0]:
+            st.write(f"{self.tag} range")
+        with self.cols[1]:
+            st.slider("Left digit range", min_value=0, max_value=999, value=(1, 99), step=1,
+                                       key=self.tag+"_range_left")
+        with self.cols[2]:
+            st.slider("Right digit range", min_value=0, max_value=999, value=(1, 99), step=1,
+                                       key=self.tag+"_range_right")
+
 
 def create_db():
     conn = sqlite3.connect("sessions.sqlite")
@@ -44,39 +62,53 @@ def initialise():
     else:
         data = load_from_database(session_id)
 
+    st.session_state.setdefault("active_problem_types", [])
+    st.session_state.setdefault("counter", 0)
+    st.session_state.setdefault("add_ints", True)
+    st.session_state.setdefault("subtract_ints", True)
+    st.session_state.setdefault("mult_ints", True)
+    st.session_state.setdefault("div_ints", True)
+    st.session_state.setdefault("add_ints_range_left", (1, 99))
+    st.session_state.setdefault("add_ints_range_right", (1, 99))
+    st.session_state.setdefault("subtract_ints_range_left", (1, 99))
+    st.session_state.setdefault("subtract_ints_range_right", (1, 99))
+    st.session_state.setdefault("mult_ints_range_left", (1, 99))
+    st.session_state.setdefault("mult_ints_range_right", (1, 99))
+    st.session_state.setdefault("div_ints_range_left", (1, 99))
+    st.session_state.setdefault("div_ints_range_right", (1, 99))
+    st.session_state.setdefault("duration", 120)
+
 def setup_screen():
 
     st.title("Mental Maths Application")
     st.markdown("Problem Types")
     problem_type_columns = st.columns(3)
-    problem_range_columns = st.columns(3)
-    game_button = st.columns(3)
 
-    # for col in problem_type_columns:
-    # addition = st.checkbox("Addition", value = True)
+    with problem_type_columns[0]:
+        st.checkbox("Addition", key="add_ints")
+        st.checkbox("Substraction", key="subtract_ints")
+    with problem_type_columns[1]:
+        st.checkbox("Multiplication", key="mult_ints")
+        division = st.checkbox("Division", key="div_ints")
+    with problem_type_columns[2]:
+        st.number_input("Duration in seconds", key="duration")
 
-    if "addition" not in st.session_state:
-        with problem_type_columns[0]:
-            addition = st.checkbox("Addition", key="add_ints", value=True)
-            substraction = st.checkbox("Substraction", key="subtract_ints", value=True)
-        with problem_type_columns[1]:
-            multiplication = st.checkbox("Multiplication", key="mult_ints", value=True)
-            division = st.checkbox("Division", key="div_ints", value=True)
-        with problem_type_columns[2]:
-            duration = st.number_input("Duration in seconds", key="duration_ints", value=120)
 
-    if addition:
-        addition_range = st.slider("Range for addition problems", min_value=0, max_value=999, value=(1, 99), step=1,
-                                   key="add_ints_range")
-    if substraction:
-        subtraction_range = st.slider("Range for subtraction problems", min_value=0, max_value=999, value=(1, 99),
-                                      step=1, key="sub_ints_range")
-    if multiplication:
-        multiplication = st.slider("Range for multiplication problems", min_value=0, max_value=999, value=(1, 99),
-                                   step=1, key="mult_ints_range")
-    if division:
-        division_range = st.slider("Range for division problems", min_value=0, max_value=999, value=(1, 99), step=1,
-                                   key="div_ints_range")
+    if st.session_state["add_ints"]:
+        add_ints_columns = Sliders("add_ints")
+        add_ints_columns.render_sliders()
+
+    if st.session_state["subtract_ints"]:
+        add_ints_columns = Sliders("subtract_ints")
+        add_ints_columns.render_sliders()
+
+    if st.session_state["mult_ints"]:
+        add_ints_columns = Sliders("mult_ints")
+        add_ints_columns.render_sliders()
+
+    if st.session_state["div_ints"]:
+        add_ints_columns = Sliders("div_ints")
+        add_ints_columns.render_sliders()
 
     start_game_button = st.button("Start", on_click=start_game)
 
@@ -102,7 +134,10 @@ def end_game():
 
 
 
-layout = initialise()
+
+
+
+initialise()
 
 if "page" not in session_state:
     st.session_state.page = "setup"
