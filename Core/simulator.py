@@ -21,16 +21,18 @@ class Generator:
         # self.floats = []
         # self.fractions = []
 
-    def generate_ints(self):
+    def generate_ints(self) -> list:
 
-        #random.seed()
+        # random.seed()
 
         # for lower, upper in self.r_integers:
             # self.integers.append(random.randint(lower, upper))
 
         return [random.randint(lower, upper) for lower, upper in self.r_integers]
 
-    def generate_floats(self):
+
+
+    def generate_floats(self) -> list:
 
         #random.seed()
 
@@ -41,7 +43,7 @@ class Generator:
 
 
 
-    def generate_fractions(self):
+    def generate_fractions(self) -> list:
 
         #random.seed()
 
@@ -138,9 +140,7 @@ class CoreProblem:
         self.answer = self.Problem.operation()
 
     def result(self):
-        print("results: ")
-        print(self.answer)
-        print(f"{self.Problem.left} * {self.Problem.right}")
+        print(f"{self.Problem.left} + {self.Problem.right}")
 
 
 ranges = [[1,7], [2,7]]
