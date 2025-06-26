@@ -110,7 +110,10 @@ def setup_screen():
         add_ints_columns = Sliders("div_ints")
         add_ints_columns.render_sliders()
 
-    start_game_button = st.button("Start", on_click=start_game)
+    st.session_state["active_problem_types"] = [k for k in ["add_ints", "subtract_ints", "mult_ints", "div_ints"] if st.session_state[k] == True]
+
+
+    start_game_button = st.button("Start", on_click=start_game, disabled= False if (st.session_state["active_problem_types"] and st.session_state["duration"] > 0) else True, key="start_game")
 
     if start_game_button:
         st.session_state.page = "game"
