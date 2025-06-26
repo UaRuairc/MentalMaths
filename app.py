@@ -8,6 +8,8 @@ import uuid
 import sqlite3
 from Core.simulator import CoreProblem
 import random
+from st_keyup import st_keyup
+import streamlit.components.v1 as components
 
 from streamlit import session_state
 
@@ -118,14 +120,41 @@ def setup_screen():
     if start_game_button:
         st.session_state.page = "game"
 
-def run_game():
+def game_screen():
+
+
+    if not st.session_state["active_problem_types"]:
+        st.session_state["page"] = "setup"
+
+    # format order starts
     st.title("Running game")
+    #current_type = "add_ints"
+    #left_range = st.session_state[current_type + "_range_left"]
+    #right_range = st.session_state[current_type + "_range_right"]
+    #current_problem = CoreProblem(r_integers=[left_range, right_range], type=current_type)
+    game_screen_columns = st.columns(3)
 
-    end_game_button = st.button("End", on_click=end_game)
-
-
-    if end_game_button:
+    if st.button("End", on_click=end_game):
         st.session_state.page = "setup"
+        st.rerun()
+    # format order ends
+
+
+    # one-time state
+    st.session_state.setdefault("counter", 0)
+
+    with game_screen_columns[0]:
+        empty_placeholder = st.container(height=200, border = False)
+        with empty_placeholder:
+            st.write("Input Answer")
+            user_answer_key = f"user_answer_{st.session_state.counter}"
+
+            user_answer = st_keyup(label="Answer", label_visibility="collapsed", key=user_answer_key)
+
+            if user_answer and user_answer.strip().isdigit():
+                if int(user_answer) == 32:
+                    st.session_state.counter += 1
+                    st.rerun()
 
 def start_game():
 
@@ -147,7 +176,7 @@ if "page" not in session_state:
 
 {
     "setup": setup_screen,
-    "game": run_game
+    "game": game_screen
 }[st.session_state.page]()
 
 
