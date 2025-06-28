@@ -4,7 +4,26 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Any
 from fractions import Fraction
 
+operator = {
+    "add_ints": "+",
+    "add_floats": "+",
+    "sub_ints": "-",
+    "sub_floats": "-",
+    "mult_ints": chr(215),
+    "div_ints": chr(247),
+    "mult_floats": chr(215),
+    None: None
+}
 
+def to_dict(obj):
+    if isinstance(obj, dict):
+        return {k: to_dict(v) for k, v in obj.items()}
+    elif hasattr(obj, '__dict__'):
+        return {k: to_dict(v) for k, v in obj.__dict__.items()}
+    elif isinstance(obj, list):
+        return [to_dict(v) for v in obj]
+    else:
+        return obj
 class Generator:
 
     # r is a list of lists. Each list represents a range.
@@ -63,20 +82,23 @@ class Problem(ABC):
         self.type = None
         self.left = None
         self.right = None
+        self.operator = None
+
 
     @abstractmethod
-    def operation(self) -> Any:
+    def operate(self) -> Any:
         pass
 
 class AddIntsProblem(Problem):
     def __init__(self, numbers):
         super().__init__(numbers)
         self.type = "add_ints"
+        self.operator = operator["add_ints"]
         if len(numbers) == 2:
             self.left = numbers[0]
             self.right = numbers[1]
 
-    def operation(self):
+    def operate(self):
 
         return sum(self.numbers)
 
@@ -88,7 +110,7 @@ class AddFracsProblem(Problem):
             self.left = numbers[0]
             self.right = numbers[1]
 
-    def operation(self):
+    def operate(self):
 
         return sum(self.numbers)
 
@@ -100,7 +122,7 @@ class MultInts(Problem):
             self.left = numbers[0]
             self.right = numbers[1]
 
-    def operation(self):
+    def operate(self):
 
         return self.left * self.right
 
@@ -118,6 +140,7 @@ class CoreProblem:
         self.answer = None
         self.Problem = None
 
+
     def calc(self):
 
         if self.type == "add_ints" or "add_fracs":
@@ -125,7 +148,7 @@ class CoreProblem:
             assert self.r_integers is not None or self.r_fractions is not None, "addition requires integers or fractions"
 
             if self.type == "add_ints":
-                print(self.r_integers)
+                # print(self.r_integers)
                 self.Problem = AddIntsProblem(self.generator.generate_ints())
             else:
                 self.Problem = AddFracsProblem(self.generator.generate_fractions())
@@ -137,16 +160,19 @@ class CoreProblem:
             self.Problem = MultInts(self.generator.generate_ints())
 
 
-        self.answer = self.Problem.operation()
+        self.answer = self.Problem.operate()
 
-    def result(self):
-        print(f"{self.Problem.left} + {self.Problem.right}")
+    # def result(self):
+        # print(f"{self.Problem.left} + {self.Problem.right}")
+
+    def info(self):
+        return to_dict(self)
 
 
 ranges = [[1,7], [2,7]]
 myProblem = CoreProblem(r_integers = ranges, r_floats = None, r_fractions = ranges, type = "mult_ints")
 myProblem.calc()
-myProblem.result()
+# myProblem.result()
 
 
 
