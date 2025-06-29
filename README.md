@@ -1,12 +1,31 @@
-# Mental Maths Trainer (WIP)
+# Maths Trainer
 
-A work-in-progress mental maths trainer built in Python.
-
-Currently, `simulator.py` contains a rough implementation of:
-- Addition of integers
-- Addition of fractions
-- Multiplication of integers
-
-More functionality (e.g. UI, stats tracking, and game modes) will be added soon.
+An interactive, web-based mental maths game built in Python using [Streamlit](https://streamlit.io/).
 
 Goal: To create an application using LLM integration, suggesting ways for the user to optimise their mental maths training
+
+
+## Overview
+
+- **Engine**  
+  The core problem generator lives in `Core/simulator.py`. Currently, it produce integer addition, subtraction, multiplication, and division problems with configurable digit ranges.
+
+
+
+- **App**  
+  The main UI is in `app.py` and provides two screens:  
+  1. **Setup** (WIP) – choose which operations to include, set your digit-range sliders, and pick a game duration.  
+  2. **Game** (WIP) – solve as many problems as you can before the timer expires; your score updates live.
+
+
+
+- **Custom Input Component**  
+   Streamlit’s built-in `st.text_input` only syncs on “change” events (e.g. Enter or blur). We tried the community `st_keyup` component, but it only held the last committed value—setting it to `""` didn’t clear the box.  
+  To deliver keystroke-level interaction and instant clearing on a correct answer, `frontend/src/FastInput.tsx` was built:  
+  - A React component that calls back on every keystroke
+  - Automatically resizes its iframe  
+  - Clears itself immediately when Python resets its controlled `value`
+
+More functionality (e.g. UI, stats tracking, and game modes) will be added soon.
+My switch to alternate UI frameworkl, but streamlits allows for easy data presentation.
+
