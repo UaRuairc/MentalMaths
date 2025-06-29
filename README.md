@@ -27,5 +27,5 @@ Goal: To create an application using LLM integration, suggesting ways for the us
   - Clears itself immediately when Python resets its controlled `value`
 
 More functionality (e.g. UI, stats tracking, and game modes) will be added soon.
-My switch to alternate UI frameworkl, but streamlits allows for easy data presentation.
+May switch to alternate UI frameworkl, but streamlits allows for easy data presentation.
 
