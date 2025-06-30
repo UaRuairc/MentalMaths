@@ -10,18 +10,36 @@ from numpy.ma.core import left_shift
 from Core.simulator import CoreProblem
 import streamlit.components.v1 as components
 
-fast_input = components.declare_component(
+custom_input = components.declare_component(
     "fast_input",
     path=os.path.join(os.getcwd(), "frontend", "build"),
 )
 
-import time
-# from Core import CoreProblem
-variable = "test"
-input_key = "my_answer"
+# region ▶ Currently unused helpers for db management
+def create_db():
+    conn = sqlite3.connect("sessions.sqlite")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS session_data (
+        session_id TEXT,
+        session_state_data TEXT,
+        PRIMARY KEY (session_id)
+    )
+    """)
+    conn.commit()
+    conn.close()
 
+def load_from_database(session_id):
+    conn = sqlite3.connect("sessions.sqlite")
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM session_data WHERE session_id = ?", (session_id,))
+    data = cursor.fetchone()
+    conn.close()
 
+    return data
+# endregion
 
+# region ▶ Helpers for UI elements: wrapper + render for slider, render for checkboxes
 class Sliders():
 
     def __init__(self, tag):
@@ -64,45 +82,24 @@ class Sliders():
     def range(self):
         return[st.session_state[self.left_key] , st.session_state[self.right_key]]
 
-def create_db():
-    conn = sqlite3.connect("sessions.sqlite")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS session_data (
-        session_id TEXT,
-        session_state_data TEXT,
-        PRIMARY KEY (session_id)
-    )
-    """)
-    conn.commit()
-    conn.close()
+def draw_checkbox(problem_type_key):
+    val = st.checkbox(problem_type_key, value=st.session_state[problem_type_key])
+    st.session_state[problem_type_key] = val
+# endregion
 
-def load_from_database(session_id):
-    conn = sqlite3.connect("sessions.sqlite")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM session_data WHERE session_id = ?", (session_id,))
-    data = cursor.fetchone()
-    conn.close()
-
-    return data
-
+# region ▶ Session-state defaults
 operators = ["add", "subtract", "mult", "div"]
 default_parameters = {
     "active_problem_types": [],
     "counter": 0,
     "duration": 120,
-    "user_answer": "",
     "first_problem": True,
-    "clear_ctr": 0,
     "fresh": True,
     "history": [],
     "add_ints": True,
     "subtract_ints": True,
     "mult_ints": True,
     "div_ints": True,
-    "debug_counter": 0,
-    "answer_value": None,
-    "last_answer": None
 }
 
 for parameter, default in default_parameters.items():
@@ -126,21 +123,56 @@ for op in operators:
         "step": 1,
         "key": f"{op}_right_slider"
     })
+# endregion
 
+# region ▶ Start/end game helpers
+def start_game():
+    print("Starting the game.")
+    st.session_state["fresh"] = True
+    st.session_state.page = "game"
 
-if False:
-    if st.session_state["debug_counter"] == 0:
-        print(f"The application has been run.")
+def end_game():
+    st.session_state["first_problem"] = True
+    st.session_state["counter"] = 0
+    st.session_state.page = "setup"
+# endregion
 
+# region ▶ helpers to generate new problems and check the answer
+def make_problem(current_type):
+    left_config = st.session_state[current_type + "_left_slider_config"]
+    right_config = st.session_state[current_type + "_right_slider_config"]
+    st.session_state["current_problem"] = CoreProblem(r_integers=Sliders("add_ints").range(), type=current_type)
+    st.session_state["current_problem"].calc()
+    st.session_state["first_problem"] = False
+    st.rerun()
 
-    if st.session_state["debug_counter"] != 0:
-        print(f"Loop # {st.session_state["debug_counter"]}")
-        print(f"The box previously contained: {st.session_state["last_answer"]}")
-        print(f"The box currently contains: {st.session_state.answer_value}")
+def check_answer():
+    key = "constant_key"
+    result = custom_input(
+        key=key,
+        correctAnswer=str(st.session_state["current_problem"].answer),
+        height=80,
+        width=200,
+    )
+    print(result)
+    if result is None or result == "":
+        return
 
-st.session_state["debug_counter"] += 1
+    typed = result or ""
 
+    st.session_state["user_answer"] = typed
 
+    print(f"Lets check if typed result is the same as {st.session_state['current_problem'].answer}")
+
+    # 6) On match, clear and make a new problem
+    if int(typed) == st.session_state["current_problem"].answer:
+        st.session_state["user_answer"] = ""
+        print("making a new problem")
+        make_problem("add_ints")
+        # st.rerun()
+# endregion
+
+#region ▶ Unused initialisation function may use to construct db
 def initialise():
     create_db()
     query_params = st.query_params
@@ -150,88 +182,9 @@ def initialise():
     else:
         data = load_from_database(session_id)
     print("initialised..")
+# endregion
 
-def make_problem(current_type):
-    left_config = st.session_state[current_type + "_left_slider_config"]
-    right_config = st.session_state[current_type + "_right_slider_config"]
-    st.session_state["current_problem"] = CoreProblem(r_integers=Sliders("add_ints").range(), type=current_type)
-    st.session_state["current_problem"].calc()
-    st.session_state["answered"] = False
-    st.session_state["fresh"] = True
-    st.session_state["user_answer"] = ""
-    st.session_state["clear_ctr"]+= 1
-    if False:
-        print(f"new problem: "
-            f"{st.session_state["current_problem"].Problem.right} "
-            f"{st.session_state["current_problem"].Problem.operator} "
-            f"{st.session_state["current_problem"].Problem.right} "
-            "= "
-            f"{st.session_state["current_problem"].answer}"
-        )
-    st.session_state["first_problem"] = False
-    st.rerun()
-
-def check_answer():
-    user_answer = st.session_state["history"].pop()
-    if user_answer is None:
-        #print("Not a digit (None)")
-        return
-    if not user_answer.isdigit():
-        #print("Not a digit")
-        return
-    print(f"Checking {user_answer} vs actual answer {st.session_state["current_problem"].answer}")
-    if int(user_answer) == int(st.session_state["current_problem"].answer):
-        print("correct!")
-        st.session_state["history"].clear()
-        st.session_state.counter += 1
-        st.session_state["answered"] = True
-        st.session_state["user_answer"] = 0
-        make_problem("add_ints")
-        # st.rerun()
-
-def display():
-    game_screen_columns = st.columns(5)
-    with game_screen_columns[0]:
-        st.markdown(f"### {st.session_state["current_problem"].Problem.left}")
-    with game_screen_columns[1]:
-        st.markdown(f"### {st.session_state["current_problem"].Problem.operator}")
-    with game_screen_columns[2]:
-        st.markdown(f"### {st.session_state["current_problem"].Problem.right}")
-    with game_screen_columns[3]:
-        st.markdown(f"### =")
-    with game_screen_columns[4]:
-        empty_placeholder = st.container(height=200, border = False)
-        with empty_placeholder:
-            key = f"answer_input_{st.session_state["clear_ctr"]}"
-            st.session_state["last_answer"] = st.session_state.answer_value
-            answer = fast_input(
-                height=80,
-                width=200,
-                key=key,
-                value=st.session_state["user_answer"]
-            )
-
-            st.session_state.answer_value = answer or ""
-            # print(f"The box visually contains {answer}, until you see this message the box will not visually change!")
-            if answer not in st.session_state["history"] and answer is not None and not st.session_state["fresh"]:
-                # print(f"we will append {answer} to history now.")
-                st.session_state["history"].append(answer)
-            else:
-                st.session_state["fresh"] = False
-                st.session_state["history"].clear()
-
-            if st.session_state["history"]:
-                print("checking...")
-                check_answer()
-
-    if st.button("End", on_click=end_game):
-        st.session_state.page = "setup"
-        st.rerun()
-
-def draw_checkbox(problem_type_key):
-    val = st.checkbox(problem_type_key, value=st.session_state[problem_type_key])
-    st.session_state[problem_type_key] = val
-
+# region ▶ setup and game screen, and two helpers for game display logic
 def setup_screen():
 
     st.title("Mental Maths Application")
@@ -266,35 +219,46 @@ def setup_screen():
     st.button("Start", on_click=start_game, disabled= False if (st.session_state["active_problem_types"] and st.session_state["duration"] > 0) else True, key="start_game")
 
 def game_screen():
-    if not st.session_state["active_problem_types"]:
-        st.session_state["page"] = "setup"
-        return
+
+    guard()
+
     st.title("Running game")
-    if input_key not in st.session_state:
-        st.session_state[input_key] = ""
+
     if st.session_state["first_problem"]:
+        print("Making a new problem...")
         make_problem("add_ints")
         st.session_state["first_problem"] = False
         st.session_state["history"].clear()
+        st.rerun()
 
     # format order starts
-    display()
+    game_display()
 
-def start_game():
-    print("Starting the game.")
-    st.session_state["fresh"] = True
-    st.session_state.page = "game"
+def game_display():
+    game_screen_columns = st.columns(5)
+    with game_screen_columns[0]:
+        st.markdown(f"### {st.session_state['current_problem'].Problem.left}")
+    with game_screen_columns[1]:
+        st.markdown(f"### {st.session_state['current_problem'].Problem.operator}")
+    with game_screen_columns[2]:
+        st.markdown(f"### {st.session_state['current_problem'].Problem.right}")
+    with game_screen_columns[3]:
+        st.markdown("### =")
+    with game_screen_columns[4]:
 
-def end_game():
-    st.session_state["first_problem"] = True
-    st.session_state["counter"] = 0
-    st.session_state.page = "setup"
+        check_answer()
 
-# ---------------------------------------------------------------------- #
 
-if "initialised" not in st.session_state:
-    st.session_state["initialised"] = True
-    initialise()
+    # End button
+    if st.button("End", on_click=end_game):
+        st.session_state.page = "setup"
+        st.rerun()
+
+def guard():
+    if not st.session_state["active_problem_types"]:
+        st.session_state["page"] = "setup"
+        return
+# endregion
 
 if "page" not in st.session_state:
     st.session_state.page = "setup"

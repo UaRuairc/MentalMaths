@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import FastInput from "./FastInput";
+import CustomInput from "./CustomInput";
 
 const container = document.getElementById("root")!;
 const root = createRoot(container);
-root.render(<FastInput {...(window as any).streamlitComponentProps} />);
+root.render(<CustomInput {...(window as any).streamlitComponentProps} />);

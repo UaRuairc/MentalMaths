@@ -21,11 +21,9 @@ Goal: To create an application using LLM integration, suggesting ways for the us
 
 - **Custom Input Component**  
    Streamlit’s built-in `st.text_input` only syncs on “change” events (e.g. Enter or blur). We tried the community `st_keyup` component, but it only held the last committed value—setting it to `""` didn’t clear the box.  
-  To deliver keystroke-level interaction and instant clearing on a correct answer, `frontend/src/FastInput.tsx` was built:  
-  - A React component that calls back on every keystroke
-  - Automatically resizes its iframe  
-  - Clears itself immediately when Python resets its controlled `value`
+  To deliver keystroke-level interaction and instant clearing on a correct answer, `frontend/src/CustomInput.tsx` was built:  
+  - A React component that takes `value=correctAnswer` and clears input upon user correctly answering the problem.
 
-More functionality (e.g. UI, stats tracking, and game modes) will be added soon.
-May switch to alternate UI frameworkl, but streamlits allows for easy data presentation.
+More functionality (e.g., UI, stat tracking, and game modes) will be added soon.
+May switch to an alternate UI framework, but Streamlit allows for easy data presentation.
 
