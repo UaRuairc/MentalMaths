@@ -1,5 +1,5 @@
 {
-  "name": "fast_input",
+  "name": "custom_input",
   "version": "0.1.0",
   "private": true,
   "main": "src/index.tsx",
@@ -8,11 +8,13 @@
     "build": "webpack --mode production"
   },
   "dependencies": {
+    "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "streamlit-component-lib": "^1.0.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.19",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "html-webpack-plugin": "^5.6.3",
