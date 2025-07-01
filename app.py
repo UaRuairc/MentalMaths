@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 import sqlite3
 
@@ -65,8 +66,6 @@ class Sliders():
         self.left_config.pop("value")
         self.right_config.pop("value")
 
-
-
     def render_sliders(self):
         with self.cols[0]:
             st.write(f"{self.tag} range")
@@ -90,6 +89,7 @@ def draw_checkbox(problem_type_key):
 # region ▶ Session-state defaults
 operators = ["add", "subtract", "mult", "div"]
 default_parameters = {
+    "page": "setup",
     "active_problem_types": [],
     "counter": 0,
     "duration": 120,
@@ -100,6 +100,8 @@ default_parameters = {
     "subtract_ints": True,
     "mult_ints": True,
     "div_ints": True,
+    "game_end_time": 0,
+    "isGameRunning": False
 }
 
 for parameter, default in default_parameters.items():
@@ -225,10 +227,10 @@ def game_screen():
     st.title("Running game")
 
     if st.session_state["first_problem"]:
+        st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
         print("Making a new problem...")
+        st.session_state["isGameRunning"] = True
         make_problem("add_ints")
-        st.session_state["first_problem"] = False
-        st.session_state["history"].clear()
         st.rerun()
 
     # format order starts
@@ -259,6 +261,19 @@ def guard():
         st.session_state["page"] = "setup"
         return
 # endregion
+
+@st.fragment(run_every=2)
+def game_countdown_timer():
+    if st.session_state["isGameRunning"]:
+        if st.session_state["game_end_time"] - time.time() <= 0:
+            print("game ended.")
+            st.session_state["isGameRunning"] = False
+            st.session_state["page"] = "setup"
+            st.rerun()
+
+
+game_countdown_timer()
+
 
 if "page" not in st.session_state:
     st.session_state.page = "setup"
