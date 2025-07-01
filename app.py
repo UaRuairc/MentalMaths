@@ -93,15 +93,13 @@ default_parameters = {
     "active_problem_types": [],
     "counter": 0,
     "duration": 120,
-    "first_problem": True,
-    "fresh": True,
-    "history": [],
+    "is_first_problem": True,
     "add_ints": True,
     "subtract_ints": True,
     "mult_ints": True,
     "div_ints": True,
     "game_end_time": 0,
-    "isGameRunning": False
+    "is_game_running": False
 }
 
 for parameter, default in default_parameters.items():
@@ -130,48 +128,35 @@ for op in operators:
 # region ▶ Start/end game helpers
 def start_game():
     print("Starting the game.")
-    st.session_state["fresh"] = True
     st.session_state.page = "game"
 
 def end_game():
-    st.session_state["first_problem"] = True
+    st.session_state["is_first_problem"] = True
     st.session_state["counter"] = 0
     st.session_state.page = "setup"
 # endregion
 
 # region ▶ helpers to generate new problems and check the answer
 def make_problem(current_type):
-    left_config = st.session_state[current_type + "_left_slider_config"]
-    right_config = st.session_state[current_type + "_right_slider_config"]
     st.session_state["current_problem"] = CoreProblem(r_integers=Sliders("add_ints").range(), type=current_type)
     st.session_state["current_problem"].calc()
-    st.session_state["first_problem"] = False
+    st.session_state["is_first_problem"] = False
     st.rerun()
 
 def check_answer():
-    key = "constant_key"
     result = custom_input(
-        key=key,
-        correctAnswer=str(st.session_state["current_problem"].answer),
+        key="constant_custom_input_key",
+        correctAnswer=str(st.session_state["current_problem"].answer), # correctAnswer is used by CustomInput.tsx to determine if the input field needs resetting.
         height=80,
         width=200,
     )
-    print(result)
     if result is None or result == "":
         return
 
     typed = result or ""
-
-    st.session_state["user_answer"] = typed
-
-    print(f"Lets check if typed result is the same as {st.session_state['current_problem'].answer}")
-
-    # 6) On match, clear and make a new problem
     if int(typed) == st.session_state["current_problem"].answer:
-        st.session_state["user_answer"] = ""
-        print("making a new problem")
+        print("Generating a new problem...")
         make_problem("add_ints")
-        # st.rerun()
 # endregion
 
 #region ▶ Unused initialisation function may use to construct db
@@ -188,10 +173,8 @@ def initialise():
 
 # region ▶ setup and game screen, and two helpers for game display logic
 def setup_screen():
-
     st.title("Mental Maths Application")
     st.markdown("Problem Types")
-
     problem_type_columns = st.columns(3)
 
     with problem_type_columns[0]:
@@ -221,19 +204,17 @@ def setup_screen():
     st.button("Start", on_click=start_game, disabled= False if (st.session_state["active_problem_types"] and st.session_state["duration"] > 0) else True, key="start_game")
 
 def game_screen():
-
     guard()
-
     st.title("Running game")
 
-    if st.session_state["first_problem"]:
+    if st.session_state["is_first_problem"]:
         st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
         print("Making a new problem...")
-        st.session_state["isGameRunning"] = True
+        st.session_state["is_game_running"] = True
         make_problem("add_ints")
         st.rerun()
 
-    # format order starts
+    # page format ordering starts here
     game_display()
 
 def game_display():
@@ -247,9 +228,7 @@ def game_display():
     with game_screen_columns[3]:
         st.markdown("### =")
     with game_screen_columns[4]:
-
         check_answer()
-
 
     # End button
     if st.button("End", on_click=end_game):
@@ -264,16 +243,14 @@ def guard():
 
 @st.fragment(run_every=2)
 def game_countdown_timer():
-    if st.session_state["isGameRunning"]:
+    if st.session_state["is_game_running"]:
         if st.session_state["game_end_time"] - time.time() <= 0:
-            print("game ended.")
-            st.session_state["isGameRunning"] = False
+            print("Game has ended.")
+            st.session_state["is_game_running"] = False
             st.session_state["page"] = "setup"
             st.rerun()
 
-
 game_countdown_timer()
-
 
 if "page" not in st.session_state:
     st.session_state.page = "setup"
