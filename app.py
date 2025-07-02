@@ -1,22 +1,24 @@
 import os
 import time
 import uuid
+import logging
 import sqlite3
-
+import json
 import streamlit as st
 import pandas as pd
 import numpy as np
-from numpy.ma.core import left_shift
 
 from Core.simulator import CoreProblem
 import streamlit.components.v1 as components
+
+from game.game_helpers import game_countdown_timer
+from widgets import Sliders, Checkbox
 
 custom_input = components.declare_component(
     "fast_input",
     path=os.path.join(os.getcwd(), "frontend", "build"),
 )
-
-# region ▶ Currently unused helpers for db management
+# region ▶ [NOT CURRENTLY USED] Currently unused db managment helpers
 def create_db():
     conn = sqlite3.connect("sessions.sqlite")
     cursor = conn.cursor()
@@ -38,52 +40,37 @@ def load_from_database(session_id):
     conn.close()
 
     return data
+
+def initialise():
+    create_db()
+    query_params = st.query_params
+    session_id = query_params.get("session_id")
+    if not session_id:
+        st.session_state["session_id"] = str(uuid.uuid4())
+    else:
+        data = load_from_database(session_id)
+    print("initialised..")
 # endregion
 
-# region ▶ Helpers for UI elements: wrapper + render for slider, render for checkboxes
-class Sliders():
+# region ▶ Some logging utility.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(message)s",
+    filename="debug.log",   # name of your log file
+    filemode="a"            # append mode
+)
 
-    def __init__(self, tag):
-        self.cols = st.columns(3, vertical_alignment="center")
-        self.tag = tag
-        self.left_config = dict(st.session_state[f"{self.tag}_left_slider_config"])
-        self.right_config = dict(st.session_state[f"{self.tag}_right_slider_config"])
+def log_game_state(label: str):
+    snapshot = {}
+    for key, value in st.session_state.items():
+        try:
+            json.dumps(value)
+            snapshot[key] = value
+        except TypeError:
+            # some objects not serialisable..
+            snapshot[key] = repr(value)
 
-        self.left_value = self.left_config["value"]
-        self.right_value = self.right_config["value"]
-        self.left_key = self.left_config["key"]
-        self.right_key = self.right_config["key"]
-
-        # self.right_config.pop("value")
-        # self.left_config.pop("value")
-
-        # initialise the values once, we do not want to keep overriding them.
-        if self.left_key not in st.session_state:
-            st.session_state[self.left_key] = self.left_value
-        if self.right_key not in st.session_state:
-            st.session_state[self.right_key] = self.right_value
-
-        self.left_config.pop("value")
-        self.right_config.pop("value")
-
-    def render_sliders(self):
-        with self.cols[0]:
-            st.write(f"{self.tag} range")
-        with self.cols[1]:
-            val = st.slider(**self.left_config)
-            if val != st.session_state[f"{self.tag}_left_slider_config"]["value"]:
-                st.session_state[f"{self.tag}_left_slider_config"]["value"] = val
-        with self.cols[2]:
-            val = st.slider(**self.right_config)
-            if val != st.session_state[f"{self.tag}_right_slider_config"]["value"]:
-                st.session_state[f"{self.tag}_right_slider_config"]["value"] = val
-
-    def range(self):
-        return[st.session_state[self.left_key] , st.session_state[self.right_key]]
-
-def draw_checkbox(problem_type_key):
-    val = st.checkbox(problem_type_key, value=st.session_state[problem_type_key])
-    st.session_state[problem_type_key] = val
+    logging.info(f"{label}: {json.dumps(snapshot)}")
 # endregion
 
 # region ▶ Session-state defaults
@@ -91,7 +78,7 @@ operators = ["add", "subtract", "mult", "div"]
 default_parameters = {
     "page": "setup",
     "active_problem_types": [],
-    "counter": 0,
+    "game_score": 0,
     "duration": 120,
     "is_first_problem": True,
     "add_ints": True,
@@ -107,13 +94,21 @@ for parameter, default in default_parameters.items():
 for op in operators:
     st.session_state.setdefault(f"{op}_ints", True)
 
+    st.session_state.setdefault(f"{op}_ints_checkbox_config", {
+        "label": f"{op}_ints",
+        "value": True,
+        "on_change": None,
+        "key": f"{op}_ints_checkbox"
+    })
+
     st.session_state.setdefault(f"{op}_ints_left_slider_config", {
         "label": "Left digit range",
         "min_value": 1,
         "max_value": 999,
         "step": 1,
         "value": (1, 99),
-        "key": f"{op}_left_slider"
+        "key": f"{op}_left_slider",
+        "on_change": None
     })
     st.session_state.setdefault(f"{op}_ints_right_slider_config", {
         "label": "Right digit range",
@@ -121,72 +116,100 @@ for op in operators:
         "max_value": 999,
         "value": (1, 99),
         "step": 1,
-        "key": f"{op}_right_slider"
+        "key": f"{op}_right_slider",
+        "on_change": None
     })
 # endregion
 
-# region ▶ Start/end game helpers
-def start_game():
-    print("Starting the game.")
-    st.session_state.page = "game"
-
-def end_game():
-    st.session_state["is_first_problem"] = True
-    st.session_state["counter"] = 0
-    st.session_state.page = "setup"
-# endregion
-
-# region ▶ helpers to generate new problems and check the answer
-def make_problem(current_type):
+# region ▶ Problem generation and game logic
+def new_problem(current_type):
+    print("Generating a new problem...")
     st.session_state["current_problem"] = CoreProblem(r_integers=Sliders("add_ints").range(), type=current_type)
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
     st.rerun()
 
-def check_answer():
+def custom_input_box():
     result = custom_input(
         key="constant_custom_input_key",
         correctAnswer=str(st.session_state["current_problem"].answer), # correctAnswer is used by CustomInput.tsx to determine if the input field needs resetting.
         height=80,
         width=200,
     )
-    if result is None or result == "":
+    if result is None:
+        return ""
+    return result
+
+def validate_answer(result):
+    if result and int(result) == st.session_state["current_problem"].answer:
+        return True
+    else:
+        return False
+
+def guard():
+    # A guard function that should never be needed. But logging if it ever is needed for future debugging
+    if not st.session_state["active_problem_types"] or st.session_state["duration"] == 20:
+        log_game_state("guard() was triggered")
+        st.session_state["page"] = "setup"
         return
 
-    typed = result or ""
-    if int(typed) == st.session_state["current_problem"].answer:
-        print("Generating a new problem...")
-        make_problem("add_ints")
+def start_game():
+    print("Starting the game.")
+    st.session_state["is_first_problem"] = True
+    st.session_state["game_score"] = 0
+    st.session_state.page = "game"
+
+def end_game():
+    st.session_state.page = "setup"
 # endregion
 
-#region ▶ Unused initialisation function may use to construct db
-def initialise():
-    create_db()
-    query_params = st.query_params
-    session_id = query_params.get("session_id")
-    if not session_id:
-        st.session_state["session_id"] = str(uuid.uuid4())
-    else:
-        data = load_from_database(session_id)
-    print("initialised..")
-# endregion
+# region ▶ User interface
 
-# region ▶ setup and game screen, and two helpers for game display logic
-def setup_screen():
+
+def render_game_ui():
+    st.title("Running game")
+    st.write(st.session_state["game_score"])
+    game_screen_columns = st.columns(5)
+    with game_screen_columns[0]:
+        st.markdown(f"### {st.session_state['current_problem'].Problem.left}")
+    with game_screen_columns[1]:
+        st.markdown(f"### {st.session_state['current_problem'].Problem.operator}")
+    with game_screen_columns[2]:
+        st.markdown(f"### {st.session_state['current_problem'].Problem.right}")
+    with game_screen_columns[3]:
+        st.markdown("### =")
+    with game_screen_columns[4]:
+        user_input = custom_input_box()
+        if validate_answer(user_input):
+            st.session_state["game_score"] += 1
+            new_problem("add_ints")
+
+    # End button
+    if st.button("End", on_click=end_game):
+        st.session_state.page = "setup"
+        st.rerun()
+
+def render_setup_ui():
     st.title("Mental Maths Application")
     st.markdown("Problem Types")
     problem_type_columns = st.columns(3)
 
     with problem_type_columns[0]:
-        draw_checkbox("add_ints")
-        draw_checkbox("subtract_ints")
+        add_ints_checkbox = Checkbox("add_ints")
+        subtract_ints_checkbox = Checkbox("subtract_ints")
+        add_ints_checkbox.render_checkbox()
+        subtract_ints_checkbox.render_checkbox()
     with problem_type_columns[1]:
-        draw_checkbox("mult_ints")
-        draw_checkbox("div_ints")
+        mult_ints_checkbox = Checkbox("mult_ints")
+        div_ints_checkbox = Checkbox("div_ints")
+        mult_ints_checkbox.render_checkbox()
+        div_ints_checkbox.render_checkbox()
     with problem_type_columns[2]:
-        duration = st.number_input("Duration in seconds", value = st.session_state["duration"])
-        st.session_state["duration"] = duration
-
+        duration = st.number_input("Duration in seconds", value=st.session_state["duration"])
+        if st.session_state["duration"] != duration:
+            print("updating internal duration value.")
+            st.session_state["duration"] = duration
+    print("rerun...")
     if st.session_state["add_ints"]:
         add_ints_sliders = Sliders("add_ints")
         add_ints_sliders.render_sliders()
@@ -200,61 +223,36 @@ def setup_screen():
         div_ints_sliders = Sliders("div_ints")
         div_ints_sliders.render_sliders()
 
-    st.session_state["active_problem_types"] = [k for k in ["add_ints", "subtract_ints", "mult_ints", "div_ints"] if st.session_state[k] == True]
-    st.button("Start", on_click=start_game, disabled= False if (st.session_state["active_problem_types"] and st.session_state["duration"] > 0) else True, key="start_game")
+    st.button("Start", on_click=start_game, disabled=False if (
+            st.session_state["active_problem_types"] and st.session_state["duration"] > 0) else True,
+              key="start_game")
+
+def setup_screen():
+    st.session_state["active_problem_types"] = [k for k in ["add_ints", "subtract_ints", "mult_ints", "div_ints"] if
+                                                st.session_state[k] == True]
+    render_setup_ui()
 
 def game_screen():
     guard()
-    st.title("Running game")
-
     if st.session_state["is_first_problem"]:
         st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
         print("Making a new problem...")
         st.session_state["is_game_running"] = True
-        make_problem("add_ints")
+        st.session_state["is_first_problem"] = False
+        new_problem("add_ints")
         st.rerun()
 
-    # page format ordering starts here
-    game_display()
-
-def game_display():
-    game_screen_columns = st.columns(5)
-    with game_screen_columns[0]:
-        st.markdown(f"### {st.session_state['current_problem'].Problem.left}")
-    with game_screen_columns[1]:
-        st.markdown(f"### {st.session_state['current_problem'].Problem.operator}")
-    with game_screen_columns[2]:
-        st.markdown(f"### {st.session_state['current_problem'].Problem.right}")
-    with game_screen_columns[3]:
-        st.markdown("### =")
-    with game_screen_columns[4]:
-        check_answer()
-
-    # End button
-    if st.button("End", on_click=end_game):
-        st.session_state.page = "setup"
-        st.rerun()
-
-def guard():
-    if not st.session_state["active_problem_types"]:
-        st.session_state["page"] = "setup"
-        return
+    render_game_ui()
 # endregion
 
-@st.fragment(run_every=2)
-def game_countdown_timer():
-    if st.session_state["is_game_running"]:
-        if st.session_state["game_end_time"] - time.time() <= 0:
-            print("Game has ended.")
-            st.session_state["is_game_running"] = False
-            st.session_state["page"] = "setup"
-            st.rerun()
-
+# keep count down timer running
 game_countdown_timer()
 
+# start on the setup page
 if "page" not in st.session_state:
     st.session_state.page = "setup"
 {
+# associated the functions needed to switch pages with the respective page names
     "setup": setup_screen,
     "game": game_screen
 }[st.session_state.page]()
