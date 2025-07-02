@@ -92,7 +92,7 @@ default_parameters = {
 for parameter, default in default_parameters.items():
     st.session_state.setdefault(parameter, default)
 for op in operators:
-    st.session_state.setdefault(f"{op}_ints", True)
+    st.session_state.setdefault(f"{op}_ints_checkbox", True)
 
     st.session_state.setdefault(f"{op}_ints_checkbox_config", {
         "label": f"{op}_ints",
@@ -210,16 +210,16 @@ def render_setup_ui():
             print("updating internal duration value.")
             st.session_state["duration"] = duration
     print("rerun...")
-    if st.session_state["add_ints"]:
+    if st.session_state["add_ints_checkbox"]:
         add_ints_sliders = Sliders("add_ints")
         add_ints_sliders.render_sliders()
-    if st.session_state["subtract_ints"]:
+    if st.session_state["subtract_ints_checkbox"]:
         subtract_ints_sliders = Sliders("subtract_ints")
         subtract_ints_sliders.render_sliders()
-    if st.session_state["mult_ints"]:
+    if st.session_state["mult_ints_checkbox"]:
         mult_ints_sliders = Sliders("mult_ints")
         mult_ints_sliders.render_sliders()
-    if st.session_state["div_ints"]:
+    if st.session_state["div_ints_checkbox"]:
         div_ints_sliders = Sliders("div_ints")
         div_ints_sliders.render_sliders()
 
@@ -228,7 +228,7 @@ def render_setup_ui():
               key="start_game")
 
 def setup_screen():
-    st.session_state["active_problem_types"] = [k for k in ["add_ints", "subtract_ints", "mult_ints", "div_ints"] if
+    st.session_state["active_problem_types"] = [k for k in ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox", "div_ints_checkbox"] if
                                                 st.session_state[k] == True]
     render_setup_ui()
 
