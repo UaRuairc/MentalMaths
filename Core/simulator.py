@@ -1,18 +1,16 @@
-import numbers
 import random
 from abc import ABC, abstractmethod
-from typing import Tuple, Any
 from fractions import Fraction
-
+from dataclasses import dataclass
+from typing import Any
 operator = {
-    "add_ints": "+",
-    "add_floats": "+",
-    "sub_ints": "-",
-    "sub_floats": "-",
-    "mult_ints": chr(215),
-    "div_ints": chr(247),
-    "mult_floats": chr(215)
+    "add": "+",
+    "sub": "-",
+    "mult": chr(215),
+    "div": chr(247),
 }
+
+
 
 def to_dict(obj):
     """Recursively convert objects to dictionaries or lists."""
@@ -26,99 +24,99 @@ def to_dict(obj):
         return obj
 
 class Generator:
-    def __init__(self, r_integers = None, r_floats = None, r_fractions = None):
-        self.r_integers = r_integers
-        self.r_floats = r_floats
-        self.r_fractions = r_fractions
-        # self.integers = []
-        # self.floats = []
-        # self.fractions = []
+    def __init__(self, range_ = None, data_type_ = None):
+        self.range = range_
+        self.data_type = data_type_
 
-    def generate_ints(self) -> list:
-        return [random.randint(lower, upper) for lower, upper in self.r_integers]
-
-    def generate_floats(self) -> list:
-        return [random.uniform(lower, upper) for lower, upper in self.r_floats]
-
-    def generate_fractions(self) -> list:
-        return [Fraction(random.randint(lower * d, upper * d), d)
-                for lower, upper in self.r_fractions
+    def generate(self):
+        if self.data_type == "ints":
+            return [random.randint(lower, upper) for lower, upper in self.range]
+        else:
+            return [Fraction(random.randint(lower * d, upper * d), d)
+                for lower, upper in self.range
                 for d in [random.randint(1, 9)]
                 ]
 
-class Problem(ABC):
-    def __init__(self, numbers = None):
-        self.numbers = numbers
-        self.type = None
-        self.left = None
-        self.right = None
-        self.operator = None
 
-    @abstractmethod
+
+PROBLEM_DISPATCH = {}
+
+
+@dataclass
+class Problem(ABC):
+    left: Any
+    right: Any
+    operator: str
     def operate(self) -> Any:
         pass
 
-class AddIntsProblem(Problem):
-    def __init__(self, numbers):
-        super().__init__(numbers)
-        self.type = "add_ints"
-        self.operator = operator["add_ints"]
-        if len(numbers) == 2:
-            self.left = numbers[0]
-            self.right = numbers[1]
+def register(type_):
+    """Decorator: remember <class> under the string <kind>."""
+    def _wrap(cls):
+        PROBLEM_DISPATCH[type_] = cls
+        return cls
+    return _wrap
 
+@register("add")
+@dataclass
+class AddProblem(Problem):
     def operate(self):
-        return sum(self.numbers)
+        return self.left + self.right
 
-class AddFracsProblem(Problem):
-    def __init__(self, numbers):
-        super().__init__(numbers)
-        self.type = "add_fracs"
-        if len(numbers) == 2:
-            self.left = numbers[0]
-            self.right = numbers[1]
-
+@register("sub")
+@dataclass
+class SubProblem(Problem):
+    type = "sub"
     def operate(self):
-        return sum(self.numbers)
+        return self.left - self.right
 
-class MultInts(Problem):
-    def __init__(self, numbers):
-        super().__init__(numbers)
-        self.type = "mult_ints"
-        if len(numbers) == 2:
-            self.left = numbers[0]
-            self.right = numbers[1]
-
+@register("mult")
+@dataclass
+class MultProblem(Problem):
+    type = "mult"
     def operate(self):
         return self.left * self.right
 
+@register("div")
+@dataclass
+class DivProblem(Problem):
+    type = "div"
+
+    def operate(self):
+        # multiplication but backwards.
+        mult_answer = self.left * self.right
+
+        # choose the divisor randomly
+        divisor_and_answer = [self.left, self.right]
+        random.shuffle(divisor_and_answer)
+        divisor, div_answer = divisor_and_answer
+
+        # update
+        self.left = mult_answer
+        self.right = divisor
+        return div_answer
+
+
+def make_problem(type_, left_, right_, operator_):
+    return PROBLEM_DISPATCH[type_](left_, right_, operator_)
 
 
 
 class CoreProblem:
-    def __init__(self, r_integers = None, r_floats = None, r_fractions = None, type = None):
-        self.r_integers = r_integers
-        self.r_floats = r_floats
-        self.r_fractions = r_fractions
-        self.type = type
-        self.generator = Generator(r_integers= r_integers, r_floats = r_floats, r_fractions = r_fractions)
+    def __init__(self, range_ = None, problem_type_ = None, dtype_ = None):
+        self.range = range_
+        self.problem_type = problem_type_
+        self.data_type = dtype_
+        self.generator = Generator(range_=self.range, data_type_=self.data_type)
         self.answer = None
         self.Problem = None
 
+
     def calc(self):
         """Generate a problem instance and compute its answer."""
-        if self.type == "add_ints" or "add_fracs":
-            assert self.r_integers is not None or self.r_fractions is not None, "addition requires integers or fractions"
-            if self.type == "add_ints":
-                # print(self.r_integers)
-                self.Problem = AddIntsProblem(self.generator.generate_ints())
-            else:
-                self.Problem = AddFracsProblem(self.generator.generate_fractions())
 
-        if self.type == "mult_ints":
-            assert self.r_integers is not None, "multiplication requires integers"
-            self.Problem = MultInts(self.generator.generate_ints())
-
+        left, right = self.generator.generate()
+        self.Problem = make_problem(self.problem_type, left, right, operator[self.problem_type])
         self.answer = self.Problem.operate()
 
     def info(self):
@@ -126,8 +124,8 @@ class CoreProblem:
 
 # Example
 if __name__ == "__main__":
-    ranges = [[1,7], [2,7]]
-    myProblem = CoreProblem(r_integers = ranges, r_floats = None, r_fractions = ranges, type = "mult_ints")
+    ranges = [[1,99], [1,99]]
+    myProblem = CoreProblem(range_=ranges, problem_type_="mult", dtype_="ints")
     myProblem.calc()
     print(myProblem.info())
 
