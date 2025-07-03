@@ -7,15 +7,17 @@ Goal: To create an application using LLM integration, suggesting ways for the us
 
 ## Overview
 
-- **Engine**  
-  The core problem generator lives in `Core/simulator.py`. Currently, it produce integer addition, subtraction, multiplication, and division problems with configurable digit ranges.
-
-
-
 - **App**  
   The main UI is in `app.py` and provides two screens:  
   1. **Setup** (WIP) – choose which operations to include, set your digit-range sliders, and pick a game duration.  
   2. **Game** (WIP) – solve as many problems as you can before the timer expires; your score updates live.
+
+
+- **Helpers**  
+  The core problem generator lives in `Core/simulator.py`. Currently, it produces integer addition, subtraction, multiplication, 
+  and division problems with configurable digit ranges. 
+  Custom widget contained in `frontend\src\CustomInput.tsx`
+  Widget helpers contained in `widgets.py`
 
 
 
@@ -26,4 +28,39 @@ Goal: To create an application using LLM integration, suggesting ways for the us
 
 More functionality (e.g., UI, stat tracking, and game modes) will be added soon.
 May switch to an alternate UI framework, but Streamlit allows for easy data presentation.
+
+## Installation 
+
+#### clone repo
+```powershell
+git clone https://github.com/UaRuairc/MentalMaths.git
+```
+#### create and activate virtual environment
+```powershell
+cd MentalMaths
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+#### install requirements
+```powershell
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+#### install Node and build
+```powershell
+cd MentalMaths
+npm install
+npm run build
+cd ..
+```
+
+#### run app
+```powershell
+streamlit run app.py
+```
+
+
+
 
