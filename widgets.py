@@ -7,68 +7,82 @@ custom_input = components.declare_component(
     path=os.path.join(os.getcwd(), "frontend", "build"),
 )
 
-class Sliders():
+
+class Slider():
+    """ How widgets seem to work in streamlit
+
+    Widgets are identified by a key:value pair in session_state, where the value is for example the range on a slider
+    session_state["my_widgets_key"] = value
+
+    However: streamlit functions by rerunning the app, and even if you made a widget earlier, if this run does not
+    render the widget, streamlit deletes the info associated with it
+
+    See: https://docs.streamlit.io/develop/concepts/multipage-apps/widgets for solutions to this
+
+    One option is to just write
+
+    def store_value(key):
+        st.session_state[key] = st.session_state["_"+key]
+    def load_value(key):
+        st.session_state["_"+key] = st.session_state[key]
+
+    for each key. BUT then you are restricted, because the key doesn't store the ENTIRE configuration.
+
+    We opt for a shadow copy for more freedom down the line.
+
+    """
 
     # The streamlit session state is essentially just a dictionary.
     # So, "storing a widget" in the session_state really means:
     # -- "Storing the config settings so we can render the widget whenever/wherever we need
     # the config contains the values of the widget AND its key, which is its unique identifier.
 
-    # So, if you have the config, you can just call widget(config=config) whenever you want
+    # So, if you have the config, you can just call widget(**config) whenever you want
     # This class is just a wrapper for a slider widget that CAN render the widget if required.
 
-    def __init__(self, tag):
-        self.cols = st.columns(3, vertical_alignment="center")
-        self.tag = tag
-        # tag could be "add_ints" or something else ...
+    def __init__(self, config_key):
+        self.config_key = config_key
+        self.config = st.session_state[self.config_key]
 
-        self.left_config = dict(st.session_state[f"{self.tag}_left_slider_config"])
-        self.right_config = dict(st.session_state[f"{self.tag}_right_slider_config"])
+        self.slider_key = self.config["key"]
+        self.slider_value_range = self.config["value"]
 
-        # self.left_config is a dictionary of arguments needed to construct the left slider
-        # self.right_config is similar for the right slider.
-        # when constructing a slider, we don't want to pass the value as it can cause unexpected
-        # value changes on rerun. So pop it and store it as a class variable
+        self.config["on_change"] = self._on_change
 
-        self.left_value = self.left_config["value"]
-        self.right_value = self.right_config["value"]
-        self.left_config.pop("value")
-        self.right_config.pop("value")
+        # now we make sure the slider knows, next time you render, you should have the current config value
+        st.session_state[self.slider_key] = self.slider_value_range
 
-        # the following variable self.left_slider_key is the key which identifies the slider.
-        # it is required so streamlit knows its simply UPDATING a slider rather than constantly building new ones ...
-        # if no key is passed when building widgets, streamlit just makes new ones
-        self.left_slider_key = self.left_config["key"]
-        self.right_slider_key = self.right_config["key"]
-
-        # initialise the values once, we do not want to keep overriding them.
-        if self.left_slider_key not in st.session_state:
-            st.session_state[self.left_slider_key] = self.left_value
-        if self.right_slider_key not in st.session_state:
-            st.session_state[self.right_slider_key] = self.right_value
-
-
-        self.left_config["on_change"] = self._on_change
-        self.right_config["on_change"] = self._on_change
-        # _on_change needs the following arguments
-        self.left_config["args"] = (f"{self.tag}_left_slider_config", self.left_slider_key)
-        self.right_config["args"] = (f"{self.tag}_right_slider_config", self.right_slider_key)
-
-    def render_sliders(self):
-        with self.cols[0]:
-            st.write(f"{self.tag} range")
-        with self.cols[1]:
-            st.slider(**self.left_config)
-        with self.cols[2]:
-            st.slider(**self.right_config)
-
-    def _on_change(self, config_key, slider_key):
+    def _on_change(self):
         # here we update the CONFIGURATION used to build future sliders of this type
-        value = st.session_state[slider_key]
-        st.session_state[config_key]["value"] = value
+        value = st.session_state[self.slider_key]
+        st.session_state[self.config_key]["value"] = value
+
+    def render_slider(self):
+        st.slider(**self.config)
 
     def range(self):
-        return[st.session_state[self.left_slider_key] , st.session_state[self.right_slider_key]]
+        return st.session_state[self.config_key]["value"]
+
+class LeftRightSliders():
+
+    def __init__(self, problem_type):
+        self.cols = st.columns(3)
+        self.problem_type = problem_type
+        self.left_config_key = f"{self.problem_type}_left_slider_config"
+        self.right_config_key = f"{self.problem_type}_right_slider_config"
+        self.left_slider = Slider(self.left_config_key)
+        self.right_slider = Slider(self.right_config_key)
+
+    def render(self):
+        with self.cols[0]:
+            st.write(f"range for {self.problem_type}")
+        with self.cols[1]:
+            self.left_slider.render_slider()
+        with self.cols[2]:
+            self.right_slider.render_slider()
+
+    def range(self):
+        return [self.left_slider.range(), self.right_slider.range()]
 
 # depreciated
 def draw_checkbox(problem_type_key):
@@ -80,16 +94,17 @@ class Checkbox:
         self.problem_type = problem_type
         self.config = dict(st.session_state[f"{self.problem_type}_checkbox_config"])
         self.config["on_change"] = self._on_change
+        # self.config.pop("value", None)
 
-        if self.config["key"] not in st.session_state:
-            st.session_state[self.config["key"]] = self.config["value"]
-        self.config.pop("value", None)
+        if f"{self.problem_type}_checkbox" not in st.session_state:
+            st.session_state[f"{self.problem_type}_checkbox"] = self.config["value"]
 
     def _on_change(self):
         st.session_state[f"{self.problem_type}_checkbox_config"]["value"] = st.session_state[
             self.config["key"]]
 
     def render_checkbox(self):
+        self.config.pop("value", None)
         st.checkbox(**self.config)
 
 def custom_input_box():

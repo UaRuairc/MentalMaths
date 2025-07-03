@@ -1,18 +1,17 @@
 import os
+import random
 import time
 import uuid
 import logging
 import sqlite3
 import json
 import streamlit as st
-import pandas as pd
-import numpy as np
 
 from Core.simulator import CoreProblem
 import streamlit.components.v1 as components
 
 from game.game_helpers import game_countdown_timer
-from widgets import Sliders, Checkbox
+from widgets import Slider, Checkbox, LeftRightSliders
 
 custom_input = components.declare_component(
     "fast_input",
@@ -75,6 +74,12 @@ def log_game_state(label: str):
 
 # region ▶ Session-state defaults
 operators = ["add", "subtract", "mult", "div"]
+OPERATOR_API_ALIASES = {
+    "add": "add",
+    "subtract": "sub",
+    "mult": "mult",
+    "div": "div"
+}
 default_parameters = {
     "page": "setup",
     "active_problem_types": [],
@@ -92,7 +97,6 @@ default_parameters = {
 for parameter, default in default_parameters.items():
     st.session_state.setdefault(parameter, default)
 for op in operators:
-    st.session_state.setdefault(f"{op}_ints_checkbox", True)
 
     st.session_state.setdefault(f"{op}_ints_checkbox_config", {
         "label": f"{op}_ints",
@@ -101,30 +105,42 @@ for op in operators:
         "key": f"{op}_ints_checkbox"
     })
 
+    st.session_state.setdefault(f"{op}_ints_left_slider", (1,5))
+
     st.session_state.setdefault(f"{op}_ints_left_slider_config", {
         "label": "Left digit range",
         "min_value": 1,
-        "max_value": 999,
+        "max_value": 200,
         "step": 1,
-        "value": (1, 99),
-        "key": f"{op}_left_slider",
+        "value": (1, 5),
+        "key": f"{op}_ints_left_slider",
         "on_change": None
     })
+
+    st.session_state.setdefault(f"{op}_ints_right_slider",(1,5))
+
     st.session_state.setdefault(f"{op}_ints_right_slider_config", {
         "label": "Right digit range",
         "min_value": 1,
-        "max_value": 999,
-        "value": (1, 99),
+        "max_value": 200,
+        "value": (1, 5),
         "step": 1,
-        "key": f"{op}_right_slider",
+        "key": f"{op}_ints_right_slider",
         "on_change": None
     })
+
+    checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
+                                                 "div_ints_checkbox"]
 # endregion
 
 # region ▶ Problem generation and game logic
-def new_problem(current_type):
+def new_problem(problem_type_, data_type_):
     print("Generating a new problem...")
-    st.session_state["current_problem"] = CoreProblem(r_integers=Sliders("add_ints").range(), type=current_type)
+    next_problem_op_, next_data_type_ = random.choice(st.session_state["active_problem_types"])
+    next_problem_tag = next_problem_op_ + "_" + next_data_type_
+    next_problem_op_ = OPERATOR_API_ALIASES[next_problem_op_]
+    next_problem_range_ = LeftRightSliders(next_problem_tag).range()
+    st.session_state["current_problem"] = CoreProblem(range_=next_problem_range_, problem_type_=next_problem_op_, dtype_=next_data_type_)
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
     st.rerun()
@@ -148,7 +164,7 @@ def validate_answer(result):
 
 def guard():
     # A guard function that should never be needed. But logging if it ever is needed for future debugging
-    if not st.session_state["active_problem_types"] or st.session_state["duration"] == 20:
+    if not st.session_state["active_problem_types"]:
         log_game_state("guard() was triggered")
         st.session_state["page"] = "setup"
         return
@@ -158,6 +174,7 @@ def start_game():
     st.session_state["is_first_problem"] = True
     st.session_state["game_score"] = 0
     st.session_state.page = "game"
+    st.rerun()
 
 def end_game():
     st.session_state.page = "setup"
@@ -182,7 +199,7 @@ def render_game_ui():
         user_input = custom_input_box()
         if validate_answer(user_input):
             st.session_state["game_score"] += 1
-            new_problem("add_ints")
+            new_problem("add", "ints")
 
     # End button
     if st.button("End", on_click=end_game):
@@ -209,27 +226,53 @@ def render_setup_ui():
         if st.session_state["duration"] != duration:
             print("updating internal duration value.")
             st.session_state["duration"] = duration
-    print("rerun...")
-    if st.session_state["add_ints_checkbox"]:
-        add_ints_sliders = Sliders("add_ints")
-        add_ints_sliders.render_sliders()
-    if st.session_state["subtract_ints_checkbox"]:
-        subtract_ints_sliders = Sliders("subtract_ints")
-        subtract_ints_sliders.render_sliders()
-    if st.session_state["mult_ints_checkbox"]:
-        mult_ints_sliders = Sliders("mult_ints")
-        mult_ints_sliders.render_sliders()
-    if st.session_state["div_ints_checkbox"]:
-        div_ints_sliders = Sliders("div_ints")
-        div_ints_sliders.render_sliders()
 
-    st.button("Start", on_click=start_game, disabled=False if (
-            st.session_state["active_problem_types"] and st.session_state["duration"] > 0) else True,
-              key="start_game")
+    st.session_state["active_problem_types"] = [
+        (op_, dtype_)
+        for full_key in checkbox_keys
+        if st.session_state[full_key]
+        for op_, dtype_, _ in [full_key.split("_")]
+    ]
+
+    #add_ints_sliders = Sliders("add_ints")
+    #subtract_ints_sliders = Sliders("subtract_ints")
+    #mult_ints_sliders = Sliders("mult_ints")
+    #div_ints_sliders = Sliders("div_ints")
+
+    slider_columns = st.columns(3)
+
+    add_ints_sliders = LeftRightSliders("add_ints")
+    subtract_ints_sliders = LeftRightSliders("subtract_ints")
+    mult_ints_sliders = LeftRightSliders("mult_ints")
+    div_ints_sliders = LeftRightSliders("div_ints")
+
+
+    if st.session_state["add_ints_checkbox"]:
+        add_ints_sliders.render()
+    if st.session_state["subtract_ints_checkbox"]:
+        subtract_ints_sliders.render()
+    if st.session_state["mult_ints_checkbox"]:
+        mult_ints_sliders.render()
+    if st.session_state["div_ints_checkbox"]:
+        div_ints_sliders.render()
+
+
+
+
+    print(st.session_state["active_problem_types"])
+
+    if st.button(
+            "Start",
+            disabled=not (st.session_state["active_problem_types"]
+                          and st.session_state["duration"] > 0),
+            key="start_game"):
+        start_game()
+        st.rerun()
+        st.stop()
+
 
 def setup_screen():
-    st.session_state["active_problem_types"] = [k for k in ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox", "div_ints_checkbox"] if
-                                                st.session_state[k] == True]
+
     render_setup_ui()
 
 def game_screen():
@@ -239,7 +282,7 @@ def game_screen():
         print("Making a new problem...")
         st.session_state["is_game_running"] = True
         st.session_state["is_first_problem"] = False
-        new_problem("add_ints")
+        new_problem("add", "ints")
         st.rerun()
 
     render_game_ui()
