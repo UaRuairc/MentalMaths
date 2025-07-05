@@ -1,5 +1,5 @@
 import random
-from abc import ABC, abstractmethod
+from abc import ABC
 from fractions import Fraction
 from dataclasses import dataclass
 from typing import Any
@@ -9,8 +9,6 @@ operator = {
     "mult": chr(215),
     "div": chr(247),
 }
-
-
 
 def to_dict(obj):
     """Recursively convert objects to dictionaries or lists."""
@@ -24,6 +22,9 @@ def to_dict(obj):
         return obj
 
 class Generator:
+    """ generate random numbers based on the range of values the user chooses
+        ** removed generation of non-integers for now, may add back later
+    """
     def __init__(self, range_ = None, data_type_ = None):
         self.range = range_
         self.data_type = data_type_
@@ -44,6 +45,7 @@ PROBLEM_DISPATCH = {}
 
 @dataclass
 class Problem(ABC):
+    """create a base class (and registry below) """
     left: Any
     right: Any
     operator: str
@@ -51,7 +53,9 @@ class Problem(ABC):
         pass
 
 def register(type_):
-    """Decorator: remember <class> under the string <kind>."""
+    """Return a class decorator that registers the decorated class
+
+        """
     def _wrap(cls):
         PROBLEM_DISPATCH[type_] = cls
         return cls
