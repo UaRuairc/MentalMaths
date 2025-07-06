@@ -80,4 +80,5 @@ def game_countdown_timer():
         if time_run_out :
             print("Game has ended.")
             end_game()
+            st.rerun()
 
