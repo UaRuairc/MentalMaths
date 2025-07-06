@@ -94,12 +94,11 @@ class Checkbox:
         self.config.pop("value", None)
         st.checkbox(**self.config)
 
-def custom_input_box():
+def custom_input_box(key_, alignment_="center"):
     result = custom_input(
-        key="constant_custom_input_key",
+        key=key_,
         correctAnswer=str(st.session_state["current_problem"].answer), # correctAnswer is used by CustomInput.tsx to determine if the input field needs resetting.
-        height=80,
-        width=200,
+        alignment=alignment_,
     )
     if result is None:
         return ""
