@@ -3,10 +3,11 @@ import { Streamlit, withStreamlitConnection } from "streamlit-component-lib"
 
 interface Args {
   correctAnswer: string
+  alignment: string
 }
 
 function CustomInput(props: { args: Args }) {
-  const { correctAnswer } = props.args
+  const { correctAnswer = "", alignment = "center"} = props.args
   const [val, setVal] = useState<string>("")
 
   // Whenever the problem changes, clear any residual input
@@ -34,21 +35,40 @@ function CustomInput(props: { args: Args }) {
       setVal("")
     }
   }
-
+  const font_size = "3rem"
+  const box_height = "4rem"
+  const box_width =  "12rem"
   // 3) Keep iframe height updated
   useEffect(() => {
-    Streamlit.setFrameHeight()
+    Streamlit.setFrameHeight((parseInt(box_height.slice(0,-3), 10))*16*2)
   }, [val])
 
   return (
+  <div style={{
+    display: 'flex',
+    justifyContent: alignment,
+    alignItems: alignment,
+    height: '100%',
+    width: '100%'
+  }}>
     <input
       value={val}
       onChange={onChange}
       onKeyDown={onKeyDown}
-      style={{ fontSize: "2rem", padding: "0.5rem", width: "6rem" }}
+      maxLength={6}
+      style={{
+        fontSize: font_size,
+        color:"white",
+        height: box_height,
+        width: box_width,
+        textAlign: "center",
+        outline: "none",
+        backgroundColor: "transparent"
+      }}
       autoFocus
     />
-  )
+  </div>
+)
 }
 
 export default withStreamlitConnection(CustomInput as any)
