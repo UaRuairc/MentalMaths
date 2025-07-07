@@ -50,7 +50,7 @@ def set_defaults():
             "key": f"{op}_ints_checkbox"
         })
 
-        # st.session_state.setdefault(f"{op}_ints_left_slider", (1, 5))
+        st.session_state.setdefault(f"{op}_ints_left_slider", (1, 5))
 
         st.session_state.setdefault(f"{op}_ints_left_slider_config", {
             "label": "Left digit range",
@@ -62,7 +62,7 @@ def set_defaults():
             "on_change": None
         })
 
-        # st.session_state.setdefault(f"{op}_ints_right_slider", (1, 5))
+        st.session_state.setdefault(f"{op}_ints_right_slider", (1, 5))
 
         st.session_state.setdefault(f"{op}_ints_right_slider_config", {
             "label": "Right digit range",

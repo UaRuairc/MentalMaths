@@ -32,12 +32,14 @@ def new_problem():
     print("Generating a new problem...")
     next_problem_op_, next_data_type_ = random.choice(st.session_state["active_problem_types"])
     next_problem_tag = next_problem_op_ + "_" + next_data_type_
-    next_problem_op_ = OPERATOR_API_ALIASES[next_problem_op_]
-    next_problem_range_ = LeftRightSliders(next_problem_tag).range()
+
+    # WARNING: Currently the CoreProblem class can be pickled. If it ever can't be,
+    # then just store the required data in a map and put that in the session state. For now, this is convenient though
     st.session_state["current_problem"] = CoreProblem(
-        range_=next_problem_range_,
-        problem_type_=next_problem_op_,
+        range_=LeftRightSliders.range(next_problem_tag),
+        problem_type_=OPERATOR_API_ALIASES[next_problem_op_],
         dtype_=next_data_type_)
+
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
     st.session_state["active_problem"] = True
