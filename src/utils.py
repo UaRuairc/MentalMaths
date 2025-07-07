@@ -43,7 +43,6 @@ def debug_fragment_info(label=""):
             debug_fragment_info("Timer")
             # ... rest of your code
     """
-
     # Get context
     ctx = get_script_run_ctx()
 
@@ -64,8 +63,6 @@ def debug_fragment_info(label=""):
 
     # Context info
     if ctx:
-
-
         debug_info.update({
             "fragment_id": ctx.current_fragment_id,
             "session_id": ctx.session_id[-8:] if ctx.session_id else "None",
