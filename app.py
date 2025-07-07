@@ -1,6 +1,6 @@
 import streamlit as st
 from src.state_management import set_defaults
-from page_navigation import initialise_and_being_navigation
+from page_navigation import initialise_and_begin_navigation
 
 #track_reruns("app.py start")
 
@@ -12,4 +12,4 @@ if st.session_state["is_game_running"]:
 
 else:
     st.set_page_config(initial_sidebar_state="expanded")
-    initialise_and_being_navigation()
+    initialise_and_begin_navigation()
