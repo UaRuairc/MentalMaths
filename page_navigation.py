@@ -1,6 +1,6 @@
 import streamlit as st
 
-def initialise_and_being_navigation():
+def initialise_and_begin_navigation():
     setup_screen_page = st.Page("pages/1_setup_screen.py", title="setup")
     stat_screen_page = st.Page("pages/2_stats_screen.py", title="stats")
     # pages = get_available_pages()
