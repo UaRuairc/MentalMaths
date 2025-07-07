@@ -41,8 +41,8 @@ class Slider():
         self.config["on_change"] = self._on_change
 
         # now we make sure the slider knows, next time you render, you should have the current config value
-        if self.slider_key not in st.session_state:
-            st.session_state[self.slider_key] = self.slider_value_range
+
+        st.session_state[self.slider_key] = self.slider_value_range
 
     def _on_change(self):
         # here we update the CONFIGURATION used to build future sliders of this type
@@ -53,6 +53,7 @@ class Slider():
         self.config.pop("value")
         st.slider(**self.config)
 
+    @staticmethod
     def range(self):
         return st.session_state[self.config_key]["value"]
 
@@ -74,8 +75,11 @@ class LeftRightSliders():
         with self.cols[2]:
             self.right_slider.render_slider()
 
-    def range(self):
-        return [self.left_slider.range(), self.right_slider.range()]
+    @staticmethod
+    def range(type_):
+        left_range = st.session_state[f"{type_}_left_slider_config"]["value"]
+        right_range = st.session_state[f"{type_}_right_slider_config"]["value"]
+        return [left_range, right_range]
 
 class Checkbox:
     def __init__(self, problem_type):
