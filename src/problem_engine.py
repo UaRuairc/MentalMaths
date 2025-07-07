@@ -38,10 +38,7 @@ class Generator:
                 for d in [random.randint(1, 9)]
                 ]
 
-
-
 PROBLEM_DISPATCH = {}
-
 
 @dataclass
 class Problem(ABC):
@@ -103,9 +100,6 @@ class AddProblem(Problem):
             self.left, self.right = max(self.left, self.right), min(self.left, self.right)
 
         self.answer = self.left - self.right
-
-
-
 
 @register("mult")
 @register("div")
