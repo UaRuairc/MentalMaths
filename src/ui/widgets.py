@@ -41,7 +41,8 @@ class Slider():
         self.config["on_change"] = self._on_change
 
         # now we make sure the slider knows, next time you render, you should have the current config value
-        st.session_state[self.slider_key] = self.slider_value_range
+        if self.slider_key not in st.session_state:
+            st.session_state[self.slider_key] = self.slider_value_range
 
     def _on_change(self):
         # here we update the CONFIGURATION used to build future sliders of this type
