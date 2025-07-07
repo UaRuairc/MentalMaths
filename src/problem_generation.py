@@ -13,7 +13,13 @@ OPERATOR_API_ALIASES = {
 }
 
 def generate_first_problem():
-    """safely make the first problem of the session"""
+    """
+
+    !! CURRENTLY NOT IN USE !!
+
+    safely make the first problem of the session
+
+    """
     st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
     print("Making a new problem...")
     st.session_state["is_game_running"] = True
@@ -31,7 +37,8 @@ def new_problem():
     st.session_state["current_problem"] = CoreProblem(range_=next_problem_range_, problem_type_=next_problem_op_, dtype_=next_data_type_)
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
-    st.rerun()
+    st.session_state["active_problem"] = True
+
 
 def validate_answer(result):
     """check if user got the answer correct"""

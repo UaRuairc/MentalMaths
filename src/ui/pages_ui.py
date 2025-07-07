@@ -26,7 +26,7 @@ def setup_page_ui():
 
     if st.button("start_game", disabled=disable_button_condition):
         start_game()
-        st.rerun()
+
 
 def game_page_ui():
     st.title("Running game")
@@ -52,11 +52,11 @@ def game_page_ui():
     if validate_answer(user_input):
         st.session_state["game_score"] += 1
         new_problem()
+        st.rerun()
 
     # End game button
-    if st.button("End", on_click=end_game):
-        st.session_state.page = "setup"
-        st.rerun()
+    if st.button("End"):
+        end_game()
 
 def display_problem(problem_details:list, style=default_style):
     """display the problem for the user, and return the column we'll put the user input box in"""
@@ -118,3 +118,6 @@ def display_sliders():
         mult_ints_sliders.render()
     if st.session_state["div_ints_checkbox"]:
         div_ints_sliders.render()
+
+def stats_screen_ui():
+    st.markdown("Nothing to show here")

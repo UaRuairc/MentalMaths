@@ -1,17 +1,24 @@
 import streamlit as st
 import time
+from src.problem_generation import new_problem
 from src.utils import debug_fragment_info
 
 def start_game():
     print("Starting the game.")
+    new_problem()
     st.session_state["is_first_problem"] = True
+    st.session_state["is_game_running"] = True
     st.session_state["game_score"] = 0
-    st.session_state.page = "game"
+    st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
+    st.rerun()
 
 def end_game():
     """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
+    print("Ending the game.")
+    st.session_state["is_first_problem"] = False
     st.session_state["is_game_running"] = False
-    st.session_state.page = "setup"
+    st.session_state["active_problem"] = False
+    st.rerun()
 
 def set_defaults():
     """set session state variables defaults"""
@@ -29,7 +36,8 @@ def set_defaults():
         "mult_ints": True,
         "div_ints": True,
         "game_end_time": 0,
-        "is_game_running": False
+        "is_game_running": False,
+        "active_problem": False
     }
 
     for parameter, default in default_parameters.items():
@@ -80,5 +88,5 @@ def game_countdown_timer():
         if time_run_out :
             print("Game has ended.")
             end_game()
-            st.rerun()
+
 
