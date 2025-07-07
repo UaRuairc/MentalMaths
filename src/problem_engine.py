@@ -48,8 +48,15 @@ class Problem(ABC):
     """create a base class (and registry below) """
     left: Any
     right: Any
-    operator: str
+    type: Any
+    invert_operation: bool = False
+    positive_answers_only: bool = False
+    answer: Any = None
+    operator: Any = None
+
     def operate(self) -> Any:
+        pass
+    def modify_problem(self) -> Any:
         pass
 
 def register(type_):
@@ -62,52 +69,75 @@ def register(type_):
     return _wrap
 
 @register("add")
-@dataclass
-class AddProblem(Problem):
-    def operate(self):
-        return self.left + self.right
-
 @register("sub")
 @dataclass
-class SubProblem(Problem):
-    type = "sub"
+class AddProblem(Problem):
+    """
+         This is baseline addition.
+         
+         We can convert it to a subtraction problem
+         if we convert it to a subtraction problem, let the user decide:
+         "do I want to deal with negative results?"
+
+         eg if 
+         self.left = 20
+         self.right = 50
+         then 20-50 = -30
+
+         alternatively, if the user prefers, we always give them:
+         50-20 = 30
+    """
+    # subtraction reverse addition or not?
     def operate(self):
-        return self.left - self.right
+        self.operator = operator[self.type]
+        self.modify_problem()
+        return self.answer
+
+    def modify_problem(self):
+        if self.type == "add":
+            self.operator = operator["add"]
+            self.answer = self.left + self.right
+            return
+
+        if self.positive_answers_only:
+            self.left, self.right = max(self.left, self.right), min(self.left, self.right)
+
+        self.answer = self.left - self.right
+
+
+
 
 @register("mult")
-@dataclass
-class MultProblem(Problem):
-    type = "mult"
-    def operate(self):
-        return self.left * self.right
-
 @register("div")
 @dataclass
-class DivProblem(Problem):
-    type = "div"
-
+class MultProblem(Problem):
     def operate(self):
-        # multiplication but backwards.
-        mult_answer = self.left * self.right
+        self.operator = operator[self.type]
+        self.modify_problem()
+        return self.answer
 
-        # choose the divisor randomly
-        divisor_and_answer = [self.left, self.right]
-        random.shuffle(divisor_and_answer)
-        divisor, div_answer = divisor_and_answer
+    def modify_problem(self):
+        if self.type == "mult":
+            self.answer = self.left * self.right
+            return
 
-        # update
-        self.left = mult_answer
+        """ for a division problem that results in integers we need to essentially reverse the problem """
+        # self.right is the quotient
+        # self.left is the divisor
+        # dividend / divisor = quotient
+        dividend = self.left * self.right
+        divisor = self.left
+        quotient = self.right
+        # for display update left / right values
+        self.left = dividend
         self.right = divisor
-        return div_answer
+        self.answer = quotient
 
-
-def make_problem(type_, left_, right_, operator_):
-    return PROBLEM_DISPATCH[type_](left_, right_, operator_)
-
-
+def make_problem(type_, left_, right_, positive_answers_only_=False):
+    return PROBLEM_DISPATCH[type_](left=left_, right=right_, type=type_, positive_answers_only=positive_answers_only_)
 
 class CoreProblem:
-    def __init__(self, range_ = None, problem_type_ = None, dtype_ = None):
+    def __init__(self, range_ = None, problem_type_ = None, dtype_ = None, positive_answers_only_ = False):
         self.range = range_
         self.problem_type = problem_type_
         self.data_type = dtype_
@@ -115,12 +145,13 @@ class CoreProblem:
         self.answer = None
         self.Problem = None
 
+        self.positive_answers_only = positive_answers_only_
 
     def calc(self):
         """Generate a problem instance and compute its answer."""
 
         left, right = self.generator.generate()
-        self.Problem = make_problem(self.problem_type, left, right, operator[self.problem_type])
+        self.Problem = make_problem(self.problem_type, left, right, self.positive_answers_only)
         self.answer = self.Problem.operate()
 
     def info(self):

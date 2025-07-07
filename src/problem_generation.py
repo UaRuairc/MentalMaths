@@ -34,7 +34,10 @@ def new_problem():
     next_problem_tag = next_problem_op_ + "_" + next_data_type_
     next_problem_op_ = OPERATOR_API_ALIASES[next_problem_op_]
     next_problem_range_ = LeftRightSliders(next_problem_tag).range()
-    st.session_state["current_problem"] = CoreProblem(range_=next_problem_range_, problem_type_=next_problem_op_, dtype_=next_data_type_)
+    st.session_state["current_problem"] = CoreProblem(
+        range_=next_problem_range_,
+        problem_type_=next_problem_op_,
+        dtype_=next_data_type_)
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
     st.session_state["active_problem"] = True
