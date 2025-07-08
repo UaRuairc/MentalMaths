@@ -23,6 +23,51 @@ def end_game():
 def set_defaults():
     """set session state variables defaults"""
     operators = ["add", "subtract", "mult", "div"]
+    widget_labels = {
+        "add_ints_checkbox": "addition",
+        "subtract_ints_checkbox": "subtraction",
+        "mult_ints_checkbox": "multiplication",
+        "div_ints_checkbox": "division",
+        "pos_answers_only_checkbox": "positive answers only?",
+        "add_ints_slider": ("left digit range", "right digit range"),
+        "subtract_ints_slider": ("left digit range", "right digit range"),
+        "mult_ints_slider": ("left digit range", "right digit range"),
+        "div_ints_slider": ("divisor range", "quotient range")
+    }
+
+    config = {
+        "checkboxes": {
+            **{
+                f"{op}_ints_checkbox": {
+                    "label": widget_labels[f"{op}_ints_checkbox"],
+                    "value": True,
+                    "on_change": None,
+                    "key": f"{op}_ints_checkbox"
+                }
+                for op in operators
+            },
+            "pos_answers_only_checkbox": {
+                "label": widget_labels["pos_answers_only_checkbox"],
+                "value": True,
+                "key": "pos_answers_only_checkbox"
+            }
+        },
+        "sliders": {
+            **{
+                f"{op}_ints_{side}_slider": {
+                    "label": widget_labels[f"{op}_ints_slider"][0 if side == "left" else 1],
+                    "min_value": 1,
+                    "max_value": 200,
+                    "value": (1, 5),
+                    "on_change": None,
+                    "key": f"{op}_ints_{side}_slider"
+                }
+                for op in operators
+                for side in ["left", "right"]
+            },
+        },
+
+    }
 
     default_parameters = {
         "page": "setup",
@@ -37,42 +82,15 @@ def set_defaults():
         "div_ints": True,
         "game_end_time": 0,
         "is_game_running": False,
-        "active_problem": False
+        "active_problem": False,
+        **{f"{op}_ints_checkbox": True for op in operators},
+        **{f"{op}_ints_{side}_slider": (1, 5) for op in operators for side in ["left", "right"]},
+        "pos_answers_only_checkbox": True,
+        "config": config
     }
 
     for parameter, default in default_parameters.items():
         st.session_state.setdefault(parameter, default)
-    for op in operators:
-        st.session_state.setdefault(f"{op}_ints_checkbox_config", {
-            "label": f"{op}_ints",
-            "value": True,
-            "on_change": None,
-            "key": f"{op}_ints_checkbox"
-        })
-
-        st.session_state.setdefault(f"{op}_ints_left_slider", (1, 5))
-
-        st.session_state.setdefault(f"{op}_ints_left_slider_config", {
-            "label": "Left digit range",
-            "min_value": 1,
-            "max_value": 200,
-            "step": 1,
-            "value": (1, 5),
-            "key": f"{op}_ints_left_slider",
-            "on_change": None
-        })
-
-        st.session_state.setdefault(f"{op}_ints_right_slider", (1, 5))
-
-        st.session_state.setdefault(f"{op}_ints_right_slider_config", {
-            "label": "Right digit range",
-            "min_value": 1,
-            "max_value": 200,
-            "value": (1, 5),
-            "step": 1,
-            "key": f"{op}_ints_right_slider",
-            "on_change": None
-        })
 
     return
 
