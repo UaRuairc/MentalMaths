@@ -75,6 +75,9 @@ def display_checkboxes():
     """create checkbox wrappers and render them. The wrapper updates their state, i.e., ticked/not ticked."""
     problem_type_columns = st.columns(3)
 
+    pos_answers_only_checkbox = Checkbox("pos_answers_only")
+    pos_answers_only_checkbox.render_checkbox()
+
     with problem_type_columns[0]:
         add_ints_checkbox = Checkbox("add_ints")
         subtract_ints_checkbox = Checkbox("subtract_ints")
@@ -118,6 +121,9 @@ def display_sliders():
         mult_ints_sliders.render()
     if st.session_state["div_ints_checkbox"]:
         div_ints_sliders.render()
+
+#def other_settings():
+
 
 def stats_screen_ui():
     st.markdown("Nothing to show here")

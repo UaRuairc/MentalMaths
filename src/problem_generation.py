@@ -38,7 +38,8 @@ def new_problem():
     st.session_state["current_problem"] = CoreProblem(
         range_=LeftRightSliders.range(next_problem_tag),
         problem_type_=OPERATOR_API_ALIASES[next_problem_op_],
-        dtype_=next_data_type_)
+        dtype_=next_data_type_,
+        positive_answers_only_=st.session_state["pos_answers_only_checkbox_config"]["value"])
 
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
