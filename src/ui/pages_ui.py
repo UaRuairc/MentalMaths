@@ -108,19 +108,9 @@ def update_active_problem_types():
 
 def display_sliders():
     """create slider wrappers and render. The wrapper updates their state, i.e., the range"""
-    add_ints_sliders = LeftRightSliders("add_ints")
-    subtract_ints_sliders = LeftRightSliders("subtract_ints")
-    mult_ints_sliders = LeftRightSliders("mult_ints")
-    div_ints_sliders = LeftRightSliders("div_ints")
+    for op, type in st.session_state["active_problem_types"]:
+        LeftRightSliders(f"{op}_{type}").render()
 
-    if st.session_state["add_ints_checkbox"]:
-        add_ints_sliders.render()
-    if st.session_state["subtract_ints_checkbox"]:
-        subtract_ints_sliders.render()
-    if st.session_state["mult_ints_checkbox"]:
-        mult_ints_sliders.render()
-    if st.session_state["div_ints_checkbox"]:
-        div_ints_sliders.render()
 
 #def other_settings():
 
