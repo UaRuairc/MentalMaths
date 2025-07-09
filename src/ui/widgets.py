@@ -34,15 +34,11 @@ class Slider():
     def __init__(self, config_key):
         self.config_key = config_key
         self.config = st.session_state["config"]["sliders"][self.config_key].copy()
-
         self.slider_key = self.config["key"]
         self.slider_value_range = self.config["value"]
-        #print(self.slider_value_range)
-
         self.config["on_change"] = self._on_change
 
-        # now we make sure the slider knows, next time you render, you should have the current config value
-
+    def ensure_initialisation(self):
         st.session_state[self.slider_key] = self.slider_value_range
 
     def _on_change(self):
@@ -51,7 +47,20 @@ class Slider():
         st.session_state["config"]["sliders"][self.config_key]["value"] = value
 
     def render_slider(self):
-        self.config.pop("value")
+
+        """
+        Unfortunately, even though we update the session state, in the event one does not pass a value,
+        when first building a slider streamlit tells the frontend to build a slider with:
+
+        value=(min,max)
+
+        for a fraction of a section, before setting:
+
+        value=session_state[key]
+
+        this results in a flicker, so we have to pass value if we plan to hide/show sliders
+        """
+        self.ensure_initialisation()
         st.slider(**self.config)
 
     @staticmethod
