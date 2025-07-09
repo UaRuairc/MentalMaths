@@ -7,6 +7,13 @@ custom_input = components.declare_component(
     path=os.path.join(os.getcwd(), "frontend", "build"),
 )
 
+slider_descriptions = {
+    "add": "Choose range for addition",
+    "subtract": "Choose range for subtraction",
+    "mult": "Choose range for multiplication",
+    "div": "Choose range for division",
+}
+
 
 class Slider():
     """how widgets seem to work in streamlit:
@@ -63,16 +70,11 @@ class Slider():
         self.ensure_initialisation()
         st.slider(**self.config)
 
-    @staticmethod
-    def range(slider_key_):
-        return st.session_state["config"]["sliders"][slider_key_]["value"]
-
 class LeftRightSliders():
 
     def __init__(self, problem_type):
-        self.cols = st.columns(3)
         self.problem_type = problem_type
-
+        self.cols = None
         self.left_config_key = f"{self.problem_type}_left_slider"
         self.right_config_key = f"{self.problem_type}_right_slider"
 
@@ -80,12 +82,16 @@ class LeftRightSliders():
         self.right_slider = Slider(self.right_config_key)
 
     def render(self):
+        self.make_columns()
         with self.cols[0]:
-            st.write(f"range for {self.problem_type}")
+            st.write(slider_descriptions[self.problem_type[:-5]])
         with self.cols[1]:
             self.left_slider.render_slider()
         with self.cols[2]:
             self.right_slider.render_slider()
+
+    def make_columns(self):
+        self.cols = st.columns(3)
 
     @staticmethod
     def range(type_):
