@@ -84,7 +84,7 @@ class AddProblem(Problem):
          alternatively, if the user prefers, we always give them:
          50-20 = 30
     """
-    # subtraction reverse addition or not?
+
     def operate(self):
         self.operator = operator[self.type]
         self.modify_problem()
@@ -115,7 +115,7 @@ class MultProblem(Problem):
             self.answer = self.left * self.right
             return
 
-        """ for a division problem that results in integers we need to essentially reverse the problem """
+        """ for a division problem that results in integers we need to essentially reverse a multiplication problem """
         # self.right is the quotient
         # self.left is the divisor
         # dividend / divisor = quotient
@@ -138,7 +138,6 @@ class CoreProblem:
         self.generator = Generator(range_=self.range, data_type_=self.data_type)
         self.answer = None
         self.Problem = None
-
         self.positive_answers_only = positive_answers_only_
 
     def calc(self):

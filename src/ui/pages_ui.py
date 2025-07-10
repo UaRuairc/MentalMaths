@@ -17,20 +17,19 @@ def setup_page_ui():
 
     no_problem_types_selected = not st.session_state["active_problem_types"]
     duration_not_set = st.session_state["duration"] <= 0
-
     disable_button_condition = no_problem_types_selected or duration_not_set
 
     if st.button("start_game", disabled=disable_button_condition):
         start_game()
 
-
 def game_page_ui():
     st.title("Running game")
     st.write(f"Score: {st.session_state["game_score"]}")
-
-    problem_details = [st.session_state['current_problem'].Problem.left,
-                       st.session_state['current_problem'].Problem.operator,
-                       st.session_state['current_problem'].Problem.right]
+    problem_details = [
+        st.session_state['current_problem'].Problem.left,
+        st.session_state['current_problem'].Problem.operator,
+        st.session_state['current_problem'].Problem.right
+    ]
 
     # render 5 display columns as follows:
     # [left]   [operator]   [right]   [  =  ]   [   ? ? ?   ]
