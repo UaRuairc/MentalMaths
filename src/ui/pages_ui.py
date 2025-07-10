@@ -13,11 +13,7 @@ def setup_page_ui():
     st.title("Mental Maths Application")
     st.markdown("Choose problem types and ranges")
 
-    display_checkboxes()
-
-    update_active_problem_types()
-
-    display_sliders()
+    display_settings()
 
     no_problem_types_selected = not st.session_state["active_problem_types"]
     duration_not_set = st.session_state["duration"] <= 0
@@ -71,7 +67,7 @@ def display_problem(problem_details:list, style=default_style):
 
     return game_screen_columns[4]
 
-def display_checkboxes():
+def display_settings_checkboxes():
     """create checkbox wrappers and render them. The wrapper updates their state, i.e., ticked/not ticked."""
     problem_type_columns = st.columns(3)
 
@@ -106,12 +102,15 @@ def update_active_problem_types():
         for op_, dtype_, _ in [full_key.split("_")]
     ]
 
-def display_sliders():
+def display_range_sliders():
     """create slider wrappers and render. The wrapper updates their state, i.e., the range"""
     for op, type in st.session_state["active_problem_types"]:
         LeftRightSliders(f"{op}_{type}").render()
 
-
+def display_settings():
+    display_settings_checkboxes()
+    update_active_problem_types()
+    display_range_sliders()
 #def other_settings():
 
 
