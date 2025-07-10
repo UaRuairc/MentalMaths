@@ -38,42 +38,75 @@ def game_page_ui():
     # [ 5  ]   [    +   ]   [  4  ]   [  =  ]   [   ? ? ?   ]
     # then return the fifth box so we can put the custom input box inside it
 
-    answer_column = display_problem(problem_details)
+    answer_column = display_problem(
+        problem_details=problem_details,
+        should_fade=st.session_state["config"]["checkboxes"]["fade_problem_checkbox"]["value"],
+    )
 
-    # now modify user input box column
     with answer_column:
         user_input = custom_input_box("constant_input_key")
-
 
     if validate_answer(user_input):
         st.session_state["game_score"] += 1
         new_problem()
         st.rerun()
 
-    # End game button
+    if st.session_state["config"]["checkboxes"]["fade_problem_checkbox"]["value"]:
+        if st.button("Show problem again"):
+            st.session_state["fade_class_identifier"] += 1
+            st.rerun()
+
     if st.button("End"):
         end_game()
 
-def display_problem(problem_details:list, style=default_style):
+def inject_fade_css(unique_class):
+    st.markdown(f"""
+            <style>
+            @keyframes fadeAnimation{st.session_state["fade_class_identifier"]} {{
+                from {{ opacity: 1; }}
+                to {{ opacity: 0; }}
+            }}
+            .{unique_class} {{
+                animation: fadeAnimation{st.session_state["fade_class_identifier"]} 1s ease-in-out forwards;
+                animation-delay: 1s;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
+
+def get_fade_html(unique_class, base_style=default_style):
+    return f"<div class='{unique_class}' style='{base_style}'>"
+
+
+def display_problem(problem_details: list, style=default_style, should_fade=True):
     """display the problem for the user, and return the column we'll put the user input box in"""
-    game_screen_columns = st.columns([1,1,1,1,2], gap="small")
+
+    unique_class = f"fade-problem-{st.session_state["fade_class_identifier"]}"
+
+    if should_fade:
+        html = get_fade_html(unique_class=unique_class, base_style=style)
+        inject_fade_css(unique_class=unique_class)
+    else:
+        html = f"<div style='{style}'>"
+
+    game_screen_columns = st.columns([1, 1, 1, 1, 2], gap="small")
     problem_details += "="
 
     for col, entry in enumerate(problem_details):
         with game_screen_columns[col]:
             st.markdown(
-                f"<div style='{style}'>{entry}</div>",
+                f"{html} {entry}</div>",
                 unsafe_allow_html=True)
 
     return game_screen_columns[4]
 
 def display_settings_checkboxes():
     """create checkbox wrappers and render them. The wrapper updates their state, i.e., ticked/not ticked."""
-    problem_type_columns = st.columns(3)
-
     pos_answers_only_checkbox = Checkbox("pos_answers_only")
     pos_answers_only_checkbox.render_checkbox()
+    fade_problem_checkbox = Checkbox("fade_problem")
+    fade_problem_checkbox.render_checkbox()
 
+    problem_type_columns = st.columns(3)
     with problem_type_columns[0]:
         add_ints_checkbox = Checkbox("add_ints")
         subtract_ints_checkbox = Checkbox("subtract_ints")

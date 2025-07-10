@@ -44,6 +44,7 @@ def new_problem():
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False
     st.session_state["active_problem"] = True
+    st.session_state["fade_class_identifier"] += 1
 
 
 def validate_answer(result):

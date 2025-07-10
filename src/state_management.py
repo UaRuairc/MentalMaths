@@ -29,6 +29,7 @@ def set_defaults():
         "mult_ints_checkbox": "multiplication",
         "div_ints_checkbox": "division",
         "pos_answers_only_checkbox": "positive answers only?",
+        "fade_problem_checkbox": "fade problem after set number of seconds?",
         "add_ints_slider": ("left digit range", "right digit range"),
         "subtract_ints_slider": ("left digit range", "right digit range"),
         "mult_ints_slider": ("left digit range", "right digit range"),
@@ -50,6 +51,11 @@ def set_defaults():
                 "label": widget_labels["pos_answers_only_checkbox"],
                 "value": True,
                 "key": "pos_answers_only_checkbox"
+            },
+            "fade_problem_checkbox": {
+                "label": widget_labels["fade_problem_checkbox"],
+                "value": False,
+                "key": "fade_problem_checkbox"
             }
         },
         "sliders": {
@@ -86,7 +92,8 @@ def set_defaults():
         **{f"{op}_ints_checkbox": True for op in operators},
         **{f"{op}_ints_{side}_slider": (1, 5) for op in operators for side in ["left", "right"]},
         "pos_answers_only_checkbox": True,
-        "config": config
+        "config": config,
+        "fade_class_identifier": 0
     }
 
     for parameter, default in default_parameters.items():
