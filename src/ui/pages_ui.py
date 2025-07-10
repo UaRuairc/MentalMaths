@@ -4,6 +4,7 @@ from google.protobuf.internal import containers
 from src.state_management import start_game, end_game
 from src.problem_generation import validate_answer, new_problem
 from src.ui.widgets import LeftRightSliders, Checkbox, custom_input_box
+from src.ui.widgets import LeftRightSliders, Checkbox, custom_input_box, InputBox
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
                  "div_ints_checkbox"]
@@ -49,13 +50,10 @@ def game_page_ui():
     # [ 5  ]   [    +   ]   [  4  ]   [  =  ]   [   ? ? ?   ]
     # then return the fifth box so we can put the custom input box inside it
 
-    answer_column = display_problem(
+    user_input = render_exercise(
         problem_details=problem_details,
         should_fade=st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
-    )
-
-    with answer_column:
-        user_input = custom_input_box("constant_input_key")
+        )
 
     if validate_answer(user_input):
         st.session_state["game_score"] += 1
@@ -87,11 +85,8 @@ def inject_fade_css(unique_class):
 def get_fade_html(unique_class, base_style=default_style):
     return f"<div class='{unique_class}' style='{base_style}'>"
 
-
-def display_problem(problem_details: list, style=default_style, should_fade=True):
+def render_exercise(problem_details: list, style=default_style, should_fade=True):
     """display the problem for the user, and return the column we'll put the user input box in"""
-
-    # fade_class_identifier is a counter that just makes sure the fade-out resets after each problem
     unique_class = f"fade-problem-{st.session_state["fade_class_identifier"]}"
 
     if should_fade:
@@ -101,36 +96,51 @@ def display_problem(problem_details: list, style=default_style, should_fade=True
         html = f"<div style='{style}'>"
 
     game_screen_columns = st.columns([1, 1, 1, 1, 2], gap="small")
+    problem_details_columns = game_screen_columns[:4]
+    input_box_column = game_screen_columns[4]
+
     problem_details += "="
 
-    for col, entry in enumerate(problem_details):
-        with game_screen_columns[col]:
-            st.markdown(
-                f"{html} {entry}</div>",
-                unsafe_allow_html=True)
 
-    return game_screen_columns[4]
+    for col, entry in zip(problem_details_columns, problem_details):
+        with col:
+            st.markdown(f"{html} {entry}</div>",unsafe_allow_html=True)
+
+    with input_box_column:
+        user_input = custom_input_box("constant_input_key")
+
+    return user_input
 
 def base_settings(settings_containers):
     with settings_containers["base_settings"]:
         st.markdown("Choose base settings")
-        add_sub_column, mult_div_column, duration_column = st.columns(3)
-        with add_sub_column:
-            add_ints_checkbox = Checkbox("add_ints")
-            subtract_ints_checkbox = Checkbox("subtract_ints")
-            add_ints_checkbox.render_checkbox()
-            subtract_ints_checkbox.render_checkbox()
-        with mult_div_column:
-            mult_ints_checkbox = Checkbox("mult_ints")
-            div_ints_checkbox = Checkbox("div_ints")
-            mult_ints_checkbox.render_checkbox()
-            div_ints_checkbox.render_checkbox()
-        with duration_column:
-            duration = st.number_input("Duration in seconds", step=1, value=st.session_state["duration"])
-            if st.session_state["duration"] != duration:
-                print("updating internal duration value.")
-                st.session_state["duration"] = duration
-                st.rerun()
+
+        base_settings_cols = st.columns(3)
+
+        base_ui_positioning = {
+            "checkboxes": {
+                "add_ints": base_settings_cols[0],
+                "subtract_ints": base_settings_cols[0],
+                "mult_ints": base_settings_cols[1],
+                "div_ints": base_settings_cols[1]
+            },
+            "input_box": {
+                "duration": base_settings_cols[2],
+            }
+
+        }
+        for widget_category, widget_column_pairs in base_ui_positioning.items():
+
+            if widget_category == "checkboxes":
+                for checkbox, column in widget_column_pairs.items():
+                    with column:
+                        Checkbox(checkbox).render_checkbox()
+
+            if widget_category == "input_box":
+                for input_box, column in widget_column_pairs.items():
+                    with column:
+                        InputBox(input_box).render()
+
 
 def extra_settings(settings_containers):
     """create checkbox wrappers and render them. The wrapper updates their state, i.e. ticked/not ticked."""
@@ -166,3 +176,4 @@ def display_settings(settings_containers):
 
 def stats_screen_ui():
     st.markdown("Nothing to show here")
+
