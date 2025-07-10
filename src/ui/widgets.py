@@ -42,16 +42,17 @@ class Slider():
         self.config_key = config_key
         self.config = st.session_state["config"]["sliders"][self.config_key].copy()
         self.slider_key = self.config["key"]
-        self.slider_value_range = self.config["value"]
+
+        self.previous_slider_value = self.config["value"]
         self.config["on_change"] = self._on_change
 
     def ensure_initialisation(self):
-        st.session_state[self.slider_key] = self.slider_value_range
+        st.session_state[self.slider_key] = self.previous_slider_value
 
     def _on_change(self):
         # here we update the CONFIGURATION we use to build future sliders of this type
-        value = st.session_state[self.slider_key]
-        st.session_state["config"]["sliders"][self.config_key]["value"] = value
+        updated_value = st.session_state[self.slider_key]
+        st.session_state["config"]["sliders"][self.config_key]["value"] = updated_value
 
     def render_slider(self):
 
@@ -107,16 +108,18 @@ class Checkbox:
         self.container = container
 
         self.box_key = self.config["key"]
+        self.previous_value = self.config["value"]
         self.config["on_change"] = self._on_change
 
-        # make sure the box starts with the config's value
-        st.session_state[self.box_key] = self.config["value"]
-
+    def ensure_initialisation(self):
+        st.session_state[self.box_key] = self.previous_value
 
     def _on_change(self):
-        st.session_state["config"]["checkboxes"][self.config_key]["value"] = st.session_state[self.box_key]
+        updated_value =  st.session_state[self.box_key]
+        st.session_state["config"]["checkboxes"][self.config_key]["value"] = updated_value
 
     def render_checkbox(self):
+        self.ensure_initialisation()
         self.config.pop("value", None)
         if self.container:
             with self.container:
@@ -133,3 +136,32 @@ def custom_input_box(key_, alignment_="center"):
     if result is None:
         return ""
     return result
+
+class InputBox:
+    def __init__(self, config_key):
+        self.config_key = config_key
+        self.config = st.session_state["config"]["input_boxes"][self.config_key].copy()
+        self.input_box_key = self.config["key"]
+        self.previous_value = self.config["value"]
+        self.type = self.config["type"]
+        self.config["on_change"] = self._on_change
+
+    def ensure_initialisation(self):
+        st.session_state[self.input_box_key] = self.previous_value
+
+    def _on_change(self):
+        updated_value = st.session_state[self.input_box_key]
+        st.session_state["config"]["input_boxes"][self.config_key]["value"] = updated_value
+
+    def render(self):
+        self.ensure_initialisation()
+        config = self.config.copy()
+        config.pop("value", None)
+        config.pop("type", None)
+
+        if self.type == "number_input":
+            st.number_input(**config)
+        elif self.type == "text_input":
+            st.text_input(**config)
+        else:
+            return

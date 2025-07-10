@@ -33,7 +33,9 @@ def set_defaults():
         "add_ints_slider": ("left digit range", "right digit range"),
         "subtract_ints_slider": ("left digit range", "right digit range"),
         "mult_ints_slider": ("left digit range", "right digit range"),
-        "div_ints_slider": ("divisor range", "quotient range")
+        "div_ints_slider": ("divisor range", "quotient range"),
+        "duration_box": "Duration in seconds",
+        "user_input_box": None
     }
 
     config = {
@@ -72,6 +74,23 @@ def set_defaults():
                 for side in ["left", "right"]
             },
         },
+
+        "input_boxes": {
+            "duration": {
+                "label": widget_labels["duration_box"],
+                "step": 1,
+                "value": 120,
+                "type": "number_input",
+                "key": "duration_box"
+            },
+            "user_game_input": {
+                "key": "constant_input_key",
+                "type": "custom_input_box",
+                "alignment_": "center",
+                "value": None,
+                "correctAnswer": None
+            }
+        }
 
     }
 
