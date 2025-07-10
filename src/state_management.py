@@ -39,7 +39,7 @@ def set_defaults():
     config = {
         "checkboxes": {
             **{
-                f"{op}_ints_checkbox": {
+                f"{op}_ints": {
                     "label": widget_labels[f"{op}_ints_checkbox"],
                     "value": True,
                     "on_change": None,
@@ -47,12 +47,12 @@ def set_defaults():
                 }
                 for op in operators
             },
-            "pos_answers_only_checkbox": {
+            "pos_answers_only": {
                 "label": widget_labels["pos_answers_only_checkbox"],
                 "value": True,
-                "key": "pos_answers_only_checkbox"
+                "key": "pos_answers_only_checkbox",
             },
-            "fade_problem_checkbox": {
+            "fade_problem": {
                 "label": widget_labels["fade_problem_checkbox"],
                 "value": False,
                 "key": "fade_problem_checkbox"
@@ -60,7 +60,7 @@ def set_defaults():
         },
         "sliders": {
             **{
-                f"{op}_ints_{side}_slider": {
+                f"{op}_ints_{side}": {
                     "label": widget_labels[f"{op}_ints_slider"][0 if side == "left" else 1],
                     "min_value": 1,
                     "max_value": 200,

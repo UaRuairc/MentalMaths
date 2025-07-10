@@ -75,8 +75,8 @@ class LeftRightSliders():
     def __init__(self, problem_type):
         self.problem_type = problem_type
         self.cols = None
-        self.left_config_key = f"{self.problem_type}_left_slider"
-        self.right_config_key = f"{self.problem_type}_right_slider"
+        self.left_config_key = f"{self.problem_type}_left"
+        self.right_config_key = f"{self.problem_type}_right"
 
         self.left_slider = Slider(self.left_config_key)
         self.right_slider = Slider(self.right_config_key)
@@ -95,14 +95,14 @@ class LeftRightSliders():
 
     @staticmethod
     def range(type_):
-        left_range = st.session_state["config"]["sliders"][f"{type_}_left_slider"]["value"]
-        right_range = st.session_state["config"]["sliders"][f"{type_}_right_slider"]["value"]
+        left_range = st.session_state["config"]["sliders"][f"{type_}_left"]["value"]
+        right_range = st.session_state["config"]["sliders"][f"{type_}_right"]["value"]
         return [left_range, right_range]
 
 class Checkbox:
     def __init__(self, problem_type):
         self.problem_type = problem_type
-        self.config_key = f"{self.problem_type}_checkbox"
+        self.config_key = f"{self.problem_type}"
         self.config =  st.session_state["config"]["checkboxes"][self.config_key].copy()
 
         self.box_key = self.config["key"]

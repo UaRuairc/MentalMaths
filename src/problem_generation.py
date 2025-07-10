@@ -39,7 +39,7 @@ def new_problem():
         range_=LeftRightSliders.range(next_problem_tag),
         problem_type_=OPERATOR_API_ALIASES[next_problem_op_],
         dtype_=next_data_type_,
-        positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only_checkbox"]["value"])
+        positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
     st.session_state["current_problem"].calc()
     st.session_state["is_first_problem"] = False

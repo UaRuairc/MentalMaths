@@ -9,9 +9,14 @@ checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_check
                  "div_ints_checkbox"]
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
 
+
+
 def setup_page_ui():
     st.title("Mental Maths Application")
     st.markdown("Choose problem types and ranges")
+
+
+
 
     display_settings()
 
@@ -39,7 +44,7 @@ def game_page_ui():
 
     answer_column = display_problem(
         problem_details=problem_details,
-        should_fade=st.session_state["config"]["checkboxes"]["fade_problem_checkbox"]["value"],
+        should_fade=st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
     )
 
     with answer_column:
@@ -50,7 +55,7 @@ def game_page_ui():
         new_problem()
         st.rerun()
 
-    if st.session_state["config"]["checkboxes"]["fade_problem_checkbox"]["value"]:
+    if st.session_state["config"]["checkboxes"]["fade_problem"]["value"]:
         if st.button("Show problem again"):
             st.session_state["fade_class_identifier"] += 1
             st.rerun()
@@ -79,6 +84,7 @@ def get_fade_html(unique_class, base_style=default_style):
 def display_problem(problem_details: list, style=default_style, should_fade=True):
     """display the problem for the user, and return the column we'll put the user input box in"""
 
+    # fade_class_identifier is a counter that just makes sure the fade-out resets after each problem
     unique_class = f"fade-problem-{st.session_state["fade_class_identifier"]}"
 
     if should_fade:
@@ -143,8 +149,6 @@ def display_settings():
     display_settings_checkboxes()
     update_active_problem_types()
     display_range_sliders()
-#def other_settings():
-
 
 def stats_screen_ui():
     st.markdown("Nothing to show here")
