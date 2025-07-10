@@ -18,14 +18,20 @@ def setup_page_ui():
         "sliders": st.container(key="sliders"),
         "extra_settings": st.container(key="extra_settings")
     }
-
     display_settings(settings_containers)
 
-    no_problem_types_selected = not st.session_state["active_problem_types"]
+    no_types_selected = not st.session_state["active_problem_types"]
     duration_not_set = st.session_state["duration"] <= 0
-    disable_button_condition = no_problem_types_selected or duration_not_set
+    disable_start_button_condition = no_types_selected or duration_not_set
 
-    if st.button("start_game", disabled=disable_button_condition):
+    help_message = (
+    "Please select at least one problem type and set a duration to begin the game" if no_types_selected and duration_not_set else
+    "Please select at least one problem type to begin the game" if no_types_selected else
+    "Please set a duration to begin the game" if duration_not_set else
+    None
+     )
+
+    if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
         start_game()
 
 def game_page_ui():
