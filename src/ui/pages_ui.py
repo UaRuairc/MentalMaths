@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL.ImageQt import align8to32
+from google.protobuf.internal import containers
 
 from src.state_management import start_game, end_game
 from src.problem_generation import validate_answer, new_problem
@@ -13,12 +13,13 @@ default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 
 
 def setup_page_ui():
     st.title("Mental Maths Application")
-    st.markdown("Choose problem types and ranges")
+    settings_containers = {
+        "base_settings": st.container(key="base_settings"),
+        "sliders": st.container(key="sliders"),
+        "extra_settings": st.container(key="extra_settings")
+    }
 
-
-
-
-    display_settings()
+    display_settings(settings_containers)
 
     no_problem_types_selected = not st.session_state["active_problem_types"]
     duration_not_set = st.session_state["duration"] <= 0
@@ -104,30 +105,35 @@ def display_problem(problem_details: list, style=default_style, should_fade=True
 
     return game_screen_columns[4]
 
-def display_settings_checkboxes():
-    """create checkbox wrappers and render them. The wrapper updates their state, i.e., ticked/not ticked."""
-    pos_answers_only_checkbox = Checkbox("pos_answers_only")
-    pos_answers_only_checkbox.render_checkbox()
-    fade_problem_checkbox = Checkbox("fade_problem")
-    fade_problem_checkbox.render_checkbox()
+def base_settings(settings_containers):
+    with settings_containers["base_settings"]:
+        st.markdown("Choose base settings")
+        add_sub_column, mult_div_column, duration_column = st.columns(3)
+        with add_sub_column:
+            add_ints_checkbox = Checkbox("add_ints")
+            subtract_ints_checkbox = Checkbox("subtract_ints")
+            add_ints_checkbox.render_checkbox()
+            subtract_ints_checkbox.render_checkbox()
+        with mult_div_column:
+            mult_ints_checkbox = Checkbox("mult_ints")
+            div_ints_checkbox = Checkbox("div_ints")
+            mult_ints_checkbox.render_checkbox()
+            div_ints_checkbox.render_checkbox()
+        with duration_column:
+            duration = st.number_input("Duration in seconds", step=1, value=st.session_state["duration"])
+            if st.session_state["duration"] != duration:
+                print("updating internal duration value.")
+                st.session_state["duration"] = duration
+                st.rerun()
 
-    problem_type_columns = st.columns(3)
-    with problem_type_columns[0]:
-        add_ints_checkbox = Checkbox("add_ints")
-        subtract_ints_checkbox = Checkbox("subtract_ints")
-        add_ints_checkbox.render_checkbox()
-        subtract_ints_checkbox.render_checkbox()
-    with problem_type_columns[1]:
-        mult_ints_checkbox = Checkbox("mult_ints")
-        div_ints_checkbox = Checkbox("div_ints")
-        mult_ints_checkbox.render_checkbox()
-        div_ints_checkbox.render_checkbox()
-    with problem_type_columns[2]:
-        duration = st.number_input("Duration in seconds", step=1, value=st.session_state["duration"])
-        if st.session_state["duration"] != duration:
-            print("updating internal duration value.")
-            st.session_state["duration"] = duration
-            st.rerun()
+def extra_settings(settings_containers):
+    """create checkbox wrappers and render them. The wrapper updates their state, i.e. ticked/not ticked."""
+    with settings_containers["extra_settings"]:
+        st.write("extra settings:")
+        pos_answers_only_checkbox = Checkbox("pos_answers_only")
+        pos_answers_only_checkbox.render_checkbox()
+        fade_problem_checkbox = Checkbox("fade_problem")
+        fade_problem_checkbox.render_checkbox()
 
 def update_active_problem_types():
     """example: if the integer addition and integers division checkboxes are ticked, then we update the session state:
@@ -140,15 +146,17 @@ def update_active_problem_types():
         for op_, dtype_, _ in [full_key.split("_")]
     ]
 
-def display_range_sliders():
-    """create slider wrappers and render. The wrapper updates their state, i.e., the range"""
-    for op, type in st.session_state["active_problem_types"]:
-        LeftRightSliders(f"{op}_{type}").render()
+def display_range_sliders(settings_containers):
+    """create slider wrappers and render. The wrapper updates their state, i.e. the range"""
+    with settings_containers["sliders"]:
+        for op, type in st.session_state["active_problem_types"]:
+            LeftRightSliders(f"{op}_{type}").render()
 
-def display_settings():
-    display_settings_checkboxes()
+def display_settings(settings_containers):
+    base_settings(settings_containers)
+    extra_settings(settings_containers)
     update_active_problem_types()
-    display_range_sliders()
+    display_range_sliders(settings_containers)
 
 def stats_screen_ui():
     st.markdown("Nothing to show here")

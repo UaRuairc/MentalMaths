@@ -100,16 +100,16 @@ class LeftRightSliders():
         return [left_range, right_range]
 
 class Checkbox:
-    def __init__(self, problem_type):
+    def __init__(self, problem_type, container=None):
         self.problem_type = problem_type
         self.config_key = f"{self.problem_type}"
         self.config =  st.session_state["config"]["checkboxes"][self.config_key].copy()
+        self.container = container
 
         self.box_key = self.config["key"]
         self.config["on_change"] = self._on_change
 
         # make sure the box starts with the config's value
-
         st.session_state[self.box_key] = self.config["value"]
 
 
@@ -118,7 +118,11 @@ class Checkbox:
 
     def render_checkbox(self):
         self.config.pop("value", None)
-        st.checkbox(**self.config)
+        if self.container:
+            with self.container:
+                st.checkbox(**self.config)
+        else:
+            st.checkbox(**self.config)
 
 def custom_input_box(key_, alignment_="center"):
     result = custom_input(
