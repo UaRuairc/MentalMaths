@@ -25,7 +25,7 @@ def setup_page_ui():
     display_settings(settings_containers)
 
     no_types_selected = not st.session_state["active_problem_types"]
-    duration_not_set = st.session_state["duration"] <= 0
+    duration_not_set = st.session_state["config"]["number_input_boxes"]["duration"]["value"] <= 0
     disable_start_button_condition = no_types_selected or duration_not_set
 
     help_message = (
@@ -110,7 +110,7 @@ def base_settings(settings_containers):
                 "mult_ints": base_settings_cols[1],
                 "div_ints": base_settings_cols[1]
             },
-            "input_box": {
+            "number_input_boxes": {
                 "duration": base_settings_cols[2],
             }
 
@@ -118,24 +118,25 @@ def base_settings(settings_containers):
         for widget_category, widget_column_pairs in base_ui_positioning.items():
 
             if widget_category == "checkboxes":
-                for checkbox, column in widget_column_pairs.items():
+                for checkbox_config, column in widget_column_pairs.items():
                     with column:
-                        Checkbox(checkbox).render_checkbox()
+                        MakeWidget(widget_config_key=checkbox_config, widget_category=widget_category).render()
+                        #Checkbox(checkbox).render_checkbox()
 
-            if widget_category == "input_box":
-                for input_box, column in widget_column_pairs.items():
+            if widget_category == "number_input_boxes":
+                for input_box_config, column in widget_column_pairs.items():
                     with column:
-                        InputBox(input_box).render()
+                        MakeWidget(widget_config_key=input_box_config, widget_category=widget_category).render()
 
 
 def extra_settings(settings_containers):
     """create checkbox wrappers and render them. The wrapper updates their state, i.e. ticked/not ticked."""
     with settings_containers["extra_settings"]:
         st.write("extra settings:")
-        pos_answers_only_checkbox = Checkbox("pos_answers_only")
-        pos_answers_only_checkbox.render_checkbox()
-        fade_problem_checkbox = Checkbox("fade_problem")
-        fade_problem_checkbox.render_checkbox()
+        MakeWidget(widget_config_key="pos_answers_only", widget_category="checkboxes").render()
+        MakeWidget(widget_config_key="fade_problem", widget_category="checkboxes").render()
+
+
 
 def update_active_problem_types():
     """example: if the integer addition and integers division checkboxes are ticked, then we update the session state:

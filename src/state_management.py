@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 from src.problem_generation import new_problem
+from src.ui.widgets import custom_input_box
 from src.utils import debug_fragment_info
 
 def start_game():
@@ -45,19 +46,22 @@ def set_defaults():
                     "label": widget_labels[f"{op}_ints_checkbox"],
                     "value": True,
                     "on_change": None,
-                    "key": f"{op}_ints_checkbox"
+                    "key": f"{op}_ints_checkbox",
+                    "widget_category": "checkboxes"
                 }
                 for op in operators
             },
             "pos_answers_only": {
                 "label": widget_labels["pos_answers_only_checkbox"],
                 "value": True,
-                "key": "pos_answers_only_checkbox"
+                "key": "pos_answers_only_checkbox",
+                "widget_category": "checkboxes"
             },
             "fade_problem": {
                 "label": widget_labels["fade_problem_checkbox"],
                 "value": False,
-                "key": "fade_problem_checkbox"
+                "key": "fade_problem_checkbox",
+                "widget_category": "checkboxes"
             }
         },
         "sliders": {
@@ -68,27 +72,28 @@ def set_defaults():
                     "max_value": 200,
                     "value": (1, 10),
                     "on_change": None,
-                    "key": f"{op}_ints_{side}_slider"
+                    "key": f"{op}_ints_{side}_slider",
+                    "widget_category": "sliders"
                 }
                 for op in operators
                 for side in ["left", "right"]
             },
         },
 
-        "input_boxes": {
+        "number_input_boxes": {
             "duration": {
                 "label": widget_labels["duration_box"],
                 "step": 1,
                 "value": 120,
-                "type": "number_input",
-                "key": "duration_box"
+                "key": "duration_box",
+                "widget_category": "number_input_boxes"
             },
-            "user_game_input": {
+        "custom_input_boxes": {
                 "key": "constant_input_key",
-                "type": "custom_input_box",
                 "alignment_": "center",
                 "value": None,
-                "correctAnswer": None
+                "correctAnswer": None,
+                "widget_category": "custom_input_boxes"
             }
         }
 
@@ -112,8 +117,15 @@ def set_defaults():
         **{f"{op}_ints_{side}_slider": (1, 10) for op in operators for side in ["left", "right"]},
         "pos_answers_only_checkbox": True,
         "config": config,
-        "fade_class_identifier": 0
-    }
+        "fade_class_identifier": 0,
+        "game_mode_selection": None,
+        "callables": {
+            "checkboxes": st.checkbox,
+            "sliders": st.slider,
+            "number_input_boxes": st.number_input,
+            "custom_input_boxes": custom_input_box
+            }
+        }
 
     for parameter, default in default_parameters.items():
         st.session_state.setdefault(parameter, default)

@@ -15,46 +15,45 @@ slider_descriptions = {
 }
 
 
-class Slider():
+class MakeWidget():
     """how widgets seem to work in streamlit:
 
-    Widgets are identified by a key:value pair in session_state, where the value is for example the range on a slider
-    e.g. session_state["my_widgets_key"] = value
+    Widgets are identified by a key:value pair in session_state, where the value is, for example, the range on a slider:
+    session_state["my_widgets_key"] = value it is currently set to
 
-    However: streamlit functions by rerunning the app, and even if you made a widget earlier, if this run does not
-    render the widget, streamlit deletes the info associated with it
+    However:
+
+    1. To update the app state, streamlit uses st.rerun().
+    2. When st.rerun() is called, if streamlits doesnt render your widget again on that run, it makes the
+    widget stateless and you lose your stored info about the widget
 
     See: https://docs.streamlit.io/develop/concepts/multipage-apps/widgets for solutions to this.
 
-    One option is to just write:
+    We opt for a widget wrapper that takes a configuration
 
-    def store_value(key):
-        st.session_state[key] = st.session_state["_"+key]
-    def load_value(key):
-        st.session_state["_"+key] = st.session_state[key]
-
-    For each key. BUT then you are restricted, because the key doesn't store the entire configuration only the value
-
-    We opt for a shadow copy for more freedom down the line.
+    1. This makes it less painful to switch UI frameworks if necessary.
+    2. Once the config is made in `state_management.py` you only ever have to type MakeWidget(),
+    you don't have to go through the whole rigmarole of making sure your widget always has the right
+    value .
 
     """
-    def __init__(self, config_key):
-        self.config_key = config_key
-        self.config = st.session_state["config"]["sliders"][self.config_key].copy()
-        self.slider_key = self.config["key"]
-
-        self.previous_slider_value = self.config["value"]
-        self.config["on_change"] = self._on_change
+    def __init__(self, widget_config_key, widget_category):
+        self.widget_config_key, self.widget_category = widget_config_key, widget_category
+        self.widget_config = st.session_state["config"][self.widget_category][self.widget_config_key].copy()
+        self.widget_state_key = self.widget_config["key"]
+        self.previous_widget_value = self.widget_config["value"]
+        self.widget_config["on_change"] = self._on_change
+        self.callable = st.session_state["callables"][self.widget_category]
 
     def ensure_initialisation(self):
-        st.session_state[self.slider_key] = self.previous_slider_value
+        st.session_state[self.widget_state_key] = self.previous_widget_value
 
     def _on_change(self):
         # here we update the CONFIGURATION we use to build future sliders of this type
-        updated_value = st.session_state[self.slider_key]
-        st.session_state["config"]["sliders"][self.config_key]["value"] = updated_value
+        updated_value = st.session_state[self.widget_state_key]
+        st.session_state["config"][self.widget_category][self.widget_config_key]["value"] = updated_value
 
-    def render_slider(self):
+    def render(self):
 
         """
         Unfortunately, even though we update the session state, in the event one does not pass a value,
@@ -69,7 +68,14 @@ class Slider():
         this results in a flicker, so we have to pass value if we plan to hide/show sliders
         """
         self.ensure_initialisation()
-        st.slider(**self.config)
+        config = self.widget_config.copy()
+        config.pop("value")
+        config.pop("widget_category")
+        self.callable(**config)
+
+    @staticmethod
+    def current_value(widget_category, widget_config_key):
+        return st.session_state["config"][widget_category][widget_config_key]["value"]
 
 class LeftRightSliders():
 
@@ -78,18 +84,17 @@ class LeftRightSliders():
         self.cols = None
         self.left_config_key = f"{self.problem_type}_left"
         self.right_config_key = f"{self.problem_type}_right"
-
-        self.left_slider = Slider(self.left_config_key)
-        self.right_slider = Slider(self.right_config_key)
+        self.left_slider = MakeWidget(self.left_config_key, "sliders")
+        self.right_slider = MakeWidget(self.right_config_key, "sliders")
 
     def render(self):
         self.make_columns()
         with self.cols[0]:
             st.write(slider_descriptions[self.problem_type[:-5]])
         with self.cols[1]:
-            self.left_slider.render_slider()
+            self.left_slider.render()
         with self.cols[2]:
-            self.right_slider.render_slider()
+            self.right_slider.render()
 
     def make_columns(self):
         self.cols = st.columns(3)
@@ -100,33 +105,6 @@ class LeftRightSliders():
         right_range = st.session_state["config"]["sliders"][f"{type_}_right"]["value"]
         return [left_range, right_range]
 
-class Checkbox:
-    def __init__(self, problem_type, container=None):
-        self.problem_type = problem_type
-        self.config_key = f"{self.problem_type}"
-        self.config =  st.session_state["config"]["checkboxes"][self.config_key].copy()
-        self.container = container
-
-        self.box_key = self.config["key"]
-        self.previous_value = self.config["value"]
-        self.config["on_change"] = self._on_change
-
-    def ensure_initialisation(self):
-        st.session_state[self.box_key] = self.previous_value
-
-    def _on_change(self):
-        updated_value =  st.session_state[self.box_key]
-        st.session_state["config"]["checkboxes"][self.config_key]["value"] = updated_value
-
-    def render_checkbox(self):
-        self.ensure_initialisation()
-        self.config.pop("value", None)
-        if self.container:
-            with self.container:
-                st.checkbox(**self.config)
-        else:
-            st.checkbox(**self.config)
-
 def custom_input_box(key_, alignment_="center"):
     result = custom_input(
         key=key_,
@@ -136,32 +114,3 @@ def custom_input_box(key_, alignment_="center"):
     if result is None:
         return ""
     return result
-
-class InputBox:
-    def __init__(self, config_key):
-        self.config_key = config_key
-        self.config = st.session_state["config"]["input_boxes"][self.config_key].copy()
-        self.input_box_key = self.config["key"]
-        self.previous_value = self.config["value"]
-        self.type = self.config["type"]
-        self.config["on_change"] = self._on_change
-
-    def ensure_initialisation(self):
-        st.session_state[self.input_box_key] = self.previous_value
-
-    def _on_change(self):
-        updated_value = st.session_state[self.input_box_key]
-        st.session_state["config"]["input_boxes"][self.config_key]["value"] = updated_value
-
-    def render(self):
-        self.ensure_initialisation()
-        config = self.config.copy()
-        config.pop("value", None)
-        config.pop("type", None)
-
-        if self.type == "number_input":
-            st.number_input(**config)
-        elif self.type == "text_input":
-            st.text_input(**config)
-        else:
-            return
