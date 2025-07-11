@@ -5,10 +5,10 @@ An interactive mental maths game built in Python, currently using UI app framewo
 Goal: To create an application using LLM integration, suggesting ways for the user to optimise their mental maths training
 
 ### App
-  The main UI is in `app.py` and provides two screens:  
-  1. **Setup** (WIP) – choose which operations to include, set your digit-range sliders, and pick a game duration.  
-  2. **Game** (WIP) – solve as many problems as you can before the timer expires.
-  3. **TO DO: Results/Statistics pages**
+  `app.py` currently has three screens: 
+  1. **Setup** (WIP) – choose game settings
+  2. **Game** (WIP) – play the game
+  3. **Stats** (WIP) – empty (soon: show user statistics and offer advice on improving)
 
 
 ## Project Structure
@@ -35,6 +35,8 @@ MentalMaths/
 │   │   ├── index.tsx
 │   ├── tsconfig.json
 │   ├── webpack.config.js
+├── .streamlit/
+│   ├── config.toml
 ├── app.py
 ├── page_navigation.py
 ├── requirements.txt

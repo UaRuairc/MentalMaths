@@ -5,6 +5,8 @@ from src.state_management import start_game, end_game
 from src.problem_generation import validate_answer, new_problem
 from src.ui.widgets import LeftRightSliders, Checkbox, custom_input_box
 from src.ui.widgets import LeftRightSliders, Checkbox, custom_input_box, InputBox
+import warnings
+warnings.filterwarnings("ignore", message=".*was created with a default value.*")
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
                  "div_ints_checkbox"]
