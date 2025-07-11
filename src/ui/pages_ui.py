@@ -3,8 +3,9 @@ from google.protobuf.internal import containers
 
 from src.state_management import start_game, end_game
 from src.problem_generation import validate_answer, new_problem
-from src.ui.widgets import LeftRightSliders, Checkbox, custom_input_box
-from src.ui.widgets import LeftRightSliders, Checkbox, custom_input_box, InputBox
+from src.ui.widgets import LeftRightSliders, custom_input_box, MakeWidget
+from src.utils import get_fade_html, inject_fade_css
+
 import warnings
 warnings.filterwarnings("ignore", message=".*was created with a default value.*")
 
@@ -69,23 +70,6 @@ def game_page_ui():
 
     if st.button("End"):
         end_game()
-
-def inject_fade_css(unique_class):
-    st.markdown(f"""
-            <style>
-            @keyframes fadeAnimation{st.session_state["fade_class_identifier"]} {{
-                from {{ opacity: 1; }}
-                to {{ opacity: 0; }}
-            }}
-            .{unique_class} {{
-                animation: fadeAnimation{st.session_state["fade_class_identifier"]} 1s ease-in-out forwards;
-                animation-delay: 1s;
-            }}
-            </style>
-            """, unsafe_allow_html=True)
-
-def get_fade_html(unique_class, base_style=default_style):
-    return f"<div class='{unique_class}' style='{base_style}'>"
 
 def render_exercise(problem_details: list, style=default_style, should_fade=True):
     """display the problem for the user, and return the column we'll put the user input box in"""
