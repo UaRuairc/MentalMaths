@@ -17,6 +17,8 @@ default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 
 
 def setup_page_ui():
     st.title("Mental Maths Application")
+    help_message_container = st.container(key="help_message")
+
     settings_containers = {
         "base_settings": st.container(key="base_settings"),
         "sliders": st.container(key="sliders"),
@@ -34,6 +36,10 @@ def setup_page_ui():
     "Please set a duration to begin the game" if duration_not_set else
     None
      )
+
+    with help_message_container:
+        if help_message:
+            st.info(help_message)
 
     if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
         start_game()
