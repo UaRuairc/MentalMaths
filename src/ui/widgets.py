@@ -69,7 +69,8 @@ class MakeWidget():
         """
         self.ensure_initialisation()
         config = self.widget_config.copy()
-        config.pop("value")
+        if config["widget_category"] != "sliders":
+            config.pop("value")
         config.pop("widget_category")
         self.callable(**config)
 
