@@ -14,7 +14,6 @@ OPERATOR_API_ALIASES = {
 
 def new_problem():
     """generate a new problem for the user"""
-    print("Generating a new problem...")
     next_problem_op_, next_data_type_ = random.choice(st.session_state["active_problem_types"])
     next_problem_tag = next_problem_op_ + "_" + next_data_type_
 
@@ -28,11 +27,16 @@ def new_problem():
 
     st.session_state["current_problem"].calc()
     st.session_state["fade_class_identifier"] += 1
+    st.session_state["current_problem_id"] = st.session_state["problem_id"]
 
-
-def validate_answer(result):
+def validate_answer(user_response: list | str):
     """check if user got the answer correct"""
-    if result and int(result) == st.session_state["current_problem"].answer:
-        return True
-    else:
+    if user_response == "":
         return False
+
+    user_answer, problem_id = user_response
+
+    correct_answer = st.session_state["current_problem"].answer
+    correct_problem_id = st.session_state["current_problem_id"]
+
+    return (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)

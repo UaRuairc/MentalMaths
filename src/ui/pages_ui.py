@@ -59,13 +59,15 @@ def game_page_ui():
     # [ 5  ]   [    +   ]   [  4  ]   [  =  ]   [   ? ? ?   ]
     # then return the fifth box so we can put the custom input box inside it
 
-    user_input = render_exercise(
+    user_response = render_exercise(
         problem_details=problem_details,
         should_fade=st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
+        problem_id=st.session_state["problem_id"]
         )
 
-    if validate_answer(user_input):
+    if validate_answer(user_response):
         st.session_state["game_score"] += 1
+        st.session_state["problem_id"] += 1
         new_problem()
         st.rerun()
 
@@ -77,7 +79,7 @@ def game_page_ui():
     if st.button("End"):
         end_game()
 
-def render_exercise(problem_details: list, style=default_style, should_fade=True):
+def render_exercise(problem_details: list, style=default_style, should_fade=True, problem_id=0):
     """display the problem for the user, and return the column we'll put the user input box in"""
     unique_class = f"fade-problem-{st.session_state["fade_class_identifier"]}"
 
@@ -99,7 +101,7 @@ def render_exercise(problem_details: list, style=default_style, should_fade=True
             st.markdown(f"{html} {entry}</div>",unsafe_allow_html=True)
 
     with input_box_column:
-        user_input = custom_input_box("constant_input_key")
+        user_input = custom_input_box(key_="constant_input_key", problem_id_=problem_id)
 
     return user_input
 

@@ -104,6 +104,7 @@ def set_defaults():
         "config": config,
         "fade_class_identifier": 0,
         "game_mode_selection": None,
+        "problem_id": 0,
         "callables": {
             "checkboxes": st.checkbox,
             "sliders": st.slider,
@@ -124,7 +125,7 @@ def game_countdown_timer():
     if st.session_state["is_game_running"]:
         time_remaining = st.session_state["game_end_time"] - time.time()
         time_run_out = time_remaining <= 0
-        print(f"Time remaining: {time_remaining}")
+        # print(f"Time remaining: {time_remaining}")
 
         if time_run_out :
             print("Game has ended.")

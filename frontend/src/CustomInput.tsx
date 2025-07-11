@@ -4,16 +4,17 @@ import { Streamlit, withStreamlitConnection } from "streamlit-component-lib"
 interface Args {
   correctAnswer: string
   alignment: string
+  problemId: number
 }
 
 function CustomInput(props: { args: Args }) {
-  const { correctAnswer = "", alignment = "center"} = props.args
+  const { correctAnswer = "", alignment = "center", problemId} = props.args
   const [val, setVal] = useState<string>("")
 
   // Whenever the problem changes, clear any residual input
   useEffect(() => {
     setVal("")
-  }, [correctAnswer])
+  }, [correctAnswer, problemId])
 
   // 1) onChange updates local state
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +32,7 @@ function CustomInput(props: { args: Args }) {
 
     // If it matches exactly, submit and clear
     if (next === correctAnswer) {
-      Streamlit.setComponentValue(next)
+      Streamlit.setComponentValue([next, problemId])
       setVal("")
     }
   }

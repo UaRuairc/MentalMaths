@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 import os
 
 custom_input = components.declare_component(
-    "fast_input",
+    "custom_input",
     path=os.path.join(os.getcwd(), "frontend", "build"),
 )
 
@@ -106,11 +106,12 @@ class LeftRightSliders():
         right_range = st.session_state["config"]["sliders"][f"{type_}_right"]["value"]
         return [left_range, right_range]
 
-def custom_input_box(key_, alignment_="center"):
+def custom_input_box(problem_id_, key_, alignment_="center"):
     result = custom_input(
         key=key_,
         correctAnswer=str(st.session_state["current_problem"].answer), # correctAnswer is used by CustomInput.tsx to determine if the input field needs resetting.
         alignment=alignment_,
+        problemId=problem_id_,
     )
     if result is None:
         return ""
