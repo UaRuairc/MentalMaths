@@ -7,18 +7,15 @@ from src.utils import debug_fragment_info
 def start_game():
     print("Starting the game.")
     new_problem()
-    st.session_state["is_first_problem"] = True
     st.session_state["is_game_running"] = True
     st.session_state["game_score"] = 0
-    st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
+    st.session_state["game_end_time"] = time.time() + st.session_state["config"]["number_input_boxes"]["duration"]["value"]
     st.rerun()
 
 def end_game():
     """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
     print("Ending the game.")
-    st.session_state["is_first_problem"] = False
     st.session_state["is_game_running"] = False
-    st.session_state["active_problem"] = False
     st.rerun()
 
 def set_defaults():
@@ -100,22 +97,10 @@ def set_defaults():
     }
 
     default_parameters = {
-        "page": "setup",
         "active_problem_types": [],
         "game_score": 0,
-        "duration_key": 120,
-        "duration": 120,
-        "is_first_problem": True,
-        "add_ints": True,
-        "subtract_ints": True,
-        "mult_ints": True,
-        "div_ints": True,
         "game_end_time": 0,
         "is_game_running": False,
-        "active_problem": False,
-        **{f"{op}_ints_checkbox": True for op in operators},
-        **{f"{op}_ints_{side}_slider": (1, 10) for op in operators for side in ["left", "right"]},
-        "pos_answers_only_checkbox": True,
         "config": config,
         "fade_class_identifier": 0,
         "game_mode_selection": None,

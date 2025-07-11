@@ -12,21 +12,6 @@ OPERATOR_API_ALIASES = {
     "div": "div"
 }
 
-def generate_first_problem():
-    """
-
-    !! CURRENTLY NOT IN USE !!
-
-    safely make the first problem of the session
-
-    """
-    st.session_state["game_end_time"] = time.time() + st.session_state["duration"]
-    print("Making a new problem...")
-    st.session_state["is_game_running"] = True
-    st.session_state["is_first_problem"] = False
-    new_problem()
-    st.rerun()
-
 def new_problem():
     """generate a new problem for the user"""
     print("Generating a new problem...")
@@ -42,8 +27,6 @@ def new_problem():
         positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
     st.session_state["current_problem"].calc()
-    st.session_state["is_first_problem"] = False
-    st.session_state["active_problem"] = True
     st.session_state["fade_class_identifier"] += 1
 
 
