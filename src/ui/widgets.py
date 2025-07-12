@@ -69,9 +69,15 @@ class MakeWidget():
         """
         self.ensure_initialisation()
         config = self.widget_config.copy()
+
+        config.pop("default", None)
+        if config["widget_category"] == "segmented_control":
+            config["default"] = config["value"]
+
         if config["widget_category"] != "sliders":
-            config.pop("value")
-        config.pop("widget_category")
+            config.pop("value", None)
+        config.pop("widget_category", None)
+
         self.callable(**config)
 
     @staticmethod

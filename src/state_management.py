@@ -22,25 +22,53 @@ def set_defaults():
     """set session state variables defaults"""
     operators = ["add", "subtract", "mult", "div"]
     widget_labels = {
-        "add_ints_checkbox": "addition",
-        "subtract_ints_checkbox": "subtraction",
-        "mult_ints_checkbox": "multiplication",
-        "div_ints_checkbox": "division",
-        "pos_answers_only_checkbox": "positive answers only?",
-        "fade_problem_checkbox": "fade problem after set number of seconds?",
-        "add_ints_slider": ("left digit range", "right digit range"),
-        "subtract_ints_slider": ("left digit range", "right digit range"),
-        "mult_ints_slider": ("left digit range", "right digit range"),
-        "div_ints_slider": ("divisor range", "quotient range"),
-        "duration_box": "Duration in seconds",
-        "user_input_box": None
+        "checkboxes":{
+            "add_ints": "addition",
+            "subtract_ints": "subtraction",
+            "mult_ints": "multiplication",
+            "div_ints": "division",
+            "pos_answers_only": "positive answers only?",
+            "fade_problem": "fade problem after set number of seconds?",
+        },
+        "sliders":{
+            "add_ints": ("left digit range", "right digit range"),
+            "subtract_ints": ("left digit range", "right digit range"),
+            "mult_ints": ("left digit range", "right digit range"),
+            "div_ints": ("divisor range", "quotient range"),
+        },
+        "number_input_boxes":{
+            "duration": "Duration in seconds",
+        },
+        "custom_input_boxes":{
+            "custom_input": None
+        }
+
+        
+        
+        
+        
+        
+    }
+    segmented_control_options = {
+        "problem_types": {
+            0: r"$+$",
+            1: r"$-$",
+            2: r"$\times$",
+            3: r"$\div$"
+        },
+        "duration" : {
+                0: r"30",
+                1: r"60",
+                2: r"120",
+                3: r"Custom"
+            }
     }
 
     config = {
         "checkboxes": {
             **{
                 f"{op}_ints": {
-                    "label": widget_labels[f"{op}_ints_checkbox"],
+                    "label": widget_labels["checkboxes"][f"{op}_ints"],
                     "value": True,
                     "on_change": None,
                     "key": f"{op}_ints_checkbox",
@@ -49,14 +77,16 @@ def set_defaults():
                 for op in operators
             },
             "pos_answers_only": {
-                "label": widget_labels["pos_answers_only_checkbox"],
+                "label": widget_labels["checkboxes"]["pos_answers_only"],
                 "value": True,
+                "on_change": None,
                 "key": "pos_answers_only_checkbox",
                 "widget_category": "checkboxes"
             },
             "fade_problem": {
-                "label": widget_labels["fade_problem_checkbox"],
+                "label": widget_labels["checkboxes"]["fade_problem"],
                 "value": False,
+                "on_change": None,
                 "key": "fade_problem_checkbox",
                 "widget_category": "checkboxes"
             }
@@ -64,10 +94,10 @@ def set_defaults():
         "sliders": {
             **{
                 f"{op}_ints_{side}": {
-                    "label": widget_labels[f"{op}_ints_slider"][0 if side == "left" else 1],
+                    "label": widget_labels["sliders"][f"{op}_ints"][0 if side == "left" else 1],
                     "min_value": 1,
                     "max_value": 200,
-                    "value": (1, 10),
+                    "value": (1, 9),
                     "on_change": None,
                     "key": f"{op}_ints_{side}_slider",
                     "widget_category": "sliders"
@@ -79,7 +109,7 @@ def set_defaults():
 
         "number_input_boxes": {
             "duration": {
-                "label": widget_labels["duration_box"],
+                "label": widget_labels["number_input_boxes"]["duration"],
                 "label_visibility": "hidden",
                 "step": 1,
                 "value": 120,
@@ -95,6 +125,28 @@ def set_defaults():
                 "value": None,
                 "correctAnswer": None,
                 "widget_category": "custom_input_boxes"
+            }
+        },
+        "segmented_control": {
+            "problem_types":{
+                "label": "problem types",
+                "options": segmented_control_options["problem_types"],
+                "format_func": lambda option: segmented_control_options["problem_types"][option],
+                "selection_mode": "multi",
+                "label_visibility": "hidden",
+                "key": "problem_selection",
+                "widget_category": "segmented_control",
+                "value": [0]
+            },
+            "duration": {
+                "label": "duration",
+                "options": segmented_control_options["duration"],
+                "format_func": lambda option: segmented_control_options["duration"][option],
+                "selection_mode": "single",
+                "label_visibility": "hidden",
+                "key": "duration_selection",
+                "widget_category": "segmented_control",
+                "value": 2
             }
         }
     }
@@ -112,8 +164,10 @@ def set_defaults():
             "checkboxes": st.checkbox,
             "sliders": st.slider,
             "number_input_boxes": st.number_input,
-            "custom_input_boxes": custom_input_box
-            }
+            "custom_input_boxes": custom_input_box,
+            "segmented_control": st.segmented_control
+            },
+        "problem_selection": [0]
         }
 
     for parameter, default in default_parameters.items():
