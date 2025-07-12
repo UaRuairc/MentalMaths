@@ -85,7 +85,9 @@ def set_defaults():
                 "key": "duration_box",
                 "widget_category": "number_input_boxes"
             },
+        },
         "custom_input_boxes": {
+            "user_input":{
                 "key": "constant_input_key",
                 "alignment_": "center",
                 "value": None,
@@ -93,7 +95,6 @@ def set_defaults():
                 "widget_category": "custom_input_boxes"
             }
         }
-
     }
 
     default_parameters = {
