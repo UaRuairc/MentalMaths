@@ -80,10 +80,12 @@ def set_defaults():
         "number_input_boxes": {
             "duration": {
                 "label": widget_labels["duration_box"],
+                "label_visibility": "hidden",
                 "step": 1,
                 "value": 120,
                 "key": "duration_box",
-                "widget_category": "number_input_boxes"
+                "widget_category": "number_input_boxes",
+                "icon": ":material/pace:"
             },
         },
         "custom_input_boxes": {
