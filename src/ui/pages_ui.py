@@ -145,20 +145,15 @@ def base_settings_old(settings_containers):
                     with column:
                         MakeWidget(widget_config_key=input_box_config, widget_category=widget_category).render()
 
-
-
 def base_settings(settings_containers):
     with settings_containers["base_settings"]:
-        st.markdown("Choose base settings")
 
-        base_settings_cols = st.columns(3)
+        base_settings_cols = st.columns(3, vertical_alignment="center")
 
         base_ui_positioning = {
-            "checkboxes": {
-                "add_ints": base_settings_cols[0],
-                "subtract_ints": base_settings_cols[0],
-                "mult_ints": base_settings_cols[1],
-                "div_ints": base_settings_cols[1]
+            "segmented_control": {
+                "problem_types": base_settings_cols[0],
+                "duration": base_settings_cols[1],
             },
             "number_input_boxes": {
                 "duration": base_settings_cols[2],
@@ -166,29 +161,22 @@ def base_settings(settings_containers):
 
         }
 
-        cols = st.columns(3)
-        with cols[0]:
-
-            MakeWidget(widget_config_key="problem_types", widget_category="segmented_control").render()
-
-        with cols[1]:
-
-            MakeWidget(widget_config_key="duration", widget_category="segmented_control").render()
-
-
-        if st.session_state["config"]["segmented_control"]["duration"]["value"] == 3:
-            with cols[2]:
-                MakeWidget(widget_config_key="duration", widget_category="number_input_boxes").render()
-
+        build_ui_from_map(positioning_map=base_ui_positioning)
 
 def extra_settings(settings_containers):
     """create checkbox wrappers and render them. The wrapper updates their state, i.e. ticked/not ticked."""
     with settings_containers["extra_settings"]:
         st.write("extra settings:")
-        MakeWidget(widget_config_key="pos_answers_only", widget_category="checkboxes").render()
-        MakeWidget(widget_config_key="fade_problem", widget_category="checkboxes").render()
+        extra_settings_cols = st.columns(1, vertical_alignment="center")
 
+        extra_ui_positioning = {
+            "checkboxes": {
+                "pos_answers_only": extra_settings_cols[0],
+                "fade_problem": extra_settings_cols[0],
+            }
+        }
 
+        build_ui_from_map(positioning_map=extra_ui_positioning)
 
 def update_active_problem_types_old():
     """example: if the integer addition and integers division checkboxes are ticked, then we update the session state:
@@ -227,6 +215,12 @@ def display_settings(settings_containers, version=2):
         extra_settings(settings_containers)
         update_active_problem_types_old()
         display_range_sliders(settings_containers)
+
+def build_ui_from_map(positioning_map):
+    for widget_category, widget_column_pairs in positioning_map.items():
+        for widget_config, column in widget_column_pairs.items():
+            with column:
+                MakeWidget(widget_config_key=widget_config, widget_category=widget_category).render()
 
 def stats_screen_ui():
     st.markdown("Nothing to show here")
