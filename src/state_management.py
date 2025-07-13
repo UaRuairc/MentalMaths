@@ -60,9 +60,18 @@ def set_defaults():
                 0: r"30",
                 1: r"60",
                 2: r"120",
-                3: r"Custom"
+                3: r"..."
             }
     }
+
+    # make a new .py file if we get too many of these
+    def update_duration_box_on_change():
+        choice_ = st.session_state["config"]["segmented_control"]["duration"]["value"]
+        if choice_ is not None and choice_ != 3:
+            st.session_state["config"]["number_input_boxes"]["duration"]["value"] = 30 * (2 ** choice_)
+
+        if choice_ is None:
+            st.session_state["config"]["number_input_boxes"]["duration"]["value"] = None
 
     config = {
         "checkboxes": {
@@ -115,7 +124,8 @@ def set_defaults():
                 "value": 120,
                 "key": "duration_box",
                 "widget_category": "number_input_boxes",
-                "icon": ":material/pace:"
+                "icon": ":material/pace:",
+                "disabled": lambda: st.session_state["config"]["segmented_control"]["duration"]["value"] != 3
             },
         },
         "custom_input_boxes": {
@@ -136,7 +146,7 @@ def set_defaults():
                 "label_visibility": "hidden",
                 "key": "problem_selection",
                 "widget_category": "segmented_control",
-                "value": [0]
+                "value": [0],
             },
             "duration": {
                 "label": "duration",
@@ -146,7 +156,8 @@ def set_defaults():
                 "label_visibility": "hidden",
                 "key": "duration_selection",
                 "widget_category": "segmented_control",
-                "value": 2
+                "value": 2,
+                "extra_callback": lambda: update_duration_box_on_change(),
             }
         }
     }
@@ -182,7 +193,7 @@ def game_countdown_timer():
     if st.session_state["is_game_running"]:
         time_remaining = st.session_state["game_end_time"] - time.time()
         time_run_out = time_remaining <= 0
-        # print(f"Time remaining: {time_remaining}")
+        print(f"Time remaining: {time_remaining}")
 
         if time_run_out :
             print("Game has ended.")

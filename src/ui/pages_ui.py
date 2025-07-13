@@ -26,17 +26,24 @@ problem_type_index_map = {
 
 def setup_page_ui(version=2):
     st.title("Mental Maths Application")
-    help_message_container = st.container(key="help_message")
 
     settings_containers = {
         "base_settings": st.container(key="base_settings"),
         "sliders": st.container(key="sliders"),
-        "extra_settings": st.container(key="extra_settings")
+        "extra_settings": st.container(key="extra_settings"),
+        "start_button": st.container(key="start_button"),
     }
     display_settings(settings_containers, version)
 
+    current_duration_value = st.session_state["config"]["number_input_boxes"]["duration"]["value"]
+    current_duration_option = st.session_state["config"]["segmented_control"]["duration"]["value"]
+
     no_types_selected = not st.session_state["active_problem_types"]
-    duration_not_set = st.session_state["config"]["number_input_boxes"]["duration"]["value"] <= 0
+    duration_not_set =  (
+        current_duration_option is None or
+        current_duration_value is None or
+        current_duration_value <= 0
+    )
     disable_start_button_condition = no_types_selected or duration_not_set
 
     help_message = (
@@ -46,12 +53,14 @@ def setup_page_ui(version=2):
     None
      )
 
-    with help_message_container:
-        if help_message:
-            st.info(help_message)
-
-    if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
-        start_game()
+    with settings_containers["start_button"]:
+        col1, col2 = st.columns([1,4],vertical_alignment="center")
+        with col1:
+            if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
+                start_game()
+        with col2:
+            if help_message:
+                st.info(help_message)
 
 def game_page_ui():
     st.title("Running game")
