@@ -42,12 +42,6 @@ def set_defaults():
         "custom_input_boxes":{
             "custom_input": None
         }
-
-        
-        
-        
-        
-        
     }
     segmented_control_options = {
         "problem_types": {
@@ -57,11 +51,11 @@ def set_defaults():
             3: r"$\div$"
         },
         "duration" : {
-                0: r"30",
-                1: r"60",
-                2: r"120",
-                3: r"..."
-            }
+            0: r"30",
+            1: r"60",
+            2: r"120",
+            3: r"..."
+        }
     }
 
     # make a new .py file if we get too many of these
@@ -73,7 +67,38 @@ def set_defaults():
         if choice_ is None:
             st.session_state["config"]["number_input_boxes"]["duration"]["value"] = None
 
+
+    """
+    
+    to introduce a new widget, give it a name and add it to the config here.
+    
+    Add its name to widget_labels above and give it a label
+    Add (if applicable) any callbacks to the dicts at the start of this method
+    
+    Each widget must have a unique widget_key
+    
+    Then, make/render the widget by using MakeWidget(widget_name, widget_category) and MakeWidget.render (from widgets.py)
+    
+    The widget_key can have any name because MakeWidget grabs key = st.session_state["config"][widget_category][widget_name]
+    (we call it widget_config_key instead of widget_name in MakeWidget, but the configuration key is just the name, as seen below)
+    
+    However, each key must be unique, no two keys should be the same or they will overwrite each others widget state
+    
+    The current key naming scheme is {widget_name}_{widget_category}
+    
+    eg. we have both f"{duration}_{number_input_box}" and f"{duration}_{selection_segmented_control}"
+    
+    Avoiding making helper functions for the config creation as streamlit configs have a lot of optional args
+    Just add it below.
+    
+    """
+
     config = {
+
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        #                                           CHECKBOXES                                               #
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        
         "checkboxes": {
             **{
                 f"{op}_ints": {
@@ -100,6 +125,11 @@ def set_defaults():
                 "widget_category": "checkboxes"
             }
         },
+
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        #                                             SLIDERS                                                #
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        
         "sliders": {
             **{
                 f"{op}_ints_{side}": {
@@ -116,18 +146,27 @@ def set_defaults():
             },
         },
 
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        #                                       NUMBER INPUT BOXES                                           #
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        
         "number_input_boxes": {
             "duration": {
                 "label": widget_labels["number_input_boxes"]["duration"],
                 "label_visibility": "hidden",
                 "step": 1,
                 "value": 120,
-                "key": "duration_box",
+                "key": "duration_number_input_box",
                 "widget_category": "number_input_boxes",
                 "icon": ":material/pace:",
                 "disabled": lambda: st.session_state["config"]["segmented_control"]["duration"]["value"] != 3
             },
         },
+
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        #         CUSTOM INPUT BOXES (not yet integrated into MakeWidget, call using custom_input_box)       #
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        
         "custom_input_boxes": {
             "user_input":{
                 "key": "constant_input_key",
@@ -137,6 +176,11 @@ def set_defaults():
                 "widget_category": "custom_input_boxes"
             }
         },
+
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        #                                        SEGMENTED CONTROL                                           #
+        # ═══════════════════════════════════════════════════════════════════════════════════════════════════#
+        
         "segmented_control": {
             "problem_types":{
                 "label": "problem types",
@@ -144,7 +188,7 @@ def set_defaults():
                 "format_func": lambda option: segmented_control_options["problem_types"][option],
                 "selection_mode": "multi",
                 "label_visibility": "hidden",
-                "key": "problem_selection",
+                "key": "problem_types_segmented_control",
                 "widget_category": "segmented_control",
                 "value": [0],
             },
@@ -154,7 +198,7 @@ def set_defaults():
                 "format_func": lambda option: segmented_control_options["duration"][option],
                 "selection_mode": "single",
                 "label_visibility": "hidden",
-                "key": "duration_selection",
+                "key": "duration_segmented_control",
                 "widget_category": "segmented_control",
                 "value": 2,
                 "extra_callback": lambda: update_duration_box_on_change(),
@@ -178,7 +222,7 @@ def set_defaults():
             "custom_input_boxes": custom_input_box,
             "segmented_control": st.segmented_control
             },
-        "problem_selection": [0]
+        "problem_types_segmented_control": [0]
         }
 
     for parameter, default in default_parameters.items():

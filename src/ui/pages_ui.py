@@ -204,8 +204,10 @@ def update_active_problem_types():
 
     st.session_state["active_problem_types"] = [
         (problem_type_index_map[index_]["operation"], problem_type_index_map[index_]["dtype"])
-        for index_ in st.session_state["problem_selection"]
+        for index_ in sorted(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
     ]
+    print(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
+    print(st.session_state["active_problem_types"])
 
 def display_range_sliders(settings_containers):
     """create slider wrappers and render. The wrapper updates their state, i.e. the range"""
