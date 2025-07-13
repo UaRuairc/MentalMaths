@@ -15,6 +15,11 @@ slider_descriptions = {
 }
 
 
+META_ARGS = {
+    "widget_category",
+    "extra_callback"
+}
+
 class MakeWidget():
     """how widgets seem to work in streamlit:
 
@@ -37,13 +42,17 @@ class MakeWidget():
     value .
 
     """
-    def __init__(self, widget_config_key, widget_category):
+    def __init__(self, widget_config_key, widget_category, **kwargs):
         self.widget_config_key, self.widget_category = widget_config_key, widget_category
         self.widget_config = st.session_state["config"][self.widget_category][self.widget_config_key].copy()
+        self.widget_config.update(kwargs)
         self.widget_state_key = self.widget_config["key"]
         self.previous_widget_value = self.widget_config["value"]
         self.widget_config["on_change"] = self._on_change
         self.callable = st.session_state["callables"][self.widget_category]
+        self.extra_on_change = self.widget_config.get("extra_callback", None)
+
+
 
     def ensure_initialisation(self):
         st.session_state[self.widget_state_key] = self.previous_widget_value
@@ -53,32 +62,46 @@ class MakeWidget():
         updated_value = st.session_state[self.widget_state_key]
         st.session_state["config"][self.widget_category][self.widget_config_key]["value"] = updated_value
 
+        if self.extra_on_change:
+            self.extra_on_change()
+
     def render(self):
-
-        """
-        Unfortunately, even though we update the session state, in the event one does not pass a value,
-        when first building a slider streamlit tells the frontend to build a slider with:
-
-        value=(min,max)
-
-        for a fraction of a section, before setting:
-
-        value=session_state[key]
-
-        this results in a flicker, so we have to pass value if we plan to hide/show sliders
-        """
         self.ensure_initialisation()
-        config = self.widget_config.copy()
+        render_config = self.clean_widget_config()
+        self.callable(**render_config)
 
-        config.pop("default", None)
-        if config["widget_category"] == "segmented_control":
-            config["default"] = config["value"]
+    def clean_widget_config(self):
 
-        if config["widget_category"] != "sliders":
-            config.pop("value", None)
-        config.pop("widget_category", None)
+        """
+         Unfortunately, even though we update the session state, in the event one does not pass a value,
+         when first building a slider streamlit tells the frontend to build a slider with:
 
-        self.callable(**config)
+         value=(min,max)
+
+         for a fraction of a section, before setting:
+
+         value=session_state[key]
+
+         this results in a flicker, so we have to pass value if we plan to hide/show sliders
+         """
+
+        render_config = self.widget_config.copy()
+
+        render_config.pop("default", None)
+        if render_config["widget_category"] == "segmented_control":
+            render_config["default"] = render_config["value"]
+
+        if render_config["widget_category"] != "sliders":
+            render_config.pop("value", None)
+
+        for arg in META_ARGS:
+            render_config.pop(arg, None)
+
+        if "disabled" in render_config and callable(render_config["disabled"]):
+            render_config["disabled"] = render_config["disabled"]()
+
+        return render_config
+
 
     @staticmethod
     def current_value(widget_category, widget_config_key):
