@@ -1,7 +1,6 @@
 import streamlit as st
-from google.protobuf.internal import containers
-
-from src.state_management import start_game, end_game
+from src.problem_engine import CoreProblem
+from src.state_management import start_game, end_game, ConfigManager
 from src.problem_generation import validate_answer, new_problem
 from src.ui.widgets import LeftRightSliders, custom_input_box, MakeWidget
 from src.utils import get_fade_html, inject_fade_css
@@ -23,6 +22,32 @@ problem_type_index_map = {
     3: {"operation": "div",      "dtype": "ints"},
 }
 
+r = {
+    "add_ints": [(3,100), (3,100)],
+    "subtract_ints": [(3,100), (3,100)],
+    "mult_ints": [(3,12), (3,12)],
+    "div_ints": [(3,12), (3,12)],
+}
+
+
+for key, val in r.items():
+
+    if key != "div_ints":
+        # dummy values for now, adding all the time
+        # use calc_theoretical_range here ...
+        answer_range = CoreProblem.calc_theoretical_range(key[:-5], val)
+        r[key].append(answer_range)
+    else:
+        dividend_range = CoreProblem.calc_theoretical_range(key, val)
+        r[key].insert(0, dividend_range)
+
+
+symbols = {
+    "add": r"$+$",
+    "subtract": r"$-$",
+    "mult": r"$\times$",
+    "div": r"$\div$",
+}
 
 def setup_page_ui(version=2):
     st.title("Mental Maths Application")
@@ -261,15 +286,15 @@ def base_settings_old(settings_containers):
         for widget_category, widget_column_pairs in base_ui_positioning.items():
 
             if widget_category == "checkboxes":
-                for checkbox_config, column in widget_column_pairs.items():
+                for checkbox_name, column in widget_column_pairs.items():
                     with column:
-                        MakeWidget(widget_config_key=checkbox_config, widget_category=widget_category).render()
+                        MakeWidget(widget_config_key=checkbox_name, widget_category=widget_category).render()
                         #Checkbox(checkbox).render_checkbox()
 
             if widget_category == "number_input_boxes":
-                for input_box_config, column in widget_column_pairs.items():
+                for input_box_name, column in widget_column_pairs.items():
                     with column:
-                        MakeWidget(widget_config_key=input_box_config, widget_category=widget_category).render()
+                        MakeWidget(widget_config_key=input_box_name, widget_category=widget_category).render()
 
 def base_settings(settings_containers):
     with settings_containers["base_settings"]:
@@ -323,27 +348,26 @@ def update_active_problem_types():
         (problem_type_index_map[index_]["operation"], problem_type_index_map[index_]["dtype"])
         for index_ in sorted(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
     ]
-    print(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
-    print(st.session_state["active_problem_types"])
+    #print(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
+    #print(st.session_state["active_problem_types"])
 
 def display_range_sliders(settings_containers):
     """create slider wrappers and render. The wrapper updates their state, i.e. the range"""
-    with settings_containers["sliders"]:
+    with settings_containers["range_settings"]:
         for op, type in st.session_state["active_problem_types"]:
             LeftRightSliders(f"{op}_{type}").render()
 
 def display_range_boxes(settings_containers):
     with settings_containers["range_settings"]:
         for op, type in st.session_state["active_problem_types"]:
-            display_range_row(f"{op}_{type}", symbol=symbols[op])
-
+            display_range_row(f"{op}_{type}", r_=r,  symbol=symbols[op])
 
 def display_settings(settings_containers, version=2):
     if version == 2:
         base_settings(settings_containers)
         extra_settings(settings_containers)
         update_active_problem_types()
-        display_range_sliders(settings_containers)
+        display_range_boxes(settings_containers)
     else:
         base_settings_old(settings_containers)
         extra_settings(settings_containers)
