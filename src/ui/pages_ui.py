@@ -29,7 +29,7 @@ def setup_page_ui(version=2):
 
     settings_containers = {
         "base_settings": st.container(key="base_settings"),
-        "sliders": st.container(key="sliders"),
+        "range_settings": st.container(key="range_settings"),
         "extra_settings": st.container(key="extra_settings"),
         "start_button": st.container(key="start_button"),
     }
@@ -61,6 +61,123 @@ def setup_page_ui(version=2):
         with col2:
             if help_message:
                 st.info(help_message)
+
+def display_range_row(type_, r_, symbol="+"):
+    digit_range = st.columns([1, 8, 1, 8, 1, 8, 1], vertical_alignment="center")
+
+    st.markdown(
+            """
+            <style>
+            /* Center all markdown content */
+            [data-testid="stMarkdown"]{
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                height:100%;
+                width:100%;
+                margin:0;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+    left_container_disabled = (type_ == "div_ints")
+    right_container_disabled = (type_ != "div_ints")
+
+    def update_disabled_box_on_change():
+        print("used")
+        if type_ == "div_ints":
+            enabled_boxes = (f"second_{type_}_operand_range_left", f"second_{type_}_operand_range_right",
+                             f"answer_{type_}_range_left", f"answer_{type_}_range_right")
+
+            disabled_boxes = (f"first_{type_}_operand_range_left", f"first_{type_}_operand_range_right")
+        else:
+            enabled_boxes = (f"first_{type_}_operand_range_left", f"first_{type_}_operand_range_right",
+                            f"second_{type_}_operand_range_left", f"second_{type_}_operand_range_right")
+
+
+            disabled_boxes = (f"answer_{type_}_range_left", f"answer_{type_}_range_right")
+
+        l1, r1 = (st.session_state["config"]["number_input_boxes"][enabled_boxes[0]]["value"],
+                  st.session_state["config"]["number_input_boxes"][enabled_boxes[1]]["value"])
+        l2, r2 = (st.session_state["config"]["number_input_boxes"][enabled_boxes[2]]["value"],
+                  st.session_state["config"]["number_input_boxes"][enabled_boxes[3]]["value"])
+        print(type_[:-5])
+
+        print(st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
+        min_, max_ = CoreProblem.calc_theoretical_range(
+            type_=type_[:-5],
+            ranges_=([l1, r1], [l2, r2]),
+            positive_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
+
+        print(min_)
+        print(max_)
+
+        st.session_state["config"]["number_input_boxes"][disabled_boxes[0]]["value"] = min_
+        st.session_state["config"]["number_input_boxes"][disabled_boxes[1]]["value"] = max_
+
+
+    ConfigManager.add_widget(f"first_{type_}_operand_range_left", "number_input_boxes",
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][0][0]}, disabled=left_container_disabled,
+                             extra_callback = lambda: update_disabled_box_on_change())
+    ConfigManager.add_widget(f"first_{type_}_operand_range_right", "number_input_boxes",
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][0][1]}, disabled=left_container_disabled,
+                             extra_callback = lambda: update_disabled_box_on_change())
+
+    ConfigManager.add_widget(f"second_{type_}_operand_range_left", "number_input_boxes",
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][1][0]},
+                             extra_callback = lambda: update_disabled_box_on_change())
+    ConfigManager.add_widget(f"second_{type_}_operand_range_right", "number_input_boxes",
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][1][1]},
+                             extra_callback = lambda: update_disabled_box_on_change())
+
+    ConfigManager.add_widget(f"answer_{type_}_range_left", "number_input_boxes",
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][2][0]}, disabled=right_container_disabled,
+                             extra_callback = lambda: update_disabled_box_on_change())
+    ConfigManager.add_widget(f"answer_{type_}_range_right", "number_input_boxes",
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][2][1]}, disabled=right_container_disabled,
+                             extra_callback = lambda: update_disabled_box_on_change())
+
+
+
+    with digit_range[1]:
+        with st.container(border=True):
+            placements3 = st.columns([5, 2, 5], vertical_alignment="center")
+            with placements3[0]:
+                MakeWidget(f"first_{type_}_operand_range_left", "number_input_boxes").render()
+            with placements3[1]:
+                st.markdown(":material/arrow_right_alt:")
+            with placements3[2]:
+                MakeWidget(f"first_{type_}_operand_range_right", "number_input_boxes").render()
+
+
+
+    with digit_range[2]:
+        st.markdown(symbol)
+
+    with digit_range[3]:
+        with st.container(border=True):
+            placements2 = st.columns([5, 2, 5], vertical_alignment="center")
+            with placements2[0]:
+                MakeWidget(f"second_{type_}_operand_range_left", "number_input_boxes").render()
+            with placements2[1]:
+                st.markdown(":material/arrow_right_alt:")
+            with placements2[2]:
+                MakeWidget(f"second_{type_}_operand_range_right", "number_input_boxes").render()
+    with digit_range[4]:
+        st.markdown("=")
+    with digit_range[5]:
+        with st.container(border=True):
+            placements2 = st.columns([5, 2, 5], vertical_alignment="center")
+            with placements2[0]:
+                MakeWidget(f"answer_{type_}_range_left", "number_input_boxes").render()
+            with placements2[1]:
+                st.markdown(":material/arrow_right_alt:")
+            with placements2[2]:
+                MakeWidget(f"answer_{type_}_range_right", "number_input_boxes").render()
+
 
 def game_page_ui():
     st.title("Running game")
@@ -214,6 +331,12 @@ def display_range_sliders(settings_containers):
     with settings_containers["sliders"]:
         for op, type in st.session_state["active_problem_types"]:
             LeftRightSliders(f"{op}_{type}").render()
+
+def display_range_boxes(settings_containers):
+    with settings_containers["range_settings"]:
+        for op, type in st.session_state["active_problem_types"]:
+            display_range_row(f"{op}_{type}", symbol=symbols[op])
+
 
 def display_settings(settings_containers, version=2):
     if version == 2:
