@@ -2,7 +2,7 @@ import random
 from abc import ABC
 from fractions import Fraction
 from dataclasses import dataclass
-from typing import Any
+from typing import Union, Callable, Any
 operator = {
     "add": "+",
     "sub": "-",
@@ -149,6 +149,41 @@ class CoreProblem:
 
     def info(self):
         return to_dict(self)
+
+    @staticmethod
+    def calc_theoretical_range(type_, ranges_, positive_answers_only: Union[bool, Callable[[], bool]]=False):
+
+        # example:
+        # (l1 -> r1) + (l2 ->  r2) = (min_ ->  max_)
+        pos = positive_answers_only() if callable(positive_answers_only) else positive_answers_only
+        print(f"we entered, pos is {pos}")
+        l1, r1 = ranges_[0]
+        l2, r2 = ranges_[1]
+        if type_ == "add":
+
+            min_ = l1 + l2
+            max_ = r1 + r2
+
+        elif type_ == "subtract":
+            min_ = l1 - r2
+            max_ = r1 - l2
+
+            if pos:
+
+                if min_ <= 0 and max_ <= 0:
+                    print("cannot be positive!!")
+                    min_, max_ = 0, 0
+
+                elif min_<=0 and max_>0:
+                    min_ = 0
+
+                else:
+                    pass
+        else:
+            min_ = l1 * l2
+            max_ = r1 * r2
+
+        return min_, max_
 
 # Example
 if __name__ == "__main__":
