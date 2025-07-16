@@ -33,7 +33,7 @@ def guard():
     """A guard function that should never be needed. But logging if it ever is necessary for future debugging"""
     if not st.session_state["active_problem_types"]:
         log_game_state("guard() was triggered")
-        st.session_state["page"] = "setup"
+        st.session_state["is_game_running"] = False
         return
 
 def debug_fragment_info(label=""):
