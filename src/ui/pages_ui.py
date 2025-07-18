@@ -11,44 +11,23 @@ warnings.filterwarnings("ignore", message=".*was created with a default value.*"
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
                  "div_ints_checkbox"]
-problem_types = ["add_ints", "subtract_ints", "mult_ints",
-                 "div_ints"]
-
-default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
-
-problem_type_index_map = {
-    0: {"operation": "add",      "dtype": "ints"},
-    1: {"operation": "subtract", "dtype": "ints"},
-    2: {"operation": "mult",     "dtype": "ints"},
-    3: {"operation": "div",      "dtype": "ints"},
-}
-
-r = {
+default_style = ("text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; "
+                 "display: flex; align-items: center; justify-content: center; min-height: 80px;")
+# currently dynamically make some widget configurations on this page at runtime, so defaults not in config yet, initialise here
+initial_range = {
     "add_ints": [(3,100), (3,100)],
     "subtract_ints": [(3,100), (3,100)],
     "mult_ints": [(3,12), (3,12)],
     "div_ints": [(3,12), (3,12)],
 }
-
-
-for key, val in r.items():
-
+for key, val in initial_range.items():
+    # for now, key is always <operation_ints>, so `[:-5]` gets rid of the ints
+    operation = key[:-5]
+    ans_range = CoreProblem.calc_theoretical_range(key[:-5], val)
     if key != "div_ints":
-        # dummy values for now, adding all the time
-        # use calc_theoretical_range here ...
-        answer_range = CoreProblem.calc_theoretical_range(key[:-5], val)
-        r[key].append(answer_range)
+        initial_range[key].append(ans_range)
     else:
-        dividend_range = CoreProblem.calc_theoretical_range(key, val)
-        r[key].insert(0, dividend_range)
-
-
-symbols = {
-    "add": r"$+$",
-    "subtract": r"$-$",
-    "mult": r"$\times$",
-    "div": r"$\div$",
-}
+        initial_range[key].insert(0, ans_range)
 
 def setup_page_ui(version=2):
     with st.sidebar:
@@ -91,9 +70,9 @@ def setup_page_ui(version=2):
             if help_message:
                 st.info(help_message)
 
-def display_range_row(type_, r_, symbol="+"):
+def display_range_row(type_, initial_range_, symbol="+"):
     digit_range = st.columns([1, 8, 1, 8, 1, 8, 1], vertical_alignment="center")
-
+    r_ = initial_range_
     st.markdown(
             """
             <style>
@@ -149,24 +128,24 @@ def display_range_row(type_, r_, symbol="+"):
 
 
     ConfigManager.add_widget(f"first_{type_}_operand_range_left", "number_input_boxes",
-                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][0][0]}, disabled=left_container_disabled,
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[0][0]}, disabled=left_container_disabled,
                              extra_callback = lambda: update_disabled_box_on_change())
     ConfigManager.add_widget(f"first_{type_}_operand_range_right", "number_input_boxes",
-                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][0][1]}, disabled=left_container_disabled,
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[0][1]}, disabled=left_container_disabled,
                              extra_callback = lambda: update_disabled_box_on_change())
 
     ConfigManager.add_widget(f"second_{type_}_operand_range_left", "number_input_boxes",
-                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][1][0]},
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[1][0]},
                              extra_callback = lambda: update_disabled_box_on_change())
     ConfigManager.add_widget(f"second_{type_}_operand_range_right", "number_input_boxes",
-                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][1][1]},
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[1][1]},
                              extra_callback = lambda: update_disabled_box_on_change())
 
     ConfigManager.add_widget(f"answer_{type_}_range_left", "number_input_boxes",
-                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][2][0]}, disabled=right_container_disabled,
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[2][0]}, disabled=right_container_disabled,
                              extra_callback = lambda: update_disabled_box_on_change())
     ConfigManager.add_widget(f"answer_{type_}_range_right", "number_input_boxes",
-                             **{"step": 1, "label_visibility": "collapsed", "value": r_[type_][2][1]}, disabled=right_container_disabled,
+                             **{"step": 1, "label_visibility": "collapsed", "value": r_[2][1]}, disabled=right_container_disabled,
                              extra_callback = lambda: update_disabled_box_on_change())
 
 
@@ -207,7 +186,6 @@ def display_range_row(type_, r_, symbol="+"):
             with placements2[2]:
                 MakeWidget(f"answer_{type_}_range_right", "number_input_boxes").render()
 
-
 def game_page_ui():
     st.title("Running game")
     st.write(f"Score: {st.session_state["game_score"]}")
@@ -230,8 +208,6 @@ def game_page_ui():
         )
 
     if validate_answer(user_response):
-        st.session_state["game_score"] += 1
-        st.session_state["problem_id"] += 1
         new_problem()
         st.rerun()
 
@@ -345,12 +321,13 @@ def update_active_problem_types_old():
     ]
 
 def update_active_problem_types():
-    """example: if the integer addition and integers division checkboxes are ticked, then we update the session state:
+    """example: if the integer addition and integers division options are ticked, then we update the session state:
     st.session_state["active_problem_types"] = (("add", "ints""), ("div", "ints"))"""
-
+    index_map = st.session_state["problem_type_index_map"]
+    selections = sorted(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
     st.session_state["active_problem_types"] = [
-        (problem_type_index_map[index_]["operation"], problem_type_index_map[index_]["dtype"])
-        for index_ in sorted(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
+        (index_map[index_]["operation"], index_map[index_]["dtype"])
+        for index_ in selections
     ]
     #print(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
     #print(st.session_state["active_problem_types"])
@@ -364,7 +341,8 @@ def display_range_sliders(settings_containers):
 def display_range_boxes(settings_containers):
     with settings_containers["range_settings"]:
         for op, type in st.session_state["active_problem_types"]:
-            display_range_row(f"{op}_{type}", r_=r,  symbol=symbols[op])
+            initial_range_ = initial_range[f"{op}_{type}"]
+            display_range_row(f"{op}_{type}", initial_range_=initial_range_,  symbol=st.session_state["symbols"][op])
 
 def display_settings(settings_containers, version=2):
     if version == 2:

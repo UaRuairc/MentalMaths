@@ -38,13 +38,27 @@ def set_defaults():
         "game_mode_selection": None,
         "problem_id": 0,
         "problem_types_segmented_control": [0],
+        "symbols": {
+            "add": r"$+$",
+            "subtract": r"$-$",
+            "mult": r"$\times$",
+            "div": r"$\div$",
+        },
         "callables": {
             "checkboxes": st.checkbox,
             "sliders": st.slider,
             "number_input_boxes": st.number_input,
             "custom_input_boxes": custom_input_box,
-            "segmented_control": st.segmented_control
-            }
+            "segmented_control": st.segmented_control,
+            "text_input_boxes": st.text_input,
+            "buttons": st.button,
+            },
+        "problem_type_index_map": {
+            0: {"operation": "add", "dtype": "ints"},
+            1: {"operation": "subtract", "dtype": "ints"},
+            2: {"operation": "mult", "dtype": "ints"},
+            3: {"operation": "div", "dtype": "ints"},
+            },
         }
 
     for parameter, default in default_parameters.items():
@@ -131,7 +145,7 @@ class ConfigManager:
     @staticmethod
     def add_widget(name: str, widget_category: str, **overrides):
         if name in st.session_state["config"][widget_category]:
-            print(f"A {widget_category} widget with this name already exists. Choose a different name.")
+            # print(f"A {widget_category} widget with this name already exists. Choose a different name.")
             return
 
         config = ConfigManager.generate_config(name, widget_category, **overrides)
@@ -165,7 +179,7 @@ def update_duration_box_on_change():
     if choice_ is None:
         st.session_state["config"]["number_input_boxes"]["duration"]["value"] = None
 # add any overrides here for the widgets that are made on startup
-def set_default_config(suppress=False):
+def set_default_config(suppress=True):
     if "suppress" not in st.session_state:
         st.session_state["suppress"] = suppress
 
@@ -290,5 +304,5 @@ def set_default_config(suppress=False):
                 widget_category=widget_category,
                 **overrides
             )
-
-    print("Initialisation complete. To suppresses these startup messages, call set_default_config(suppress=True) in `state_management.py` instead.")
+    if not st.session_state["suppress"]:
+        print("Initialisation complete. To suppresses these startup messages, call set_default_config(suppress=True) in `state_management.py` instead.")
