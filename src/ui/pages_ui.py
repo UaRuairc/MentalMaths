@@ -4,6 +4,7 @@ from src.state_management import start_game, end_game, ConfigManager
 from src.problem_generation import validate_answer, new_problem
 from src.ui.widgets import LeftRightSliders, custom_input_box, MakeWidget
 from src.utils import get_fade_html, inject_fade_css
+from src.database.db_management import SupabaseLogin
 
 import warnings
 warnings.filterwarnings("ignore", message=".*was created with a default value.*")
@@ -50,6 +51,9 @@ symbols = {
 }
 
 def setup_page_ui(version=2):
+    with st.sidebar:
+        SupabaseLogin().render()
+
     st.title("Mental Maths Application")
 
     settings_containers = {
