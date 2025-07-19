@@ -20,14 +20,17 @@ def new_problem():
     # WARNING: Currently the CoreProblem class can be pickled. If it ever can't be,
     # then just store the required data in a map and put that in the session state. For now, this is convenient though
     st.session_state["current_problem"] = CoreProblem(
-        range_=LeftRightSliders.range(next_problem_tag),
+        range_=get_range(next_problem_tag),
         problem_type_=OPERATOR_API_ALIASES[next_problem_op_],
         dtype_=next_data_type_,
         positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
     st.session_state["current_problem"].calc()
     st.session_state["fade_class_identifier"] += 1
+    st.session_state["game_score"] += 1
+    st.session_state["problem_id"] += 1
     st.session_state["current_problem_id"] = st.session_state["problem_id"]
+
 
 def validate_answer(user_response: list | str):
     """check if user got the answer correct"""
@@ -40,3 +43,22 @@ def validate_answer(user_response: list | str):
     correct_problem_id = st.session_state["current_problem_id"]
 
     return (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)
+
+def get_range(next_problem_tag):
+    boxes_config = st.session_state["config"]["number_input_boxes"]
+    if next_problem_tag != "div_ints":
+        #(l1, r1) + (l2, r2) = ?
+        l1 = boxes_config[f"first_{next_problem_tag}_operand_range_left"]["value"]
+        r1 = boxes_config[f"first_{next_problem_tag}_operand_range_right"]["value"]
+        l2 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
+        r2 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
+    else:
+        # (l1, r1) + (l2, r2) = ...
+        l1 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
+        r1 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
+        l2 = boxes_config[f"answer_{next_problem_tag}_range_left"]["value"]
+        r2 = boxes_config[f"answer_{next_problem_tag}_range_right"]["value"]
+    range1 = (l1, r1)
+    range2 = (l2, r2)
+
+    return range1, range2
