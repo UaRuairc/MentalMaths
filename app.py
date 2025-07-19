@@ -1,7 +1,7 @@
 import streamlit as st
 from src.state_management import set_defaults
 from page_navigation import initialise_and_begin_navigation
-from src.database.db_management import init_connection
+from src.database.connection import init_connection
 
 #track_reruns("app.py start")
 

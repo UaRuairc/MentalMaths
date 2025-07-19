@@ -4,7 +4,7 @@ from src.state_management import start_game, end_game, ConfigManager
 from src.problem_generation import validate_answer, new_problem
 from src.ui.widgets import LeftRightSliders, custom_input_box, MakeWidget
 from src.utils import get_fade_html, inject_fade_css
-from src.database.db_management import SupabaseLogin
+from src.ui.auth_ui import auth_ui
 
 import warnings
 warnings.filterwarnings("ignore", message=".*was created with a default value.*")
@@ -31,7 +31,7 @@ for key, val in initial_range.items():
 
 def setup_page_ui(version=2):
     with st.sidebar:
-        SupabaseLogin().render()
+        auth_ui()
 
     st.title("Mental Maths Application")
 
@@ -112,16 +112,12 @@ def display_range_row(type_, initial_range_, symbol="+"):
                   st.session_state["config"]["number_input_boxes"][enabled_boxes[1]]["value"])
         l2, r2 = (st.session_state["config"]["number_input_boxes"][enabled_boxes[2]]["value"],
                   st.session_state["config"]["number_input_boxes"][enabled_boxes[3]]["value"])
-        print(type_[:-5])
 
         print(st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
         min_, max_ = CoreProblem.calc_theoretical_range(
             type_=type_[:-5],
             ranges_=([l1, r1], [l2, r2]),
             positive_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
-
-        print(min_)
-        print(max_)
 
         st.session_state["config"]["number_input_boxes"][disabled_boxes[0]]["value"] = min_
         st.session_state["config"]["number_input_boxes"][disabled_boxes[1]]["value"] = max_
@@ -159,8 +155,6 @@ def display_range_row(type_, initial_range_, symbol="+"):
                 st.markdown(":material/arrow_right_alt:")
             with placements3[2]:
                 MakeWidget(f"first_{type_}_operand_range_right", "number_input_boxes").render()
-
-
 
     with digit_range[2]:
         st.markdown(symbol)
