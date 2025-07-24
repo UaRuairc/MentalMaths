@@ -4,15 +4,21 @@ from supabase import create_client
 
 @st.cache_resource
 def init_connection():
+    print("init connection")
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
-    options_ = ClientOptions(flow_type="pkce")
+    options_ = ClientOptions(
+        flow_type="pkce",
+        auto_refresh_token= True,
+        persist_session=True
+    )
     # Tell the client we want the PKCE flow
     return create_client(
         url,
         key,
         options=options_
     )
+
 
 def get_supabase():
     try:
