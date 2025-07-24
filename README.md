@@ -28,7 +28,9 @@ MentalMaths/
 │   ├── problem_generation.py
 │   ├── state_management.py
 │   ├── database/
-│   │   ├── db_management.py
+│   │   ├── connection.py
+│   │   └── auth/
+│   │       └── service.py
 │   ├── ui/
 │   │   ├── pages_ui.py
 │   │   ├── widgets.py
