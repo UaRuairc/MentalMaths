@@ -12,6 +12,7 @@ default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(message)s",
+    datefmt="%H:%M:%S",
     filename="debug.log",   # name of your log file
     filemode="a"            # append mode
 )
@@ -164,3 +165,51 @@ def inject_fade_css(unique_class):
 
 def get_fade_html(unique_class, base_style=default_style):
     return f"<div class='{unique_class}' style='{base_style}'>"
+
+
+# Module‑level globals (not in session_state)
+_debug_counter = 0
+_last_rerun   = None
+
+def file_log(msg: str):
+    """Append a timestamped message to your debug.log without touching session_state."""
+    logging.info(f"{msg}")
+
+def debug_fragment_to_file(label=""):
+    """Write detailed fragment/debug info to debug.log (no session_state mutation)."""
+    global _debug_counter
+    _debug_counter += 1
+    now = time.time()
+    ctx = get_script_run_ctx()
+    lines = [
+        "\n" + "="*40,
+        f"DEBUG #{_debug_counter}: {label}",
+        "-"*40,
+        f"timestamp        : {now:.4f}",
+        f"thread           : {threading.current_thread().name}",
+    ]
+    if ctx:
+        lines.append(f"session_id (last8): {ctx.session_id[-8:]}")
+        lines.append(f"fragment_id       : {getattr(ctx, 'fragment_id', 'N/A')}")
+    caller = inspect.currentframe().f_back
+    lines.append(f"caller            : {caller.f_code.co_name}@{caller.f_lineno}")
+    lines.append("="*40 + "\n")
+    logging.info("\n".join(lines))
+
+def track_rerun_to_file(location=""):
+    """Log each script rerun to debug.log with timing, no session_state."""
+    global _last_rerun
+    now = time.time()
+    lines = [
+        "\n" + "*"*40,
+        f"RERUN at {location}",
+        f"time       : {time.strftime('%H:%M:%S', time.localtime(now))}"
+    ]
+    if _last_rerun is not None:
+        delta = now - _last_rerun
+        lines.append(f"since last : {delta:.3f}s")
+        if delta < 0.1:
+            lines.append("**WARNING: rapid rerun**")
+    lines.append("*"*40 + "\n")
+    logging.info("\n".join(lines))
+    _last_rerun = now
