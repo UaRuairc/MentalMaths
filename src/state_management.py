@@ -1,11 +1,7 @@
 import streamlit as st
 import time
 import inspect
-from typing import Callable
-
-from altair import condition
-from attr.validators import is_callable
-
+from src.database.connection import init_connection
 from src.problem_generation import new_problem
 from src.ui.widgets import custom_input_box, MakeWidget
 from src.utils import debug_fragment_info
@@ -30,6 +26,7 @@ def set_defaults():
     """set session state variables defaults"""
 
     default_parameters = {
+        "supabase_client": init_connection(),
         "active_problem_types": [],
         "game_score": 0,
         "game_end_time": 0,
