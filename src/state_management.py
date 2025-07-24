@@ -26,7 +26,13 @@ def set_defaults():
     """set session state variables defaults"""
 
     default_parameters = {
+        "user": None,
         "supabase_client": init_connection(),
+        "expired_tokens": None,
+        "supabase_tokens": None,
+        "did_try_restore": False,
+        "cookies_worked": False,
+        "tokens_to_save": None,
         "active_problem_types": [],
         "game_score": 0,
         "game_end_time": 0,
