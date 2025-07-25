@@ -5,6 +5,7 @@ from src.database.connection import init_connection
 from src.problem_generation import new_problem
 from src.ui.widgets import custom_input_box, MakeWidget
 from src.utils import debug_fragment_info
+from src.utils import file_log
 
 from collections import defaultdict
 

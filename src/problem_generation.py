@@ -2,10 +2,10 @@ import streamlit as st
 import time
 import random
 from src.ui.widgets import LeftRightSliders
-from src.problem_engine import CoreProblem
+from src.problem_engine import Question
 
-operators = ["add", "subtract", "mult", "div"]
-OPERATOR_API_ALIASES = {
+ops = ["add", "subtract", "mult", "div"]
+op_API_ALIASES = {
     "add": "add",
     "subtract": "sub",
     "mult": "mult",
@@ -19,17 +19,19 @@ def new_problem():
 
     # WARNING: Currently the CoreProblem class can be pickled. If it ever can't be,
     # then just store the required data in a map and put that in the session state. For now, this is convenient though
-    st.session_state["current_problem"] = CoreProblem(
+    st.session_state["current_problem"] = Question(
         range_=get_range(next_problem_tag),
-        problem_type_=OPERATOR_API_ALIASES[next_problem_op_],
+        op_=op_API_ALIASES[next_problem_op_],
         dtype_=next_data_type_,
-        positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
+        positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"]
+    )
 
     st.session_state["current_problem"].calc()
     st.session_state["fade_class_identifier"] += 1
     st.session_state["game_score"] += 1
     st.session_state["problem_id"] += 1
     st.session_state["current_problem_id"] = st.session_state["problem_id"]
+    st.session_state["current_problem_type"] = st.session_state["current_problem"].op
 
 
 def validate_answer(user_response: list | str):

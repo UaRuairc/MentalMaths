@@ -1,5 +1,5 @@
 import streamlit as st
-from src.problem_engine import CoreProblem
+from src.problem_engine import Question
 from src.state_management import start_game, end_game, ConfigManager
 from src.problem_generation import validate_answer, new_problem
 from src.ui.widgets import LeftRightSliders, custom_input_box, MakeWidget
@@ -23,7 +23,7 @@ initial_range = {
 for key, val in initial_range.items():
     # for now, key is always <operation_ints>, so `[:-5]` gets rid of the ints
     operation = key[:-5]
-    ans_range = CoreProblem.calc_theoretical_range(key[:-5], val)
+    ans_range = Question.calc_theoretical_range(key[:-5], val)
     if key != "div_ints":
         initial_range[key].append(ans_range)
     else:
@@ -95,7 +95,6 @@ def display_range_row(type_, initial_range_, symbol="+"):
     right_container_disabled = (type_ != "div_ints")
 
     def update_disabled_box_on_change():
-        print("used")
         if type_ == "div_ints":
             enabled_boxes = (f"second_{type_}_operand_range_left", f"second_{type_}_operand_range_right",
                              f"answer_{type_}_range_left", f"answer_{type_}_range_right")
@@ -114,7 +113,7 @@ def display_range_row(type_, initial_range_, symbol="+"):
                   st.session_state["config"]["number_input_boxes"][enabled_boxes[3]]["value"])
 
         print(st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
-        min_, max_ = CoreProblem.calc_theoretical_range(
+        min_, max_ = Question.calc_theoretical_range(
             type_=type_[:-5],
             ranges_=([l1, r1], [l2, r2]),
             positive_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
@@ -185,7 +184,7 @@ def game_page_ui():
     st.write(f"Score: {st.session_state["game_score"]}")
     problem_details = [
         st.session_state['current_problem'].Problem.left,
-        st.session_state['current_problem'].Problem.operator,
+        st.session_state['current_problem'].Problem.op,
         st.session_state['current_problem'].Problem.right
     ]
 

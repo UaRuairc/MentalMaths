@@ -3,7 +3,8 @@ from abc import ABC
 from fractions import Fraction
 from dataclasses import dataclass
 from typing import Union, Callable, Any
-operator = {
+import time
+op_string = {
     "add": "+",
     "sub": "-",
     "mult": chr(215),
@@ -25,12 +26,12 @@ class Generator:
     """ generate random numbers based on the range of values the user chooses
         ** removed generation of non-integers for now, may add back later
     """
-    def __init__(self, range_ = None, data_type_ = None):
+    def __init__(self, range_ = None, dtype_ = None):
         self.range = range_
-        self.data_type = data_type_
+        self.dtype = dtype_
 
     def generate(self):
-        if self.data_type == "ints":
+        if self.dtype == "ints":
             return [random.randint(lower, upper) for lower, upper in self.range]
         else:
             return [Fraction(random.randint(lower * d, upper * d), d)
@@ -49,7 +50,7 @@ class Problem(ABC):
     invert_operation: bool = False
     positive_answers_only: bool = False
     answer: Any = None
-    operator: Any = None
+    op: Any = None
 
     def operate(self) -> Any:
         pass
@@ -86,13 +87,12 @@ class AddProblem(Problem):
     """
 
     def operate(self):
-        self.operator = operator[self.type]
+        self.op = op_string[self.type]
         self.modify_problem()
         return self.answer
 
     def modify_problem(self):
         if self.type == "add":
-            self.operator = operator["add"]
             self.answer = self.left + self.right
             return
 
@@ -106,7 +106,7 @@ class AddProblem(Problem):
 @dataclass
 class MultProblem(Problem):
     def operate(self):
-        self.operator = operator[self.type]
+        self.op = op_string[self.type]
         self.modify_problem()
         return self.answer
 
@@ -130,12 +130,23 @@ class MultProblem(Problem):
 def make_problem(type_, left_, right_, positive_answers_only_=False):
     return PROBLEM_DISPATCH[type_](left=left_, right=right_, type=type_, positive_answers_only=positive_answers_only_)
 
-class CoreProblem:
-    def __init__(self, range_ = None, problem_type_ = None, dtype_ = None, positive_answers_only_ = False):
+class Question:
+
+    """
+    In the future we may have different game modes, e.g., multiple choice
+
+                    5 + 5 = ?
+
+    [ans1]      [ans2]      [ans3]      [ans3]
+
+    In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
+    """
+    def __init__(self, range_ = None, op_ = None, dtype_ = None, positive_answers_only_ = False):
+        self.problem_start_time = time.time()
         self.range = range_
-        self.problem_type = problem_type_
-        self.data_type = dtype_
-        self.generator = Generator(range_=self.range, data_type_=self.data_type)
+        self.op = op_
+        self.dtype = dtype_
+        self.generator = Generator(range_=self.range, dtype_=self.dtype)
         self.answer = None
         self.Problem = None
         self.positive_answers_only = positive_answers_only_
@@ -144,7 +155,7 @@ class CoreProblem:
         """Generate a problem instance and compute its answer."""
 
         left, right = self.generator.generate()
-        self.Problem = make_problem(self.problem_type, left, right, self.positive_answers_only)
+        self.Problem = make_problem(self.op, left, right, self.positive_answers_only)
         self.answer = self.Problem.operate()
 
     def info(self):
@@ -156,7 +167,6 @@ class CoreProblem:
         # example:
         # (l1 -> r1) + (l2 ->  r2) = (min_ ->  max_)
         pos = positive_answers_only() if callable(positive_answers_only) else positive_answers_only
-        print(f"we entered, pos is {pos}")
         l1, r1 = ranges_[0]
         l2, r2 = ranges_[1]
         if type_ == "add":
@@ -188,7 +198,7 @@ class CoreProblem:
 # Example
 if __name__ == "__main__":
     ranges = [[1,99], [1,99]]
-    myProblem = CoreProblem(range_=ranges, problem_type_="mult", dtype_="ints")
+    myProblem = Question(range_=ranges, op_="mult", dtype_="ints")
     myProblem.calc()
     print(myProblem.info())
 
