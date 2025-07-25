@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_cookies_controller import CookieController, RemoveEmptyElementContainer
 from src.database.auth.service import SupabaseLogin
-from src.state_management import ConfigManager
+from src.config.config_management import ConfigManager
 from src.ui.widgets import MakeWidget
 from src.utils import file_log
 ENABLE_GOOGLE_LOGIN = True

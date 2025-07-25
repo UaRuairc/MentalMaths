@@ -1,8 +1,7 @@
 import streamlit as st
-import time
 import random
-from src.ui.widgets import LeftRightSliders
-from src.problem_engine import Question
+from src.problem_management.problem_engine import Question
+from src.utils import get_range
 
 ops = ["add", "subtract", "mult", "div"]
 op_API_ALIASES = {
@@ -46,21 +45,4 @@ def validate_answer(user_response: list | str):
 
     return (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)
 
-def get_range(next_problem_tag):
-    boxes_config = st.session_state["config"]["number_input_boxes"]
-    if next_problem_tag != "div_ints":
-        #(l1, r1) + (l2, r2) = ?
-        l1 = boxes_config[f"first_{next_problem_tag}_operand_range_left"]["value"]
-        r1 = boxes_config[f"first_{next_problem_tag}_operand_range_right"]["value"]
-        l2 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
-        r2 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
-    else:
-        # (l1, r1) + (l2, r2) = ...
-        l1 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
-        r1 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
-        l2 = boxes_config[f"answer_{next_problem_tag}_range_left"]["value"]
-        r2 = boxes_config[f"answer_{next_problem_tag}_range_right"]["value"]
-    range1 = (l1, r1)
-    range2 = (l2, r2)
 
-    return range1, range2

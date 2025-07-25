@@ -19,37 +19,63 @@ Goal: To create an application using LLM integration, suggesting ways for the us
 ## Project Structure
 ```
 MentalMaths/
+├── app.py
+├── page_navigation.py
+├── requirements.txt
+├── README.md
+│ 
 ├── pages/
 │   ├── 1_setup_screen.py
 │   ├── 2_stats_screen.py
-│   ├── game_screen.py
+│   └── game_screen.py
+│ 
 ├── src/
-│   ├── problem_engine.py
-│   ├── problem_generation.py
-│   ├── state_management.py
+│   ├── utils.py
+│   │  
+│   ├── config/
+│   │   ├── config_init.py
+│   │   └── config_management.py
+│   │
 │   ├── database/
 │   │   ├── connection.py
 │   │   └── auth/
 │   │       └── service.py
-│   ├── ui/
-│   │   ├── pages_ui.py
-│   │   ├── widgets.py
-│   ├── utils.py
-├── frontend/                    # Build custom widget (see Installation)
-│   ├── package.json
-│   ├── public/
-│   │   ├── index.html
-│   ├── src/
-│   │   ├── CustomInput.tsx
-│   │   ├── index.tsx
-│   ├── tsconfig.json
-│   ├── webpack.config.js
+│   │ 
+│   ├── problem_management/
+│   │   ├── problem_engine.py
+│   │   └── problem_generation.py
+│   │
+│   ├── state_management/
+│   │   └── game_state.py
+│   │ 
+│   └── ui/
+│       ├── auth_ui.py
+│       ├── pages_ui.py
+│       └── widgets.py
+│
 ├── .streamlit/
 │   ├── config.toml     
-│   ├── secrets.example.toml     # Put supabase secrets here
-├── app.py                       # Main app
-├── page_navigation.py
-├── requirements.txt             # See install requirements
+│   └── secrets.example.toml            # Rename to secrets.toml and put Supabase secrets here 
+│
+├── frontend/                           # Build custom widget with node (see Installation)
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── webpack.config.js
+│   │
+│   ├── build/
+│   │   ├── CustomInput.d.ts
+│   │   ├── index.d.ts
+│   │   ├── index.html
+│   │   ├── index.js
+│   │   └── index.js.LICENSE.txt
+│   │ 
+│   ├── public/
+│   │   └── index.html
+│   │
+│   └── src/
+│       ├── CustomInput.tsx
+│       ├── custom_range_input.tsx
+│       └── index.tsx
 ```
 
 -----------------------

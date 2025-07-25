@@ -1,10 +1,6 @@
 import streamlit as st
-import logging
-import json
-import threading
+import logging, json, threading, inspect, time
 from streamlit.runtime.scriptrunner import get_script_run_ctx
-import inspect
-import time
 
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
 
@@ -166,7 +162,6 @@ def inject_fade_css(unique_class):
 def get_fade_html(unique_class, base_style=default_style):
     return f"<div class='{unique_class}' style='{base_style}'>"
 
-
 # Module‑level globals (not in session_state)
 _debug_counter = 0
 _last_rerun   = None
@@ -213,3 +208,22 @@ def track_rerun_to_file(location=""):
     lines.append("*"*40 + "\n")
     logging.info("\n".join(lines))
     _last_rerun = now
+
+def get_range(next_problem_tag):
+    boxes_config = st.session_state["config"]["number_input_boxes"]
+    if next_problem_tag != "div_ints":
+        #(l1, r1) + (l2, r2) = ?
+        l1 = boxes_config[f"first_{next_problem_tag}_operand_range_left"]["value"]
+        r1 = boxes_config[f"first_{next_problem_tag}_operand_range_right"]["value"]
+        l2 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
+        r2 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
+    else:
+        # (l1, r1) + (l2, r2) = ...
+        l1 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
+        r1 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
+        l2 = boxes_config[f"answer_{next_problem_tag}_range_left"]["value"]
+        r2 = boxes_config[f"answer_{next_problem_tag}_range_right"]["value"]
+    range1 = (l1, r1)
+    range2 = (l2, r2)
+
+    return range1, range2

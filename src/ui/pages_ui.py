@@ -1,7 +1,8 @@
 import streamlit as st
-from src.problem_engine import Question
-from src.state_management import start_game, end_game, ConfigManager
-from src.problem_generation import validate_answer, new_problem
+from src.problem_management.problem_engine import Question
+from src.problem_management.problem_generation import validate_answer, new_problem
+from src.config.config_management import ConfigManager
+from src.state_management.game_state import start_game, end_game
 from src.ui.widgets import LeftRightSliders, custom_input_box, MakeWidget
 from src.utils import get_fade_html, inject_fade_css
 from src.ui.auth_ui import auth_ui
