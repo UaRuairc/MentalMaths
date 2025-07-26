@@ -228,19 +228,17 @@ def get_range(next_problem_tag):
 
     return range1, range2
 
-def get_ranges(widget_type_used):
+def get_ranges():
     """
-    We would like to use one source of truth at all times: st.session_state["config"].
-
-    But, we may use different widgets at different times to collect info
+    May use different widgets at different times to collect info
     for example: we might use sliders in the future, or stick with input boxes.
     This helper is where we make sure we collect the data from the right place
+    atm just collects from v0.2 UI
     """
 
-    config = st.session_state["config"][widget_type_used]
     ranges = {}
 
-    for op, dtype in config["active_problem_types"]:
+    for op, dtype in st.session_state["active_problem_types"]:
         r = get_range(f"{op}_{dtype}")
 
         if f"{op}_{dtype}" != "div_ints":
