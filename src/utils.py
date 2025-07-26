@@ -1,6 +1,8 @@
 import streamlit as st
-import logging, json, threading, inspect, time
+import logging, json, threading, inspect, time, gzip, hashlib
 from streamlit.runtime.scriptrunner import get_script_run_ctx
+from collections import defaultdict
+
 
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
 
@@ -252,3 +254,40 @@ def get_ranges():
                 "quotient_range": r[1],
             }
     return ranges
+
+
+def to_plain(o):
+    if isinstance(o, defaultdict):
+        o = dict(o)
+    if isinstance(o, dict):
+        return {k: to_plain(v) for k, v in o.items()}
+    if isinstance(o, list):
+        return [to_plain(v) for v in o]
+    return o
+
+def config_stats(cfg):
+    plain = to_plain(cfg)
+    def extract_values(d):
+        out = {}
+        for g, group in (d or {}).items():
+            if isinstance(group, dict):
+                out[g] = {k: (v.get("value") if isinstance(v, dict) and "value" in v else v)
+                          for k, v in group.items()}
+            else:
+                out[g] = group
+        return out
+
+    normalized = extract_values(plain)
+
+    s = json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    raw = s.encode("utf-8")
+    gz = gzip.compress(raw)
+    return {
+        "json_bytes": len(raw),
+        "json_kib": len(raw) / 1024,
+        "gzip_bytes": len(gz),
+        "gzip_kib": len(gz) / 1024,
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "normalized": normalized,  # remove if you don't want to print the whole thing
+    }
+
