@@ -3,6 +3,7 @@ from abc import ABC
 from fractions import Fraction
 from dataclasses import dataclass
 from typing import Union, Callable, Any
+from datetime import datetime, timezone
 import time
 op_string = {
     "add": "+",
@@ -142,7 +143,8 @@ class Question:
     In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
     """
     def __init__(self, range_ = None, op_ = None, dtype_ = None, positive_answers_only_ = False):
-        self.problem_start_time = time.time()
+        self.problem_start_timestamp = datetime.now(timezone.utc)
+        self.problem_start_perf_counter = time.perf_counter()
         self.range = range_
         self.op = op_
         self.dtype = dtype_
@@ -194,6 +196,11 @@ class Question:
             max_ = r1 * r2
 
         return min_, max_
+
+    def time_elapsed_ms(self):
+        elapsed = time.perf_counter() - self.problem_start_perf_counter
+        elapsed_ms = elapsed * 1000
+        return int(round(elapsed_ms))
 
 # Example
 if __name__ == "__main__":
