@@ -90,12 +90,12 @@ class Session:
             "game_mode": game_mode,
             "base_settings": {
                 "active_problem_types": st.session_state["active_problem_types"],
-                "duration": get_val("number_input_boxes", "duration"),
-                "ranges": get_ranges("number_input_boxes"),
+                "duration": get_val("duration", "number_input_boxes"),
+                "ranges": get_ranges(),
             },
             "extra_settings": {
-                "pos_answers_only": get_val("checkboxes", "pos_answers_only"),
-                "fade_problem": get_val("checkboxes", "fade_problem")
+                "pos_answers_only": get_val("pos_answers_only", "checkboxes"),
+                "fade_problem": get_val("fade_problem", "checkboxes")
             },
         }
 
