@@ -202,6 +202,8 @@ def game_page_ui():
         )
 
     if validate_answer(user_response):
+        st.session_state["game_score"] += 1
+        st.session_state["problem_id"] += 1
         new_problem()
         st.rerun()
 

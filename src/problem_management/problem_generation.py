@@ -27,8 +27,6 @@ def new_problem():
 
     st.session_state["current_problem"].calc()
     st.session_state["fade_class_identifier"] += 1
-    st.session_state["game_score"] += 1
-    st.session_state["problem_id"] += 1
     st.session_state["current_problem_id"] = st.session_state["problem_id"]
     st.session_state["current_problem_type"] = st.session_state["current_problem"].op
 
