@@ -10,10 +10,14 @@ interface Args {
 function CustomInput(props: { args: Args }) {
   const { correctAnswer = "", alignment = "center", problemId} = props.args
   const [val, setVal] = useState<string>("")
+  const [keystrokeHistory, setKeystrokeHistory] = useState<Array<{key: string, timestamp: number}>>([])
+  const [keystrokeCount, setKeystrokeCount] = useState(0)
 
   // Whenever the problem changes, clear any residual input
   useEffect(() => {
+    console.log("The problem was answered correctly, clearing input...")
     setVal("")
+    setKeystrokeHistory([])
   }, [correctAnswer, problemId])
 
   // 1) onChange updates local state
@@ -23,6 +27,12 @@ function CustomInput(props: { args: Args }) {
 
   // 2) onKeyDown watches for the final keystroke, ignoring repeats
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const updatedKeystrokeCount = keystrokeCount + 1
+    const newKeystroke = {key: e.key, timestamp: Date.now()}
+    const updatedKeystrokeHistory = keystrokeHistory.concat(newKeystroke)
+    setKeystrokeCount(updatedKeystrokeCount)
+    setKeystrokeHistory(updatedKeystrokeHistory)
+
     if (e.repeat) {
       return
     }
@@ -32,8 +42,10 @@ function CustomInput(props: { args: Args }) {
 
     // If it matches exactly, submit and clear
     if (next === correctAnswer) {
-      Streamlit.setComponentValue([next, problemId])
+      e.preventDefault()
+      Streamlit.setComponentValue([next, problemId, updatedKeystrokeHistory, updatedKeystrokeCount])
       setVal("")
+      setKeystrokeHistory([])
     }
   }
   const font_size = "3rem"

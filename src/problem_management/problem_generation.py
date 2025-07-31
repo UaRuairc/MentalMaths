@@ -38,7 +38,7 @@ def validate_answer(user_response: list | str):
     if user_response == "":
         return False
 
-    user_answer, problem_id = user_response
+    user_answer, problem_id, _, _ = user_response
 
     correct_answer = st.session_state["current_problem"].answer
     correct_problem_id = st.session_state["current_problem_id"]
