@@ -204,6 +204,8 @@ def game_page_ui():
     if validate_answer(user_response):
         st.session_state["game_score"] += 1
         st.session_state["problem_id"] += 1
+        st.session_state["current_game_session"].update_problem_event(keystroke_sequence=user_response[2], keystroke_count=user_response[3], event="correct_answer")
+        st.session_state["current_game_session"].store_problem_event()
         new_problem()
         st.rerun()
 
@@ -213,7 +215,7 @@ def game_page_ui():
             st.rerun()
 
     if st.button("End"):
-        end_game()
+        end_game(event="game_ended_early")
 
 def render_exercise(problem_details: list, style=default_style, should_fade=True, problem_id=0):
     """display the problem for the user, and return the column we'll put the user input box in"""
