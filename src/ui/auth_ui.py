@@ -21,6 +21,55 @@ def auth_ui():
 
     Third: try to render "display_auth_login_ui" if:
     1. We have already tried to login via other means and it failed
+
+    ASIDE: SOME COMMENTS ABOUT THIS AUTH FLOW, AND WHY MAY END UP NOT USING IT:
+
+    This flow is designed to maintain updated Google tokens in browser cookies at all times.
+
+    In theory, we could use an alternative method, Method 2: use the query params on the initial login to immediately create
+    a Supabase session that persists page reloads, app refresh, st session state resetting etc, no manual cookie
+    modification is needed as Supabase handles it all nicely.
+
+    Method 2 may just be better than the current 'make cookie with Google tokens' Method. This is because:
+
+    1. Streamlit's lacking of decent cookie support means we need to use a custom React widget which causes reruns.
+    2. You should not have reruns queued before events that trigger immediately them if you intend to do anything else
+    importing during that run. For example, you can't queue a rerun, do a http request and store data in session state
+    because the program ends after the http request
+
+    So you need to make sure you trigger the rerun prior to the request. If you ALWAYS queue a rerun before a HTTP request
+    you will NEVER be able to use that data.
+
+    For example, if you have
+
+                <code that queues a rerun every time>
+
+                if no_rerun_queued and want_to_make_http_request:
+                    <make http request>
+                else:
+                    st.rerun()
+
+    you will just be in an infinite loop.
+
+    However, if you have:
+
+                <code that queues a rerun sometimes>
+
+                if no_rerun_queued and want_to_make_http_request:
+                    make http request
+                else:
+                    st.rerun()
+
+    you may eventually get out of the loop.
+
+    This is very ugly though and currently has a bug where pathological cookie states can result
+    in too many reruns. Need to improve the logic below.
+
+    Right now, we use Method 1, but may just move to Method 2. Benefit of Method 1 is that if we ever do need Google login
+    again, we don't need to prompt them gain. Plus, streamlit might just get better cookie support soon, or we could use
+    a different UI framework.
+
+
     """
 
     login_container = st.container(key="login")
