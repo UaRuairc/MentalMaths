@@ -6,7 +6,6 @@ from collections import defaultdict
 
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
 
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(message)s",
@@ -147,6 +146,9 @@ def track_reruns(location=""):
 
     print(output)
 
+def get_fade_html(unique_class, base_style=default_style):
+    return f"<div class='{unique_class}' style='{base_style}'>"
+
 def inject_fade_css(unique_class):
     st.markdown(f"""
             <style>
@@ -161,8 +163,23 @@ def inject_fade_css(unique_class):
             </style>
             """, unsafe_allow_html=True)
 
-def get_fade_html(unique_class, base_style=default_style):
-    return f"<div class='{unique_class}' style='{base_style}'>"
+def inject_centring_css():
+    st.markdown(
+        """
+        <style>
+        /* Center all markdown content */
+        [data-testid="stMarkdown"]{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            height:100%;
+            width:100%;
+            margin:0;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # Module‑level globals (not in session_state)
 _debug_counter = 0

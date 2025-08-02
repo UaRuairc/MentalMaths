@@ -8,7 +8,7 @@ ENABLE_GOOGLE_LOGIN = True
 ENABLE_GITHUB_LOGIN = False
 ENABLE_EMAIL_LOGIN = False
 
-def auth_ui():
+def user_auth():
     """
     auth logic:
 
@@ -80,7 +80,6 @@ def auth_ui():
     login_handler = SupabaseLogin()
 
     logged_in = login_handler.already_logged_in() or login_handler.attempt_user_restoration(cookie_manager, are_cookies_ready)
-
     if logged_in:
         display_already_logged_in_placeholder(login_handler, container=login_container)
         file_log("logged in")
@@ -93,9 +92,6 @@ def auth_ui():
         display_auth_login_ui()
 
     return
-
-
-
 
 def display_auth_login_ui():
 
