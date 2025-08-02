@@ -1,5 +1,6 @@
 import time
 import uuid
+import uuid6
 import streamlit as st
 from src.database.events import Session
 from src.problem_management.problem_generation import new_problem
@@ -13,7 +14,7 @@ def start_game( logged_in=False, event="game_started"):
 
     if "supabase_client" in st.session_state:
         st.session_state["current_game_session"] = Session(
-            session_id= str(uuid.uuid7()),
+            session_id= str(uuid6.uuid7()),
             user_id=st.session_state["supabase_client"].auth.get_user().user.id if logged_in else None,
             game_mode="standard",
             active_problem_types=st.session_state["active_problem_types"],
