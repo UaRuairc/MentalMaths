@@ -1,5 +1,5 @@
 import streamlit as st
-import logging, json, threading, inspect, time, gzip, hashlib
+import logging, json, threading, inspect, time, gzip, hashlib, functools
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 from collections import defaultdict
 
@@ -308,3 +308,13 @@ def config_stats(cfg):
         "normalized": normalized,  # remove if you don't want to print the whole thing
     }
 
+def timed(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"{func.__name__} took {end - start:.4f}s")
+        return result
+
+    return wrapper
