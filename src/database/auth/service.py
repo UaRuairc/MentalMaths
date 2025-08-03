@@ -89,9 +89,10 @@ class SupabaseLogin:
     def restore_tokens_via_cookies(self):
         try:
             cookie = st.session_state["cookies"].get(COOKIE_NAME)
+            cookie = json.loads(cookie)
             if not cookie:
-                file_log(f"could not find a cookie named {COOKIE_NAME}, if you see this after the line 'Creating and storing cookies now...' then persistence failed!")
-                return
+                file_log(f"No {COOKIE_NAME} cookie")
+                return False
 
             if cookie is not None and cookie != st.session_state["expired_tokens"]:
                 st.session_state["supabase_tokens"] = cookie
