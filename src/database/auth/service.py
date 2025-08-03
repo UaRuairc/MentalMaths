@@ -81,7 +81,7 @@ class SupabaseLogin:
 
         except Exception as e:
             # Tokens might be expired
-            st.session_state["expired_tokens"] = None
+            st.session_state["expired_tokens"] = st.session_state["supabase_tokens"].copy()
             st.session_state["supabase_tokens"] = None
             file_log(f"Failed restore userdata via token: {e}.")
             return False
