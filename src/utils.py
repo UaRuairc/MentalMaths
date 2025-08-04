@@ -8,7 +8,7 @@ default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(message)s",
+    format="%(asctime)s.%(msecs)03d %(message)s",
     datefmt="%H:%M:%S",
     filename="debug.log",   # name of your log file
     filemode="a"            # append mode
