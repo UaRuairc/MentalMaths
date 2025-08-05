@@ -143,7 +143,7 @@ class Question:
     In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
     """
     def __init__(self, range_ = None, op_ = None, dtype_ = None, positive_answers_only_ = False):
-        self.problem_start_timestamp = datetime.now(timezone.utc)
+        self.problem_start_time = datetime.now(timezone.utc)
         self.problem_start_perf_counter = time.perf_counter()
         self.range = range_
         self.op = op_

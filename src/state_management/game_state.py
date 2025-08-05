@@ -18,7 +18,7 @@ def start_game( logged_in=False, event="game_started"):
             user_id=st.session_state["supabase_client"].auth.get_user().user.id if logged_in else None,
             game_mode="standard",
             active_problem_types=st.session_state["active_problem_types"],
-            started_at=datetime.now(timezone.utc),
+            started_at=str(datetime.now(timezone.utc)),
         )
     new_problem()
     st.session_state["is_game_running"] = True

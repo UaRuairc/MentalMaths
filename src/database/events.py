@@ -1,7 +1,8 @@
 import streamlit as st
-import time, json
+from datetime import datetime, timezone
 from src.config.config_management import ConfigManager
 from src.utils import get_ranges
+import json
 
 
 class Session:
@@ -54,7 +55,7 @@ class Session:
             "problem_type": f"{st.session_state["current_problem"].op}_{st.session_state["current_problem"].dtype}",
             "answer_ms": st.session_state["current_problem"].time_elapsed_ms(),
             "is_correct": True,
-            "created_at": st.session_state["current_problem"].problem_start_timestamp,
+            "created_at": str(st.session_state["current_problem"].problem_start_time),
             "left_operand": st.session_state["current_problem"].Problem.left,
             "left_operand_text":  st.session_state["current_problem"].Problem.left,
             "right_operand":  st.session_state["current_problem"].Problem.right,
@@ -63,6 +64,12 @@ class Session:
             "keystroke_sequence": keystroke_sequence,
             "keystroke_count": keystroke_count
             }
+            "left_operand_text": st.session_state["current_problem"].Problem.left,
+            "right_operand": st.session_state["current_problem"].Problem.right,
+            "right_operand_text": st.session_state["current_problem"].Problem.right,
+            "keystroke_sequence": keystroke_sequence, "keystroke_count": keystroke_count,
+            "answer": st.session_state["current_problem"].answer if event == "correct_answer" else None,
+         }
 
         self.current_problem_event.update(data)
 
