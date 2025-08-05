@@ -30,8 +30,10 @@ class Session:
             "right_operand": None,
             "right_operand_text": None,
             "answer": None,
+            "event": None,
             "keystroke_sequence": None,
             "keystroke_count": 0,
+            "status": "active",  # could be active, correct_answer, wrong_answer, duration_expired or game_ended_early
         }
 
         self.current_session_event = {
@@ -47,6 +49,7 @@ class Session:
             "payload": self.build_event_payload(game_mode),
             "total_keystroke_count": 0,
             "total_expected_keystroke_count": 0,
+            "status": "active",  # could be active, game_ended or game_ended_early
         }
 
     def update_problem_event(self, keystroke_sequence, keystroke_count, event="correct_answer"):
@@ -57,18 +60,12 @@ class Session:
             "is_correct": True,
             "created_at": str(st.session_state["current_problem"].problem_start_time),
             "left_operand": st.session_state["current_problem"].Problem.left,
-            "left_operand_text":  st.session_state["current_problem"].Problem.left,
-            "right_operand":  st.session_state["current_problem"].Problem.right,
-            "right_operand_text":  st.session_state["current_problem"].Problem.right,
-            "answer": st.session_state["current_problem"].answer,
-            "keystroke_sequence": keystroke_sequence,
-            "keystroke_count": keystroke_count
-            }
             "left_operand_text": st.session_state["current_problem"].Problem.left,
             "right_operand": st.session_state["current_problem"].Problem.right,
             "right_operand_text": st.session_state["current_problem"].Problem.right,
             "keystroke_sequence": keystroke_sequence, "keystroke_count": keystroke_count,
             "answer": st.session_state["current_problem"].answer if event == "correct_answer" else None,
+            "status": event
          }
 
         self.current_problem_event.update(data)
@@ -76,21 +73,16 @@ class Session:
         self.update_session_event(event=event)
 
     def update_session_event(self, event="correct_answer"):
-        if event=="correct_answer":
-            self.current_session_event["num_questions"] += 1
-            self.current_session_event["num_correct"] = st.session_state["game_score"]
-            self.current_session_event["total_keystroke_count"] += len(str(self.current_problem_event["keystroke_count"]))
-            self.current_session_event["total_expected_keystroke_count"] += len(str(st.session_state["current_problem"].answer))
-            return
+        self.current_session_event["num_questions"] += 1
+        self.current_session_event["num_correct"] = st.session_state["game_score"]
+        self.current_session_event["total_keystroke_count"] += self.current_problem_event["keystroke_count"]
+        self.current_session_event["total_expected_keystroke_count"] += len(
+            str(st.session_state["current_problem"].answer))
+        self.current_session_event["status"] = event
+        self.current_session_event["ended_at"] = str(datetime.now(timezone.utc))
+        self.current_session_event["ended_early"] = True if event == "game_ended_early" else False
 
-        if event=="game_completed":
-            self.current_session_event["ended_at"] = st.session_state["game_end_time"]
-            return
-
-        if event=="game_ended_early":
-            self.current_session_event["ended_at"] = time.time()
-            self.current_session_event["ended_early"] = True
-            return
+        return
 
     def store_problem_event(self):
         print("We would have stored the following problem in the database:")
@@ -104,7 +96,13 @@ class Session:
         event_copy.pop("payload")
         data_to_store = json.dumps(event_copy, indent=2, sort_keys=True, default=str)
         print(data_to_store)
-        #st.session_state["supabase_client"].table("game_sessions").insert(self.current_session_event).execute()
+        try:
+            print(self.current_session_event)
+            #res = st.session_state["supabase_client"].postgrest.schema("api").from_("game_sessions").insert(self.current_session_event).execute()
+        except Exception as e:
+            print(f"Error storing session event: {e}")
+            res = None
+
 
 
     @staticmethod
@@ -137,9 +135,31 @@ class Session:
                 "fade_problem": get_val("fade_problem", "checkboxes")
             },
         }
-        payload = st.session_state["config"].copy()
+        # payload = st.session_state["config"].copy()
 
         return payload
+
+    def reset_problem_event(self):
+        self.current_problem_event = {
+            "session_id": self.current_problem_event["session_id"],
+            "user_id": self.current_problem_event["user_id"],
+            "problem_id": None,
+            "problem_type": None,
+            "is_correct": True,
+            "answer_ms": None,
+            "created_at": None,
+            "left_num": None,
+            "left_den": None,
+            "left_operand": None,
+            "left_operand_text": None,
+            "right_num": None,
+            "right_den": None,
+            "right_operand": None,
+            "right_operand_text": None,
+            "answer": None,
+            "keystroke_sequence": None,
+            "keystroke_count": 0,
+        }
 
 
 

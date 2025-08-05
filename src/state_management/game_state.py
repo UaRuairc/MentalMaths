@@ -28,8 +28,9 @@ def start_game( logged_in=False, event="game_started"):
 
 def end_game(event="game_ended_early"):
     """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
-    st.session_state["current_game_session"].update_session_event(event=event)
+    st.session_state["current_game_session"].update_problem_event(keystroke_count=0, keystroke_sequence="", event=event)
     print("Ending the game.")
+    st.session_state["current_game_session"].store_problem_event()
     st.session_state["current_game_session"].store_session_event()
     st.session_state["is_game_running"] = False
     st.rerun()
