@@ -46,6 +46,7 @@ function CustomInput(props: { args: Args }) {
       Streamlit.setComponentValue([next, problemId, updatedKeystrokeHistory, updatedKeystrokeCount])
       setVal("")
       setKeystrokeHistory([])
+      setKeystrokeCount(0)
     }
   }
   const font_size = "3rem"
