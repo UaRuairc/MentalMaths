@@ -16,7 +16,7 @@ def setup_page_ui(version=2):
     settings_containers = {
         "base_settings": st.container(key="base_settings"),
         "range_settings": st.container(key="range_settings"),
-        "extra_settings": st.container(key="extra_settings"),
+        "modifier_settings": st.container(key="modifier_settings"),
         "start_button": st.container(key="start_button"),
     }
     display_settings(settings_containers)

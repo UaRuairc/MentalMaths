@@ -130,7 +130,7 @@ class Session:
                 "duration": get_val("duration", "number_input_boxes"),
                 "ranges": get_ranges(),
             },
-            "extra_settings": {
+            "modifier_settings": {
                 "pos_answers_only": get_val("pos_answers_only", "checkboxes"),
                 "fade_problem": get_val("fade_problem", "checkboxes")
             },

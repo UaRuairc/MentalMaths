@@ -27,7 +27,7 @@ for key, val in initial_range.items():
 
 def display_settings(settings_containers):
     render_base_settings(settings_containers)
-    render_extra_settings(settings_containers)
+    render_modifier_settings(settings_containers)
     update_active_problem_types()
     render_active_problem_type_settings(settings_containers)
 
@@ -49,7 +49,7 @@ def render_base_settings(settings_containers):
 
         build_ui_from_map(positioning_map=base_ui_positioning)
 
-def render_extra_settings(settings_containers):
+def render_modifier_settings(settings_containers):
 
     """
 
@@ -57,18 +57,18 @@ def render_extra_settings(settings_containers):
 
     """
 
-    with settings_containers["extra_settings"]:
-        st.write("extra settings:")
-        extra_settings_cols = st.columns(1, vertical_alignment="center")
+    with settings_containers["modifier_settings"]:
+        st.write("Game Modifiers")
+        modifier_settings_cols = st.columns(1, vertical_alignment="center")
 
-        extra_ui_positioning = {
+        modifier_ui_positioning = {
             "checkboxes": {
-                "pos_answers_only": extra_settings_cols[0],
-                "fade_problem": extra_settings_cols[0],
+                "pos_answers_only": modifier_settings_cols[0],
+                "fade_problem": modifier_settings_cols[0],
             }
         }
 
-        build_ui_from_map(positioning_map=extra_ui_positioning)
+        build_ui_from_map(positioning_map=modifier_ui_positioning)
 
 def update_active_problem_types():
     """
