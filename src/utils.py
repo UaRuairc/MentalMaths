@@ -3,6 +3,7 @@ import logging, json, threading, inspect, time, gzip, hashlib, functools
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 from collections import defaultdict
 
+from src.config.config_management import ConfigManager
 
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
 
@@ -229,19 +230,20 @@ def track_rerun_to_file(location=""):
     _last_rerun = now
 
 def get_range(next_problem_tag):
-    boxes_config = st.session_state["config"]["number_input_boxes"]
+    get_val = lambda name: ConfigManager.get_widget_value(widget_name=name,  widget_category="number_input_boxes")
+
     if next_problem_tag != "div_ints":
         #(l1, r1) + (l2, r2) = ?
-        l1 = boxes_config[f"first_{next_problem_tag}_operand_range_left"]["value"]
-        r1 = boxes_config[f"first_{next_problem_tag}_operand_range_right"]["value"]
-        l2 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
-        r2 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
+        l1 = get_val(f"{next_problem_tag}_a_min")
+        r1 = get_val(f"{next_problem_tag}_a_max")
+        l2 = get_val(f"{next_problem_tag}_b_min")
+        r2 = get_val(f"{next_problem_tag}_b_max")
     else:
         # (l1, r1) + (l2, r2) = ...
-        l1 = boxes_config[f"second_{next_problem_tag}_operand_range_left"]["value"]
-        r1 = boxes_config[f"second_{next_problem_tag}_operand_range_right"]["value"]
-        l2 = boxes_config[f"answer_{next_problem_tag}_range_left"]["value"]
-        r2 = boxes_config[f"answer_{next_problem_tag}_range_right"]["value"]
+        l1 = get_val(f"{next_problem_tag}_b_min")
+        r1 = get_val(f"{next_problem_tag}_b_max")
+        l2 = get_val(f"{next_problem_tag}_c_min")
+        r2 = get_val(f"{next_problem_tag}_c_max")
     range1 = (l1, r1)
     range2 = (l2, r2)
 

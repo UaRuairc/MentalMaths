@@ -118,21 +118,14 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
     r_ = initial_range_
     inject_centring_css()
 
-    # keeping this dict so it's clearer what we are doing
-
-    names = {
-        "first_left": f"first_{type_}_operand_range_left",
-        "first_right": f"first_{type_}_operand_range_right",
-        "second_left": f"second_{type_}_operand_range_left",
-        "second_right": f"second_{type_}_operand_range_right",
-        "answer_left": f"answer_{type_}_range_left",
-        "answer_right": f"answer_{type_}_range_right",
-    }
+    keys = (
+        f"{type_}_a_min", f"{type_}_a_max", f"{type_}_b_min", f"{type_}_b_max", f"{type_}_c_min", f"{type_}_c_max"
+    )
 
     if type_ != "div_ints":
-        disabled_widgets = (names["answer_left"], names["answer_right"])
+        disabled_pos = "c"
     else:
-        disabled_widgets = (names["first_left"], names["first_right"])
+        disabled_pos = "a"
 
     def update_disabled_boxes_on_change():
 
@@ -141,53 +134,51 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
             ranges_=get_range(type_),
             positive_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
-        st.session_state["config"]["number_input_boxes"][disabled_widgets[0]]["value"] = min_
-        st.session_state["config"]["number_input_boxes"][disabled_widgets[1]]["value"] = max_
+        st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_pos}_min"]["value"] = min_
+        st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_pos}_max"]["value"] = max_
 
+    for key, range_ in zip(keys, sum(r_, ())):
 
-    for box_name, range_ in zip(names.values(), sum(r_, ())):
+        box_pos = key.split("_")[2]  # e.g. "a", "b", "c"
 
         ConfigManager.add_widget(
-            name=box_name,
+            name=key,
             widget_category="number_input_boxes",
             **{"step": 1, "label_visibility": "collapsed", "value": range_},
-            disabled= True if box_name in disabled_widgets else False,
+            disabled= True if disabled_pos == box_pos else False,
             extra_callback=update_disabled_boxes_on_change
         )
 
     with range_display_cols[1]:
-        with st.container(border=True):
-            placements3 = st.columns([5, 2, 5], vertical_alignment="center")
-            with placements3[0]:
-                MakeWidget(f"first_{type_}_operand_range_left", "number_input_boxes").render()
-            with placements3[1]:
-                st.markdown(":material/arrow_right_alt:")
-            with placements3[2]:
-                MakeWidget(f"first_{type_}_operand_range_right", "number_input_boxes").render()
+        make_number_boxes(type_=type_, position_ = "a")
 
     with range_display_cols[2]:
         st.markdown(symbol)
 
     with range_display_cols[3]:
-        with st.container(border=True):
-            placements2 = st.columns([5, 2, 5], vertical_alignment="center")
-            with placements2[0]:
-                MakeWidget(f"second_{type_}_operand_range_left", "number_input_boxes").render()
-            with placements2[1]:
-                st.markdown(":material/arrow_right_alt:")
-            with placements2[2]:
-                MakeWidget(f"second_{type_}_operand_range_right", "number_input_boxes").render()
+        make_number_boxes(type_=type_, position_ = "b")
+
     with range_display_cols[4]:
         st.markdown("=")
+
     with range_display_cols[5]:
-        with st.container(border=True):
-            placements2 = st.columns([5, 2, 5], vertical_alignment="center")
-            with placements2[0]:
-                MakeWidget(f"answer_{type_}_range_left", "number_input_boxes").render()
-            with placements2[1]:
-                st.markdown(":material/arrow_right_alt:")
-            with placements2[2]:
-                MakeWidget(f"answer_{type_}_range_right", "number_input_boxes").render()
+        make_number_boxes(type_=type_, position_="c")
+
+def make_number_boxes(type_, position_):
+    render_box = lambda kind_: MakeWidget(
+                                    widget_config_key=f"{type_}_{position_}_{kind_}",
+                                    widget_category="number_input_boxes",
+    ).render()
+
+
+    with st.container(border=True):
+        placements3 = st.columns([5, 2, 5], vertical_alignment="center")
+        with placements3[0]:
+            render_box("min")
+        with placements3[1]:
+            st.markdown(":material/arrow_right_alt:")
+        with placements3[2]:
+            render_box("max")
 
 def is_start_button_disabled():
     current_duration_value = st.session_state["config"]["number_input_boxes"]["duration"]["value"]
