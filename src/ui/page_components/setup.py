@@ -165,9 +165,12 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
         make_number_boxes(type_=type_, position_="c")
 
 def make_number_boxes(type_, position_):
+    get_val = lambda key_: ConfigManager.get_widget_value(widget_name=key_, widget_category="number_input_boxes")
+    flip = {"min": "max", "max": "min"}
     render_box = lambda kind_: MakeWidget(
                                     widget_config_key=f"{type_}_{position_}_{kind_}",
                                     widget_category="number_input_boxes",
+                                    **{flip[kind_] + "_value": get_val(f"{type_}_{position_}_" + flip[kind_])},
     ).render()
 
 
