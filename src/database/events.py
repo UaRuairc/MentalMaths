@@ -93,14 +93,14 @@ class Session:
         #st.session_state["supabase_client"].table("problem_events").insert(self.current_problem_event).execute()
 
     def store_session_event(self):
-        print("We would have stored the following session in the database [note, we remove the payload config so remove verbosity for now...]:")
+        print("We would have stored the following session in the database:")
         event_copy = self.current_session_event.copy()
-        event_copy.pop("payload")
         data_to_store = json.dumps(event_copy, indent=2, sort_keys=True, default=str)
         print(data_to_store)
         try:
             print(self.current_session_event)
-            #res = st.session_state["supabase_client"].postgrest.schema("api").from_("game_sessions").insert(self.current_session_event).execute()
+
+            res = st.session_state["supabase_client"].schema("api").from_("game_sessions").insert(self.current_session_event).execute()
         except Exception as e:
             print(f"Error storing session event: {e}")
             res = None
