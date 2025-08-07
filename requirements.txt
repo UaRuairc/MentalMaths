@@ -4,3 +4,5 @@ altair~=5.5.0
 attrs~=25.3.0
 python-ulid~=3.0.0
 supabase~=2.16.0
+requests~=2.32.4
+uuid6~=2025.0.1
