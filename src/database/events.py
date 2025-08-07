@@ -32,10 +32,10 @@ class Session:
             "right_operand": None,
             "right_operand_text": None,
             "answer": None,
-            "event": None,
+            "event": event,
             "keystroke_sequence": None,
             "keystroke_count": 0,
-            "status": "active",  # could be active, correct_answer, wrong_answer, duration_expired or game_ended_early
+            "status": "active",  # could be active, correct_answer, wrong_answer, duration_expired
         }
 
         self.current_session_event = {
@@ -46,13 +46,13 @@ class Session:
             "modifiers": None,
             "started_at": str(datetime.now(timezone.utc)),
             "ended_at": None,
-            "ended_early": None,
+            "ended_early": False,
             "num_questions": 0,
             "num_correct": 0,
-            "payload": self.build_event_payload(game_mode),
+            "payload": None,
             "total_keystroke_count": 0,
             "total_expected_keystroke_count": 0,
-            "status": "active",  # could be active, game_ended or game_ended_early
+            "status": "active",  # could be active, ended or ended_early
         }
 
     def update_problem_event(self, keystroke_sequence, keystroke_count, event="correct_answer"):
@@ -72,16 +72,19 @@ class Session:
         self.update_session_event(event=event)
 
     def update_session_event(self, event="correct_answer"):
-        self.current_session_event["num_questions"] += 1
+        self.current_session_event["num_questions"] += 1 if event in ("correct_answer", "wrong_answer") else 0
         self.current_session_event["num_correct"] = st.session_state["game_score"]
-        self.current_session_event["total_keystroke_count"] += self.current_problem_event["keystroke_count"]
+
+        self.current_session_event["total_keystroke_count"] += self.current_problem_event["keystroke_count"] if event in ("correct_answer", "wrong_answer") else 0
         self.current_session_event["total_expected_keystroke_count"] += len(
-            str(st.session_state["current_problem"].answer))
-        self.current_session_event["status"] = event
-        self.current_session_event["ended_at"] = str(datetime.now(timezone.utc))
-        self.current_session_event["ended_early"] = True if event == "game_ended_early" else False
+            str(st.session_state["current_problem"].answer)) if event in ("correct_answer", "wrong_answer") else 0
 
         self.current_session_event["modifiers"] = st.session_state["current_problem"].modifiers
+        self.current_session_event["status"] = "active" if event in ("correct_answer", "wrong_answer") else event
+        self.current_session_event["ended_at"] = (str(datetime.now(timezone.utc))) if self.current_session_event["status"] != "active" else None
+        self.current_session_event["payload"] = self.build_event_payload()
+        if event == "game_ended_early":
+            self.current_session_event["ended_early"] = True
         return
 
     def store_problem_event(self):
@@ -156,6 +159,8 @@ class Session:
             "answer": None,
             "keystroke_sequence": None,
             "keystroke_count": 0,
+            "status": "reset",
+            "event": "reset"
         }
 
 
