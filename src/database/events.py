@@ -39,8 +39,8 @@ class Session:
         }
 
         self.current_session_event = {
-            "session_id": session_id,
-            "user_id": user_id,
+            "session_id": self.session_id,
+            "user_id": self.user_id,
             "game_mode": game_mode,
             "active_problem_types": active_problem_types,
             "modifiers": None,
