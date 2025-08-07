@@ -23,20 +23,19 @@ class Session:
             "is_correct": True,
             "answer_ms": None,
             "created_at": None,
-            "left_num": None,
-            "left_den": None,
+            "left_num": None, # for fractions
+            "left_den": None, # for fractions
             "left_operand": None,
-            "left_operand_text": None,
-            "right_num": None,
-            "right_den": None,
+            "right_num": None, # for fractions
+            "right_den": None, # for fractions
             "right_operand": None,
-            "right_operand_text": None,
             "answer": None,
             "event": event,
             "keystroke_sequence": None,
             "keystroke_count": 0,
             "status": "active",  # could be active, correct_answer, wrong_answer, duration_expired
         }
+        # Could do something like event=game_pause, event=game_resume, e.g. getting an ended_early=True game from the db and resuming it?
 
         self.current_session_event = {
             "session_id": self.session_id,
@@ -151,11 +150,9 @@ class Session:
             "left_num": None,
             "left_den": None,
             "left_operand": None,
-            "left_operand_text": None,
             "right_num": None,
             "right_den": None,
             "right_operand": None,
-            "right_operand_text": None,
             "answer": None,
             "keystroke_sequence": None,
             "keystroke_count": 0,
