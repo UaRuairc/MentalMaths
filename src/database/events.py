@@ -56,20 +56,16 @@ class Session:
         }
 
     def update_problem_event(self, keystroke_sequence, keystroke_count, event="correct_answer"):
+
+        problem_snapshot = st.session_state["current_problem"].snapshot(event)
         data = {
             "problem_id": st.session_state["current_problem_id"],
-            "problem_type": f"{st.session_state["current_problem"].op}_{st.session_state["current_problem"].dtype}",
-            "answer_ms": st.session_state["current_problem"].time_elapsed_ms(),
-            "is_correct": True,
-            "created_at": str(st.session_state["current_problem"].problem_start_time),
-            "left_operand": st.session_state["current_problem"].Problem.left,
-            "left_operand_text": st.session_state["current_problem"].Problem.left,
-            "right_operand": st.session_state["current_problem"].Problem.right,
-            "right_operand_text": st.session_state["current_problem"].Problem.right,
             "keystroke_sequence": keystroke_sequence, "keystroke_count": keystroke_count,
-            "answer": st.session_state["current_problem"].answer if event == "correct_answer" else None,
-            "status": event
          }
+
+        data.update(problem_snapshot)
+
+
 
         self.current_problem_event.update(data)
 
