@@ -19,7 +19,11 @@ initial_range = {
 for key, val in initial_range.items():
     # for now, key is always <operation_ints>, so `[:-5]` gets rid of the ints
     operation = key[:-5]
-    ans_range = Question.calc_theoretical_range(key[:-5], val)
+    ans_range = Question.calc_theoretical_range(
+        type_=key[:-5],
+        ranges_=val,
+        pos_answers_only=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"]
+    )
     if key != "div_ints":
         initial_range[key].append(ans_range)
     else:
@@ -132,7 +136,7 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
         min_, max_ = Question.calc_theoretical_range(
             type_=type_[:-5],
             ranges_=get_range(type_),
-            positive_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
+            pos_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
         st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_pos}_min"]["value"] = min_
         st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_pos}_max"]["value"] = max_

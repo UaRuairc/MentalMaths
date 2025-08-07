@@ -24,7 +24,7 @@ def new_problem():
         range_=get_range(next_problem_tag),
         op_=op_API_ALIASES[next_problem_op_],
         dtype_=next_data_type_,
-        positive_answers_only_=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"]
+        modifiers=get_modifiers()
     )
 
     st.session_state["current_problem"].calc()
@@ -44,5 +44,13 @@ def validate_answer(user_response: list | str):
     correct_problem_id = st.session_state["current_problem_id"]
 
     return (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)
+
+def get_modifiers():
+    return {
+        "pos_answers_only": st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"],
+        "fade_problem": st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
+    }
+
+
 
 

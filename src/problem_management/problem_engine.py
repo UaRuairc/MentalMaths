@@ -49,7 +49,7 @@ class Problem(ABC):
     right: Any
     type: Any
     invert_operation: bool = False
-    positive_answers_only: bool = False
+    modifiers: list = None
     answer: Any = None
     op: Any = None
 
@@ -97,7 +97,7 @@ class AddProblem(Problem):
             self.answer = self.left + self.right
             return
 
-        if self.positive_answers_only:
+        if "pos_answers_only" in self.modifiers:
             self.left, self.right = max(self.left, self.right), min(self.left, self.right)
 
         self.answer = self.left - self.right
@@ -128,8 +128,8 @@ class MultProblem(Problem):
         self.right = divisor
         self.answer = quotient
 
-def make_problem(type_, left_, right_, positive_answers_only_=False):
-    return PROBLEM_DISPATCH[type_](left=left_, right=right_, type=type_, positive_answers_only=positive_answers_only_)
+def make_problem(type_, left_, right_, modifiers_=False):
+    return PROBLEM_DISPATCH[type_](left=left_, right=right_, type=type_, modifiers=modifiers_)
 
 class Question:
 
@@ -142,33 +142,34 @@ class Question:
 
     In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
     """
-    def __init__(self, range_ = None, op_ = None, dtype_ = None, positive_answers_only_ = False):
-        self.problem_start_time = datetime.now(timezone.utc)
-        self.problem_start_perf_counter = time.perf_counter()
+    def __init__(self, range_ = None, op_ = None, dtype_ = None, modifiers = None):
         self.range = range_
         self.op = op_
         self.dtype = dtype_
+        self.modifiers = modifiers
         self.generator = Generator(range_=self.range, dtype_=self.dtype)
         self.answer = None
         self.Problem = None
-        self.positive_answers_only = positive_answers_only_
+
+        self.problem_start_time = datetime.now(timezone.utc)
+        self.problem_start_perf_counter = time.perf_counter()
 
     def calc(self):
         """Generate a problem instance and compute its answer."""
 
         left, right = self.generator.generate()
-        self.Problem = make_problem(self.op, left, right, self.positive_answers_only)
+        self.Problem = make_problem(self.op, left, right, self.modifiers)
         self.answer = self.Problem.operate()
 
     def info(self):
         return to_dict(self)
 
     @staticmethod
-    def calc_theoretical_range(type_, ranges_, positive_answers_only: Union[bool, Callable[[], bool]]=False):
+    def calc_theoretical_range(type_, ranges_, pos_answers_only: Union[bool, Callable[[], bool]]=False):
 
         # example:
         # (l1 -> r1) + (l2 ->  r2) = (min_ ->  max_)
-        pos = positive_answers_only() if callable(positive_answers_only) else positive_answers_only
+        pos = pos_answers_only() if callable(pos_answers_only) else pos_answers_only
         l1, r1 = ranges_[0]
         l2, r2 = ranges_[1]
         if type_ == "add":
@@ -205,7 +206,7 @@ class Question:
 # Example
 if __name__ == "__main__":
     ranges = [[1,99], [1,99]]
-    myProblem = Question(range_=ranges, op_="mult", dtype_="ints")
+    myProblem = Question(range_=ranges, op_="mult", dtype_="ints", modifiers=None)
     myProblem.calc()
     print(myProblem.info())
 
