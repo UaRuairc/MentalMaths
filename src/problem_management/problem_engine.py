@@ -27,15 +27,16 @@ class Generator:
     """ generate random numbers based on the range of values the user chooses
         ** removed generation of non-integers for now, may add back later
     """
-    def __init__(self, range_ = None, dtype_ = None):
+    def __init__(self, range_ = None, dtype_ = None, seed = None):
         self.range = range_
         self.dtype = dtype_
+        self.rng = random.Random(seed) if seed else random.Random()
 
     def generate(self):
         if self.dtype == "ints":
-            return [random.randint(lower, upper) for lower, upper in self.range]
+            return [self.rng.randint(lower, upper) for lower, upper in self.range]
         else:
-            return [Fraction(random.randint(lower * d, upper * d), d)
+            return [Fraction(self.rng.randint(lower * d, upper * d), d)
                 for lower, upper in self.range
                 for d in [random.randint(1, 9)]
                 ]
