@@ -165,6 +165,24 @@ class Question:
     def info(self):
         return to_dict(self)
 
+    def snapshot(self, event):
+        """
+        Create a snapshot of this Question instance.
+        """
+        data = {
+            "problem_type": f"{self.op}_{self.dtype}",
+            "answer_ms": self.time_elapsed_ms(),
+            "is_correct": True if event == "correct_answer" else False,
+            "created_at": str(self.problem_start_time),
+            "left_operand": self.Problem.left,
+            "right_operand": self.Problem.right,
+
+            "answer": self.answer if event == "correct_answer" else None,
+            "status": event,
+            "modifiers": self.modifiers
+        }
+        return data
+
     @staticmethod
     def calc_theoretical_range(type_, ranges_, pos_answers_only: Union[bool, Callable[[], bool]]=False):
 
