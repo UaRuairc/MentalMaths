@@ -3,19 +3,21 @@ from datetime import datetime, timezone
 from src.config.config_management import ConfigManager
 from src.utils import get_ranges
 import json
+import uuid6
 
 
 class Session:
 
-    def __init__(self, session_id, user_id, game_mode, active_problem_types, started_at, event="game_started"):
+    def __init__(self, game_mode, active_problem_types, event="session_started"):
         """
-
-        Could do something like event=game_pause, event=game_resume, e.g. getting an ended_early=True game from the db and resuming it?
-
+        Initialize a new game session with the given parameters.
         """
+        self.session_id = str(uuid6.uuid7())
+        self.user_id = st.session_state["supabase_client"].auth.get_user().user.id if st.session_state.get("user") is not None else "anon"
+
         self.current_problem_event={
-            "session_id": session_id,
-            "user_id": user_id,
+            "session_id": self.session_id,
+            "user_id": self.user_id,
             "problem_id": None,
             "problem_type": None,
             "is_correct": True,
@@ -41,7 +43,8 @@ class Session:
             "user_id": user_id,
             "game_mode": game_mode,
             "active_problem_types": active_problem_types,
-            "started_at": started_at,
+            "modifiers": None,
+            "started_at": str(datetime.now(timezone.utc)),
             "ended_at": None,
             "ended_early": None,
             "num_questions": 0,
@@ -82,6 +85,7 @@ class Session:
         self.current_session_event["ended_at"] = str(datetime.now(timezone.utc))
         self.current_session_event["ended_early"] = True if event == "game_ended_early" else False
 
+        self.current_session_event["modifiers"] = st.session_state["current_problem"].modifiers
         return
 
     def store_problem_event(self):
@@ -130,10 +134,7 @@ class Session:
                 "duration": get_val("duration", "number_input_boxes"),
                 "ranges": get_ranges(),
             },
-            "modifier_settings": {
-                "pos_answers_only": get_val("pos_answers_only", "checkboxes"),
-                "fade_problem": get_val("fade_problem", "checkboxes")
-            },
+            "modifiers": st.session_state["current_problem"].modifiers
         }
         # payload = st.session_state["config"].copy()
 
