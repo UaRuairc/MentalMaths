@@ -16,6 +16,7 @@ class Session:
         self.user_id = st.session_state["supabase_client"].auth.get_user().user.id if st.session_state.get("user") is not None else None
 
         self.current_problem_event={
+            "event_id": None,
             "session_id": self.session_id,
             "user_id": self.user_id,
             "problem_id": None,
@@ -51,13 +52,23 @@ class Session:
             "payload": None,
             "total_keystroke_count": 0,
             "total_expected_keystroke_count": 0,
+            "event": None,
             "status": "active",  # could be active, ended or ended_early
         }
+
+        try:
+            print("not storing right now")
+            # self.send_initial_session_event()
+        except Exception as e:
+            print(f"Error storing session event: {e}")
+            res = None
+
 
     def update_problem_event(self, keystroke_sequence, keystroke_count, event="correct_answer"):
 
         problem_snapshot = st.session_state["current_problem"].snapshot(event)
         data = {
+            "event_id": str(uuid6.uuid7()),
             "problem_id": st.session_state["current_problem_id"],
             "keystroke_sequence": keystroke_sequence, "keystroke_count": keystroke_count,
          }
@@ -71,6 +82,13 @@ class Session:
         self.update_session_event(event=event)
 
     def update_session_event(self, event="correct_answer"):
+
+        if event == "session_started":
+            self.current_session_event["total_expected_keystroke_count"] += len(
+                str(st.session_state["current_problem"].answer)) if event in ("correct_answer", "wrong_answer") else 0
+            self.current_session_event["modifiers"] = st.session_state["current_problem"].modifiers
+            self.current_session_event["status"] = event
+
         self.current_session_event["num_questions"] += 1 if event in ("correct_answer", "wrong_answer") else 0
         self.current_session_event["num_correct"] = st.session_state["game_score"]
 
@@ -86,21 +104,29 @@ class Session:
             self.current_session_event["ended_early"] = True
         return
 
-    def store_problem_event(self):
+    def store_problem_event(self, event=None):
         print("We would have stored the following problem in the database:")
         data_to_store = json.dumps(self.current_problem_event, indent=2, sort_keys=True, default=str)
         print(data_to_store)
+        try:
+            print("not storing right now")
+            # res = st.session_state["supabase_client"].schema("api").from_("problem_events").insert(self.current_problem_event).execute()
+        except Exception as e:
+            print(f"Error storing problem event: {e}")
+            res = None
+            return None
         #st.session_state["supabase_client"].table("problem_events").insert(self.current_problem_event).execute()
 
-    def store_session_event(self):
+    def store_session_event(self, event=None):
         print("We would have stored the following session in the database:")
         event_copy = self.current_session_event.copy()
         data_to_store = json.dumps(event_copy, indent=2, sort_keys=True, default=str)
         print(data_to_store)
         try:
+            print("not storing right now")
             print(self.current_session_event)
 
-            res = st.session_state["supabase_client"].schema("api").from_("game_sessions").insert(self.current_session_event).execute()
+            #res = st.session_state["supabase_client"].schema("api").from_("game_sessions").insert(self.current_session_event).execute()
         except Exception as e:
             print(f"Error storing session event: {e}")
             res = None
@@ -160,6 +186,13 @@ class Session:
             "event": "reset"
         }
 
+    def send_initial_session_event(self):
+        """
+        Send the initial session event to the database.
+        """
+        self.update_session_event(event="session_started")
+        self.store_problem_event(event="session_started")
+        return
 
 
 
