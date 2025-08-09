@@ -13,7 +13,7 @@ class Session:
         Initialize a new game session with the given parameters.
         """
         self.session_id = str(uuid6.uuid7())
-        self.user_id = st.session_state["supabase_client"].auth.get_user().user.id if st.session_state.get("user") is not None else "anon"
+        self.user_id = st.session_state["supabase_client"].auth.get_user().user.id if st.session_state.get("user") is not None else None
 
         self.current_problem_event={
             "session_id": self.session_id,
