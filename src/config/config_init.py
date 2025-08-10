@@ -26,7 +26,7 @@ def set_defaults():
         "game_mode_selection": None,
         "problem_id": 0,
         "problem_types_segmented_control": [0],
-        "current_game_session": None,
+        "GameTelemetry": None,
         "symbols": {
             "add": r"$+$",
             "subtract": r"$-$",

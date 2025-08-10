@@ -51,11 +51,10 @@ def game_page_ui():
     if validate_answer(user_response):
         st.session_state["game_score"] += 1
         st.session_state["problem_id"] += 1
-        #print(f"the user response was: {user_response}")
-        st.session_state["current_game_session"].update_problem_event(keystroke_sequence=user_response[2], keystroke_count=user_response[3], event="correct_answer")
-        #print(st.session_state["current_game_session"].current_problem_event)
-        #print(json.dumps(st.session_state["current_game_session"].current_session_event, indent=2, default=str))
-        st.session_state["current_game_session"].store_problem_event()
+        st.session_state["GameTelemetry"].update_problem_event(keystroke_sequence=user_response[2], keystroke_count=user_response[3], event="correct_answer")
+        #print(st.session_state["GameTelemetry"].current_problem_event)
+        #print(json.dumps(st.session_state["GameTelemetry"].current_session_event, indent=2, default=str))
+        st.session_state["GameTelemetry"].store_problem_event()
         new_problem()
         st.rerun()
 

@@ -19,7 +19,7 @@ def new_problem():
     # WARNING: Currently the CoreProblem class can be pickled. If it ever can't be,
     # then just store the required data in a map and put that in the session state. For now, this is convenient though
 
-    st.session_state["current_game_session"].reset_problem_event()
+    st.session_state["GameTelemetry"].reset_problem_event()
     st.session_state["current_problem"] = Question(
         range_=get_range(next_problem_tag),
         op_=op_API_ALIASES[next_problem_op_],

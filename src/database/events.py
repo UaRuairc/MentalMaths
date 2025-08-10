@@ -6,7 +6,7 @@ import json
 import uuid6
 
 
-class Session:
+class GameTelemetry:
 
     def __init__(self, game_mode, active_problem_types, event="session_started"):
         """
@@ -66,7 +66,11 @@ class Session:
 
     def update_problem_event(self, keystroke_sequence, keystroke_count, event="correct_answer"):
 
+        if event == "problem_created":
+            self.reset_problem_event()
+
         problem_snapshot = st.session_state["current_problem"].snapshot(event)
+
         data = {
             "event_id": str(uuid6.uuid7()),
             "problem_id": st.session_state["current_problem_id"],
