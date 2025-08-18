@@ -7,8 +7,18 @@ import random
 from src.utils import get_range
 
 
+def start_game(event="game_session_started"):
+    print("test")
+    st.session_state["Game"] = Game(event=event)
+    st.rerun()
 
-def start_game(event="game_started"):
+def end_game(event="game_ended_early"):
+    """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
+    st.session_state["Game"].last_event = event
+    st.session_state["Game"].end_game()
+    st.rerun()
+
+def start_game_old(event="game_started"):
     print("Starting the game.")
     st.session_state["game_start_time"] = time.time()
     st.session_state["game_end_time"] = st.session_state["game_start_time"] + st.session_state["config"]["number_input_boxes"]["duration"]["value"]
@@ -24,7 +34,7 @@ def start_game(event="game_started"):
     st.rerun()
 
 
-def end_game(event="game_ended_early"):
+def end_game_old(event="game_ended_early"):
     """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
     st.session_state["GameTelemetry"].update_problem_event(keystroke_count=0, keystroke_sequence="", event=event)
     print("Ending the game.")
@@ -40,15 +50,16 @@ def game_countdown_timer(verbosity=1):
     Will need to make a game logger helper soon
     """
     #debug_fragment_info("Game Timer")
+    game = st.session_state["Game"]
 
-    if st.session_state["is_game_running"]:
-        time_remaining = st.session_state["game_end_time"] - time.time()
+    if game.is_running:
+        time_remaining = game.end_time - time.time()
         time_run_out = time_remaining <= 0
         if verbosity == 1: print(f"Time remaining: {time_remaining}")
 
         if time_run_out :
             if verbosity == 1: print("Game has ended.")
-            end_game(event="game_completed")
+            game.end_game(event="game_completed")
 
 class Game():
 

@@ -1,7 +1,7 @@
 import streamlit as st
 from src.problem_management.problem_engine import Question
 from src.config.config_management import ConfigManager
-from src.state_management.game_state import start_game
+from src.state_management.game_state import start_game, start_game_old
 from src.ui.widgets import LeftRightSliders, MakeWidget
 from src.utils import inject_centring_css, get_range
 
@@ -207,6 +207,19 @@ def is_start_button_disabled():
     )
 
     return disable_start_button_condition, help_message
+
+def display_start_button_and_help_messages_old(settings_containers):
+
+    disable_start_button_condition, help_message = is_start_button_disabled()
+
+    with settings_containers["start_button"]:
+        col1, col2 = st.columns([1, 4], vertical_alignment="center")
+        with col1:
+            if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
+                start_game_old()
+        with col2:
+            if help_message:
+                st.info(help_message)
 
 def display_start_button_and_help_messages(settings_containers):
 
