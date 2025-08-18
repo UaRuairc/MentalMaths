@@ -38,6 +38,7 @@ MentalMaths/
 │   │
 │   ├── database/
 │   │   ├── connection.py
+│   │   ├── events.py
 │   │   └── auth/
 │   │       └── service.py
 │   │ 
@@ -49,9 +50,13 @@ MentalMaths/
 │   │   └── game_state.py
 │   │ 
 │   └── ui/
-│       ├── auth_ui.py
-│       ├── pages_ui.py
-│       └── widgets.py
+│       ├── pages.py
+│       ├── widgets.py
+│       └── page_components/
+│           ├── auth.py
+│           ├── game.py
+│           ├── setup.py
+│           └── stats.py
 │
 ├── .streamlit/
 │   ├── config.toml     
