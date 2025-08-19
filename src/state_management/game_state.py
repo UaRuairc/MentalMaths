@@ -8,7 +8,6 @@ from src.utils import get_range
 
 
 def start_game(event="game_session_started"):
-    print("test")
     st.session_state["Game"] = Game(event=event)
     st.rerun()
 
@@ -16,7 +15,6 @@ def end_game(event="game_ended_early"):
     """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
     st.session_state["Game"].last_event = event
     st.session_state["Game"].end_game()
-    st.rerun()
 
 def start_game_old(event="game_started"):
     print("Starting the game.")
@@ -59,7 +57,8 @@ def game_countdown_timer(verbosity=1):
 
         if time_run_out :
             if verbosity == 1: print("Game has ended.")
-            game.end_game(event="game_completed")
+            game.last_event = "game_timed_out"
+            game.end_game()
 
 class Game():
 

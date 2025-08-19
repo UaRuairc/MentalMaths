@@ -105,7 +105,7 @@ def game_page_ui():
     game.last_user_response = render_exercise(
         problem_details=problem_details,
         should_fade=st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
-        problem_id=st.session_state["problem_id"]
+        problem_id=game.problem_id
         )
 
 
