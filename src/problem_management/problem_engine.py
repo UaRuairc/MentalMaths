@@ -50,7 +50,7 @@ class Problem(ABC):
     right: Any
     type: Any
     invert_operation: bool = False
-    modifiers: list = None
+    modifiers: dict = None
     answer: Any = None
     op: Any = None
 
@@ -98,7 +98,7 @@ class AddProblem(Problem):
             self.answer = self.left + self.right
             return
 
-        if "pos_answers_only" in self.modifiers:
+        if self.modifiers["pos_answers_only"]:
             self.left, self.right = max(self.left, self.right), min(self.left, self.right)
 
         self.answer = self.left - self.right
