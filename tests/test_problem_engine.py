@@ -89,6 +89,8 @@ RANGES = static_ranges()
 @pytest.mark.parametrize("op, seed, ranges, i", [(op, seed, ranges, i%8) for op in ops for i, (seed,ranges) in enumerate(zip(SEEDS[op], RANGES[op])) ])
 def test_problem_generation(op, seed, ranges, i):
 
+    modifiers["pos_answers_only"] = False
+
     l1, r1 = ranges
     l2, r2 = l1 + 1000, r1 + 1000
 
@@ -100,6 +102,8 @@ def test_problem_generation(op, seed, ranges, i):
 @pytest.mark.parametrize("op, seed, ranges, i", [(op, seed, ranges, i%8) for op in ops for i, (seed,ranges) in enumerate(zip(SEEDS[op], RANGES[op])) ])
 def test_left_right_operands(op, seed, ranges, i):
 
+    modifiers["pos_answers_only"] = False
+
     l1, r1 = ranges
     l2, r2 = l1 + 1000, r1 + 1000
 
@@ -108,6 +112,18 @@ def test_left_right_operands(op, seed, ranges, i):
 
     assert (q.Problem.left, q.Problem.right) == EXPECTED_OPERANDS[op][i]
 
+@pytest.mark.parametrize("op, seed, ranges, i", [(op, seed, ranges, i%8) for op in ops for i, (seed,ranges) in enumerate(zip(SEEDS[op], RANGES[op])) ])
+def test_modifier_pos_answers_only(op, seed, ranges, i):
 
+    l1, r1 = ranges
+    l2, r2 = l1 + 1000, r1 + 1000
+
+    modifiers["pos_answers_only"] = True
+
+    q = Question(range_ = ((l1, r1), (l2, r2)), op_=op, seed=seed, dtype_ = "ints", modifiers=modifiers)
+    q.calc()
+
+
+    assert q.answer == abs(EXPECTED_ANSWERS[op][i])
 
 
