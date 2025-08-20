@@ -30,7 +30,7 @@ class Generator:
     def __init__(self, range_ = None, dtype_ = None, seed = None):
         self.range = range_
         self.dtype = dtype_
-        self.rng = random.Random(seed) if seed else random.Random()
+        self.rng = random.Random(seed) if seed is not None else random.Random()
 
     def generate(self):
         if self.dtype == "ints":
@@ -143,12 +143,12 @@ class Question:
 
     In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
     """
-    def __init__(self, range_ = None, op_ = None, dtype_ = None, modifiers = None):
+    def __init__(self, range_ = None, op_ = None, dtype_ = None, modifiers = None, seed = None):
         self.range = range_
         self.op = op_
         self.dtype = dtype_
         self.modifiers = modifiers
-        self.generator = Generator(range_=self.range, dtype_=self.dtype)
+        self.generator = Generator(range_=self.range, dtype_=self.dtype, seed=seed)
         self.answer = None
         self.Problem = None
 
