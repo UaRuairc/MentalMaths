@@ -1,7 +1,7 @@
 import streamlit as st
 from src.problem_management.problem_engine import Question
 from src.config.config_management import ConfigManager
-from src.state_management.game_state import start_game, start_game_old
+from src.game.game_manager import start_game, start_game_old
 from src.ui.widgets import LeftRightSliders, MakeWidget
 from src.utils import inject_centring_css, get_range
 

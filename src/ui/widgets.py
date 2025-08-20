@@ -37,7 +37,7 @@ class MakeWidget():
     We opt for a widget wrapper that takes a configuration
 
     1. This makes it less painful to switch UI frameworks if necessary.
-    2. Once the config is made in `state_management.py` you only ever have to type MakeWidget(),
+    2. Once the config is made, you only ever have to type MakeWidget(),
     you don't have to go through the whole rigmarole of making sure your widget always has the right
     value .
 

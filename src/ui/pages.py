@@ -1,6 +1,6 @@
 import streamlit as st
 from src.problem_management.problem_generation import validate_answer, new_problem
-from src.state_management.game_state import end_game, end_game_old
+from src.game.game_manager import end_game, end_game_old
 from src.ui.page_components.auth import user_auth
 from src.ui.page_components.setup import display_settings, display_start_button_and_help_messages, display_start_button_and_help_messages_old
 from src.ui.page_components.game import render_exercise

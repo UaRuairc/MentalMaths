@@ -60,7 +60,7 @@ def game_countdown_timer(verbosity=1):
             game.last_event = "game_timed_out"
             game.end_game()
 
-class Game():
+class Game:
 
     def __init__(self, event="game_session_started"):
         self.is_running = False
