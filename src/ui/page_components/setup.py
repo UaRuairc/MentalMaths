@@ -127,31 +127,42 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
     )
 
     if type_ != "div_ints":
-        disabled_pos = "c"
+        disabled_box = "c"
     else:
-        disabled_pos = "a"
+        disabled_box = "a"
 
-    def update_disabled_boxes_on_change():
+    def update_disabled_boxes_on_change(type_, disabled_box):
+        def wrapper():
+            min_, max_ = Question.calc_theoretical_range(
+                type_=type_[:-5],
+                ranges_=get_range(type_),
+                pos_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
-        min_, max_ = Question.calc_theoretical_range(
-            type_=type_[:-5],
-            ranges_=get_range(type_),
-            pos_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
 
-        st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_pos}_min"]["value"] = min_
-        st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_pos}_max"]["value"] = max_
+            st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_box}_min"]["value"] = min_
+            st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_box}_max"]["value"] = max_
 
-    for key, range_ in zip(keys, sum(r_, ())):
+        return wrapper
 
-        box_pos = key.split("_")[2]  # e.g. "a", "b", "c"
+    if keys[0] not in st.session_state["config"]["number_input_boxes"]:
+        # add the widgets
 
-        ConfigManager.add_widget(
-            name=key,
-            widget_category="number_input_boxes",
-            **{"step": 1, "label_visibility": "collapsed", "value": range_},
-            disabled= True if disabled_pos == box_pos else False,
-            extra_callback=update_disabled_boxes_on_change
-        )
+        for key, range_ in zip(keys, sum(r_, ())):
+
+            box_pos = key.split("_")[2]  # e.g. "a", "b", "c"
+
+            ConfigManager.add_widget(
+                name=key,
+                widget_category="number_input_boxes",
+                **{"step": 1, "label_visibility": "collapsed", "value": range_},
+                disabled= True if disabled_box == box_pos else False,
+                extra_callback=update_disabled_boxes_on_change(type_, disabled_box)
+            )
+
+
+
+
+
 
     with range_display_cols[1]:
         make_number_boxes(type_=type_, position_ = "a")
@@ -167,6 +178,16 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
 
     with range_display_cols[5]:
         make_number_boxes(type_=type_, position_="c")
+
+    if ConfigManager.get_widget_value(
+            widget_name="pos_answers_only",
+            widget_category="checkboxes",
+            arg="extra_callback") is None:
+        #need a callback to update the answer range when the pos_answers_only checkbox is toggled
+
+        ConfigManager.update_widget_arg(widget_name="pos_answers_only", widget_category="checkboxes",
+                                        arg="extra_callback",
+                                        updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
 
 def make_number_boxes(type_, position_):
     get_val = lambda key_: ConfigManager.get_widget_value(widget_name=key_, widget_category="number_input_boxes")
