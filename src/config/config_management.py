@@ -43,6 +43,7 @@ class ConfigManager:
 
         config["label"] = f"{name}"
         config["on_change"] = None
+        config["extra_callback"] = None
 
         if widget_category == "number_input_boxes":
             config["value"] = 0
@@ -74,11 +75,17 @@ class ConfigManager:
     @staticmethod
     def validate_config(widget_key, widget_category):
         MakeWidget(widget_key, widget_category)
-        # work in progress
+        # work in progress could just use MakeWidget give an error when invalid
+
+    @staticmethod
+    def get_widget_config(widget_key, widget_category):
+        if widget_category not in st.session_state["config"]:
+            print(f"There are no widgets widget category {widget_category} does not exist in session state.")
 
     @staticmethod
     def add_widget(name: str, widget_category: str, **overrides):
-        if name in st.session_state["config"][widget_category]:
+
+        if ConfigManager.is_widget_configured(name, widget_category):
             # print(f"A {widget_category} widget with this name already exists. Choose a different name.")
             return
 
@@ -89,8 +96,78 @@ class ConfigManager:
 
     @staticmethod
     def remove_widget(name: str, widget_category: str):
-        st.session_state["config"][widget_category].pop(name)
+        if widget_category not in st.session_state["config"]:
+            print(f"The widget category {widget_category} is already empty. Is {name} in a different category?")
+            return
+
+        if name not in st.session_state["config"][widget_category]:
+            st.session_state["config"][widget_category].pop(name)
 
     @staticmethod
-    def get_widget_value(widget_name, widget_category):
-        return st.session_state["config"][widget_category][widget_name]["value"]
+    def get_widget_value(widget_name, widget_category, arg="value"):
+        return st.session_state["config"][widget_category][widget_name][arg]
+
+    @staticmethod
+    def add_widget_arg(widget_name, widget_category, new_arg, new_arg_value):
+        """
+        Add a new argument to the widget config in session state.
+        This is used to add new arguments to existing widgets.
+        """
+
+        if widget_category not in st.session_state["config"] or widget_name not in st.session_state["config"][widget_category]:
+            print(f"The widget does not exist.")
+            return
+        else:
+            widget_config = st.session_state["config"][widget_category][widget_name]
+
+        if new_arg in widget_config:
+            print("That argument already exists. If you want to change it, use the set_widget_arg method.")
+            return
+
+        widget_config[new_arg] = new_arg_value
+
+        return
+
+    @staticmethod
+    def update_widget_arg(widget_name, widget_category, arg, updated_arg_value):
+        """
+        Add new arguments to existing widget configs.
+        """
+        if ConfigManager.is_widget_configured(widget_name, widget_category):
+            widget_config = st.session_state["config"][widget_category][widget_name]
+        else:
+            print(f"The widget {widget_name} of category {widget_category} does not exist. Please add it before trying to update it.")
+            return False
+
+        if arg not in widget_config:
+            print("That argument does not exist. If you want to add it, use the add_new_widget_arg method.")
+            return False
+
+        if type(updated_arg_value) != type(widget_config[arg]):
+            print(f"WARNING: {arg} is of type {type(widget_config[arg])}, but the updated value is of type {type(updated_arg_value)}.")
+            print("updated the value anyway, but this may cause issues.")
+
+
+        if arg == "extra_callback":
+            if updated_arg_value is not None and not callable(updated_arg_value):
+                print(f"extra_callback must be a callable, got {type(updated_arg_value)} instead.")
+                return False
+
+
+        widget_config[arg] = updated_arg_value
+
+
+
+        return True
+
+    @staticmethod
+    def is_widget_configured(widget_name, widget_category):
+        """
+        Check if a widget exists in the session state.
+        """
+        if widget_category not in st.session_state["config"] or widget_name not in st.session_state["config"][
+            widget_category]:
+            #print(f"The widget {widget_name} of category {widget_category} does not exist.")
+            return False
+        else:
+            return True
