@@ -89,7 +89,7 @@ class ConfigManager:
     def add_widget(name: str, widget_category: str, **overrides):
 
         if ConfigManager.is_widget_configured(name, widget_category):
-            # print(f"A {widget_category} widget with this name already exists. Choose a different name.")
+            print(f"A {widget_category} widget with this name already exists. Choose a different name.")
             return
 
         config = ConfigManager.generate_config(name, widget_category, **overrides)
@@ -108,6 +108,8 @@ class ConfigManager:
 
     @staticmethod
     def get_widget_value(widget_name, widget_category, arg="value"):
+        """ Get the value of a widget argument from the session state.
+            By default, it returns the value arg, but can return any argument of the widget config."""
         return st.session_state["config"][widget_category][widget_name][arg]
 
     @staticmethod
@@ -116,15 +118,14 @@ class ConfigManager:
         Add a new argument to the widget config in session state.
         This is used to add new arguments to existing widgets.
         """
-
-        if widget_category not in st.session_state["config"] or widget_name not in st.session_state["config"][widget_category]:
-            print(f"The widget does not exist.")
+        if not ConfigManager.is_widget_configured(widget_name, widget_category):
+            print(f"The widget {widget_name} of category {widget_category} does not exist. Please add it before trying to add an argument.")
             return
         else:
-            widget_config = st.session_state["config"][widget_category][widget_name]
+            widget_config = ConfigManager.get_widget_config(widget_name, widget_category)
 
         if new_arg in widget_config:
-            print("That argument already exists. If you want to change it, use the set_widget_arg method.")
+            print("That argument already exists. If you want to update it, use the update_widget_arg method.")
             return
 
         widget_config[new_arg] = new_arg_value
