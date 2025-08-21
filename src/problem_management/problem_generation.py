@@ -2,6 +2,7 @@ import streamlit as st
 import random
 from src.problem_management.problem_engine import Question
 from src.utils import get_range
+from src.config.config_management import ConfigManager as cm
 
 ops = ["add", "subtract", "mult", "div"]
 op_API_ALIASES = {
@@ -12,7 +13,13 @@ op_API_ALIASES = {
 }
 
 def new_problem():
-    """generate a new problem for the user"""
+    """
+
+    generate a new problem for the user
+
+    Keeping this function, even though we now have game class. Will likely be used if we fully separate front/backend
+
+    """
     next_problem_op_, next_data_type_ = random.choice(st.session_state["active_problem_types"])
     next_problem_tag = next_problem_op_ + "_" + next_data_type_
 
@@ -45,10 +52,11 @@ def validate_answer(user_response: list | str):
 
     return (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)
 
+
 def get_modifiers():
     return {
-        "pos_answers_only": st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"],
-        "fade_problem": st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
+        "pos_answers_only": cm.get_widget_value("pos_answers_only", "checkboxes"),
+        "fade_problem": cm.get_widget_value("fade_problem", "checkboxes")
     }
 
 

@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime, timezone
-from src.config.config_management import ConfigManager
+from src.config.config_management import ConfigManager as cm
 from src.utils import get_ranges
 import json
 import uuid6
@@ -111,7 +111,7 @@ class GameTelemetry:
     def store_problem_event(self, event=None):
         print("We would have stored the following problem in the database:")
         data_to_store = json.dumps(self.current_problem_event, indent=2, sort_keys=True, default=str)
-        print(data_to_store)
+        #print(data_to_store)
         try:
             print("not storing right now")
             # res = st.session_state["supabase_client"].schema("api").from_("problem_events").insert(self.current_problem_event).execute()
@@ -125,7 +125,7 @@ class GameTelemetry:
         print("We would have stored the following session in the database:")
         event_copy = self.current_session_event.copy()
         data_to_store = json.dumps(event_copy, indent=2, sort_keys=True, default=str)
-        print(data_to_store)
+        #print(data_to_store)
         try:
             print("not storing right now")
             print(self.current_session_event)
@@ -153,7 +153,7 @@ class GameTelemetry:
         #stats = config_stats(st.session_state["config"])
         #print({k: stats[k] for k in ("json_kib", "gzip_kib", "sha256")})
 
-        get_val = ConfigManager.get_widget_value
+        get_val = cm.get_widget_value
         payload = {
             "version": "0.2",
             "game_mode": game_mode,

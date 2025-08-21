@@ -1,6 +1,6 @@
 import streamlit as st
 from src.problem_management.problem_engine import Question
-from src.config.config_management import ConfigManager
+from src.config.config_management import ConfigManager as cm
 from src.game.game_manager import start_game, start_game_old
 from src.ui.widgets import LeftRightSliders, MakeWidget
 from src.utils import inject_centring_css, get_range
@@ -22,7 +22,7 @@ for key, val in initial_range.items():
     ans_range = Question.calc_theoretical_range(
         type_=key[:-5],
         ranges_=val,
-        pos_answers_only=st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"]
+        pos_answers_only=lambda: cm.get_widget_value("pos_answers_only", "checkboxes")
     )
     if key != "div_ints":
         initial_range[key].append(ans_range)
@@ -82,7 +82,7 @@ def update_active_problem_types():
 
     """
     index_map = st.session_state["problem_type_index_map"]
-    selections = sorted(st.session_state["config"]["segmented_control"]["problem_types"]["value"])
+    selections = sorted(cm.get_widget_value("problem_types", "segmented_control"))
     st.session_state["active_problem_types"] = [
         (index_map[index_]["operation"], index_map[index_]["dtype"])
         for index_ in selections
@@ -136,33 +136,27 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
             min_, max_ = Question.calc_theoretical_range(
                 type_=type_[:-5],
                 ranges_=get_range(type_),
-                pos_answers_only=lambda: st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"])
+                pos_answers_only= cm.get_widget_value("pos_answers_only", "checkboxes"))
 
-
-            st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_box}_min"]["value"] = min_
-            st.session_state["config"]["number_input_boxes"][f"{type_}_{disabled_box}_max"]["value"] = max_
+            cm.update_widget_arg(f"{type_}_{disabled_box}_min", "number_input_boxes", min_)
+            cm.update_widget_arg(f"{type_}_{disabled_box}_max", "number_input_boxes", max_)
 
         return wrapper
 
-    if keys[0] not in st.session_state["config"]["number_input_boxes"]:
-        # add the widgets
+    if not cm.is_widget_configured(keys[0], "number_input_boxes"):
+        # the widgets need to be added to the config
 
         for key, range_ in zip(keys, sum(r_, ())):
 
             box_pos = key.split("_")[2]  # e.g. "a", "b", "c"
 
-            ConfigManager.add_widget(
+            cm.add_widget(
                 name=key,
                 widget_category="number_input_boxes",
                 **{"step": 1, "label_visibility": "collapsed", "value": range_},
                 disabled= True if disabled_box == box_pos else False,
                 extra_callback=update_disabled_boxes_on_change(type_, disabled_box)
             )
-
-
-
-
-
 
     with range_display_cols[1]:
         make_number_boxes(type_=type_, position_ = "a")
@@ -179,18 +173,18 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
     with range_display_cols[5]:
         make_number_boxes(type_=type_, position_="c")
 
-    if ConfigManager.get_widget_value(
+    if cm.get_widget_value(
             widget_name="pos_answers_only",
             widget_category="checkboxes",
             arg="extra_callback") is None:
         #need a callback to update the answer range when the pos_answers_only checkbox is toggled
 
-        ConfigManager.update_widget_arg(widget_name="pos_answers_only", widget_category="checkboxes",
+        cm.update_widget_arg(widget_name="pos_answers_only", widget_category="checkboxes",
                                         arg="extra_callback",
                                         updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
 
 def make_number_boxes(type_, position_):
-    get_val = lambda key_: ConfigManager.get_widget_value(widget_name=key_, widget_category="number_input_boxes")
+    get_val = lambda key_: cm.get_widget_value(widget_name=key_, widget_category="number_input_boxes")
     flip = {"min": "max", "max": "min"}
     render_box = lambda kind_: MakeWidget(
                                     widget_config_key=f"{type_}_{position_}_{kind_}",
@@ -209,8 +203,9 @@ def make_number_boxes(type_, position_):
             render_box("max")
 
 def is_start_button_disabled():
-    current_duration_value = st.session_state["config"]["number_input_boxes"]["duration"]["value"]
-    current_duration_option = st.session_state["config"]["segmented_control"]["duration"]["value"]
+
+    current_duration_value = cm.get_widget_value("duration", "number_input_boxes")
+    current_duration_option = cm.get_widget_value("duration", "segmented_control")
 
     no_types_selected = not st.session_state["active_problem_types"]
     duration_not_set = (

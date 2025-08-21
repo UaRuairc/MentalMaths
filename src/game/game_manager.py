@@ -1,5 +1,6 @@
 import time
 import streamlit as st
+from src.config.config_management import ConfigManager as cm
 from src.database.events import GameTelemetry
 from src.problem_management.problem_generation import new_problem
 from src.problem_management.problem_engine import Question
@@ -19,7 +20,7 @@ def end_game(event="game_ended_early"):
 def start_game_old(event="game_started"):
     print("Starting the game.")
     st.session_state["game_start_time"] = time.time()
-    st.session_state["game_end_time"] = st.session_state["game_start_time"] + st.session_state["config"]["number_input_boxes"]["duration"]["value"]
+    st.session_state["game_end_time"] = st.session_state["game_start_time"] + cm.get_widget_value("duration", "number_input_boxes")
 
     st.session_state["GameTelemetry"] = GameTelemetry(
         game_mode="standard",
@@ -89,7 +90,7 @@ class Game:
         if self.GameTelemetry is None:
             print("Initialising telemetry.")
             self.start_time = time.time()
-            self.end_time = self.start_time + st.session_state["config"]["number_input_boxes"]["duration"]["value"]
+            self.end_time = self.start_time + cm.get_widget_value("duration", "number_input_boxes")
             self.is_running = True
             st.session_state["is_game_running"] = self.is_running
             self.score = 0
@@ -216,8 +217,8 @@ class Game:
     @staticmethod
     def get_modifiers():
         return {
-            "pos_answers_only": st.session_state["config"]["checkboxes"]["pos_answers_only"]["value"],
-            "fade_problem": st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
+            "pos_answers_only":  cm.get_widget_value("pos_answers_only", "checkboxes"),
+            "fade_problem": cm.get_widget_value("fade_problem", "checkboxes")
     }
 
 

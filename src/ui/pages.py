@@ -1,8 +1,8 @@
 import streamlit as st
-from src.problem_management.problem_generation import validate_answer, new_problem
-from src.game.game_manager import end_game, end_game_old
+from src.config.config_management import ConfigManager as cm
+from src.game.game_manager import end_game
 from src.ui.page_components.auth import user_auth
-from src.ui.page_components.setup import display_settings, display_start_button_and_help_messages, display_start_button_and_help_messages_old
+from src.ui.page_components.setup import display_settings, display_start_button_and_help_messages
 from src.ui.page_components.game import render_exercise
 import warnings
 warnings.filterwarnings("ignore", message=".*was created with a default value.*")
@@ -44,7 +44,7 @@ def game_page_ui():
     ]
     game.last_user_response = render_exercise(
         problem_details=problem_details,
-        should_fade=st.session_state["config"]["checkboxes"]["fade_problem"]["value"],
+        should_fade=cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"),
         problem_id=game.problem_id
         )
 
@@ -55,7 +55,7 @@ def game_page_ui():
         game.GameTelemetry.reset_problem_event()
         st.rerun()
 
-    if st.session_state["config"]["checkboxes"]["fade_problem"]["value"]:
+    if cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"):
         if st.button("Show problem again"):
             st.session_state["fade_class_identifier"] += 1
             st.rerun()
