@@ -79,8 +79,11 @@ class ConfigManager:
 
     @staticmethod
     def get_widget_config(widget_key, widget_category):
-        if widget_category not in st.session_state["config"]:
-            print(f"There are no widgets widget category {widget_category} does not exist in session state.")
+        if ConfigManager.is_widget_configured(widget_key, widget_category):
+            return st.session_state["config"][widget_category][widget_key]
+        else:
+            print(f"The widget {widget_key} of category {widget_category} does not exist. Please add it before trying to get it.")
+            return None
 
     @staticmethod
     def add_widget(name: str, widget_category: str, **overrides):
