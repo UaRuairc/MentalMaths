@@ -129,9 +129,13 @@ class ConfigManager:
         return
 
     @staticmethod
-    def update_widget_arg(widget_name, widget_category, arg, updated_arg_value):
+    def update_widget_arg(widget_name: str,
+                          widget_category: str,
+                          updated_arg_value,
+                          arg: str="value",
+                          ):
         """
-        Add new arguments to existing widget configs.
+        Update arguments to existing widget configs.
         """
         if ConfigManager.is_widget_configured(widget_name, widget_category):
             widget_config = st.session_state["config"][widget_category][widget_name]
