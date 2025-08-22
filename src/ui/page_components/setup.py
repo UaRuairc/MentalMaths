@@ -10,24 +10,8 @@ checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_check
 default_style = ("text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; "
                  "display: flex; align-items: center; justify-content: center; min-height: 80px;")
 # currently dynamically make some widget configurations on this page at runtime, so defaults not in config yet, initialise here
-initial_range = {
-    "add_ints": [(3,100), (3,100)],
-    "subtract_ints": [(3,100), (3,100)],
-    "mult_ints": [(3,12), (3,12)],
-    "div_ints": [(3,12), (3,12)],
-}
-for key, val in initial_range.items():
-    # for now, key is always <operation_ints>, so `[:-5]` gets rid of the ints
-    operation = key[:-5]
-    ans_range = Question.calc_theoretical_range(
-        type_=key[:-5],
-        ranges_=val,
-        pos_answers_only=lambda: cm.get_widget_value("pos_answers_only", "checkboxes")
-    )
-    if key != "div_ints":
-        initial_range[key].append(ans_range)
-    else:
-        initial_range[key].insert(0, ans_range)
+
+
 
 def display_settings(settings_containers):
     render_base_settings(settings_containers)
@@ -98,10 +82,9 @@ def render_active_problem_type_settings(settings_containers):
     """
     with settings_containers["range_settings"]:
         for op, type in st.session_state["active_problem_types"]:
-            initial_range_ = initial_range[f"{op}_{type}"]
-            render_range_inputs(f"{op}_{type}", initial_range_=initial_range_,  symbol=st.session_state["symbols"][op])
+            render_range_inputs(f"{op}_{type}",  symbol=st.session_state["symbols"][op])
 
-def render_range_inputs(type_, initial_range_, symbol="+"):
+def render_range_inputs(type_, symbol="+"):
 
     """
 
@@ -119,24 +102,25 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
     """
 
     range_display_cols = st.columns([1, 8, 1, 8, 1, 8, 1], vertical_alignment="center")
-    r_ = initial_range_
     inject_centring_css()
-
-    keys = (
-        f"{type_}_a_min", f"{type_}_a_max", f"{type_}_b_min", f"{type_}_b_max", f"{type_}_c_min", f"{type_}_c_max"
-    )
 
     if type_ != "div_ints":
         disabled_box = "c"
     else:
         disabled_box = "a"
 
+
+    keys = (
+        f"{type_}_a_min", f"{type_}_a_max", f"{type_}_b_min", f"{type_}_b_max", f"{type_}_c_min", f"{type_}_c_max"
+    )
+
     def update_disabled_boxes_on_change(type_, disabled_box):
         def wrapper():
+            #print(type_, disabled_box)
             min_, max_ = Question.calc_theoretical_range(
                 type_=type_[:-5],
-                ranges_=get_range(type_),
-                pos_answers_only= cm.get_widget_value("pos_answers_only", "checkboxes"))
+                ranges_=lambda: get_range(type_),
+                pos_answers_only= lambda: cm.get_widget_value("pos_answers_only", "checkboxes"))
 
             cm.update_widget_arg(f"{type_}_{disabled_box}_min", "number_input_boxes", min_)
             cm.update_widget_arg(f"{type_}_{disabled_box}_max", "number_input_boxes", max_)
@@ -145,18 +129,72 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
 
     if not cm.is_widget_configured(keys[0], "number_input_boxes"):
         # the widgets need to be added to the config
+        # add the ones that are not disabled first, then the disabled one last
 
-        for key, range_ in zip(keys, sum(r_, ())):
+        # we need to give them some initial values
+        initial_range = {
+            "add_ints": [(3, 100), (3, 100)],
+            "subtract_ints": [(3, 100), (3, 100)],
+            "mult_ints": [(3, 12), (3, 12)],
+            "div_ints": [(3, 12), (3, 12)],
+        }
 
-            box_pos = key.split("_")[2]  # e.g. "a", "b", "c"
+        if disabled_box == "c":
+            a_min, a_max, b_min, b_max = sum(initial_range[type_], ())
+            c_min, c_max = Question.calc_theoretical_range(
+                type_=type_[:-5],
+                ranges_=( (a_min, a_max), (b_min, b_max) ),
+                pos_answers_only=cm.get_widget_value("pos_answers_only", "checkboxes")
+            )
+
+
+            active = [
+                (a_min, f"{type_}_a_min"),
+                (a_max, f"{type_}_a_max"),
+                (b_min, f"{type_}_b_min"),
+                (b_max, f"{type_}_b_max"),
+                      ]
+            disabled = [
+                (c_min, f"{type_}_c_min"),
+                (c_max, f"{type_}_c_max"),
+            ]
+
+        else:
+            b_min, b_max, c_min, c_max = sum(initial_range[type_], ())
+            a_min, a_max = Question.calc_theoretical_range(
+                type_=type_[:-5],
+                ranges_=( (b_min, b_max), (c_min, c_max) ),
+                pos_answers_only=cm.get_widget_value("pos_answers_only", "checkboxes")
+            )
+
+            active = [
+                (b_min, f"{type_}_b_min"),
+                (b_max, f"{type_}_b_max"),
+                (c_min, f"{type_}_c_min"),
+                (c_max, f"{type_}_c_max"),
+            ]
+            disabled = [
+                (a_min, f"{type_}_a_min"),
+                (a_max, f"{type_}_a_max"),
+            ]
+
+        for val, widget_name in active:
 
             cm.add_widget(
-                name=key,
+                name=widget_name,
                 widget_category="number_input_boxes",
-                **{"step": 1, "label_visibility": "collapsed", "value": range_},
-                disabled= True if disabled_box == box_pos else False,
+                **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": False},
                 extra_callback=update_disabled_boxes_on_change(type_, disabled_box)
             )
+
+        for val, widget_name in disabled:
+
+            cm.add_widget(
+                name=widget_name,
+                widget_category="number_input_boxes",
+                **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": True},
+            )
+
 
     with range_display_cols[1]:
         make_number_boxes(type_=type_, position_ = "a")
@@ -173,15 +211,16 @@ def render_range_inputs(type_, initial_range_, symbol="+"):
     with range_display_cols[5]:
         make_number_boxes(type_=type_, position_="c")
 
-    if cm.get_widget_value(
-            widget_name="pos_answers_only",
-            widget_category="checkboxes",
-            arg="extra_callback") is None:
-        #need a callback to update the answer range when the pos_answers_only checkbox is toggled
+    if type_ == "subtract_ints":
+        if cm.get_widget_value(
+                widget_name="pos_answers_only",
+                widget_category="checkboxes",
+                arg="extra_callback") is None:
+            #need a callback to update the answer range when the pos_answers_only checkbox is toggled
+            cm.update_widget_arg(widget_name="pos_answers_only", widget_category="checkboxes",
+                                            arg="extra_callback",
+                                            updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
 
-        cm.update_widget_arg(widget_name="pos_answers_only", widget_category="checkboxes",
-                                        arg="extra_callback",
-                                        updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
 
 def make_number_boxes(type_, position_):
     get_val = lambda key_: cm.get_widget_value(widget_name=key_, widget_category="number_input_boxes")
