@@ -184,11 +184,13 @@ class Question:
         return data
 
     @staticmethod
-    def calc_theoretical_range(type_, ranges_, pos_answers_only: Union[bool, Callable[[], bool]]=False):
+    def calc_theoretical_range(type_, ranges_: Union[tuple, Callable[[], tuple]], pos_answers_only: Union[bool, Callable[[], bool]]=False):
 
         # example:
         # (l1 -> r1) + (l2 ->  r2) = (min_ ->  max_)
         pos = pos_answers_only() if callable(pos_answers_only) else pos_answers_only
+        ranges_ = ranges_() if callable(ranges_) else ranges_
+
         l1, r1 = ranges_[0]
         l2, r2 = ranges_[1]
         if type_ == "add":
