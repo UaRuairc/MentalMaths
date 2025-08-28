@@ -49,11 +49,7 @@ def game_page_ui():
         )
 
 
-    if game.validate_answer():
-        game.handle_event()
-        game.create_new_problem()
-        game.GameTelemetry.reset_problem_event()
-        st.rerun()
+    game.validate_answer()
 
     if cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"):
         if st.button("Show problem again"):
@@ -61,7 +57,7 @@ def game_page_ui():
             st.rerun()
 
     if st.button("End"):
-        end_game(event="game_ended_early")
+        game.last_event = "user_pressed_end_game"
 
 
 def stats_screen_ui():

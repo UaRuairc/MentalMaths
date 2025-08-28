@@ -165,22 +165,26 @@ class Question:
     def info(self):
         return to_dict(self)
 
-    def snapshot(self, event):
+    def snapshot(self, last_event):
         """
         Create a snapshot of this Question instance.
         """
+
         data = {
             "problem_type": f"{self.op}_{self.dtype}",
-            "answer_ms": self.time_elapsed_ms(),
-            "is_correct": True if event == "correct_answer" else False,
             "created_at": str(self.problem_start_time),
             "left_operand": self.Problem.left,
             "right_operand": self.Problem.right,
-
-            "answer": self.answer if event == "correct_answer" else None,
-            "status": event,
-            "modifiers": self.modifiers
+            "answer": self.answer,
+            "status": "unanswered",
+            "modifiers": self.modifiers,
+            "is_correct": None,
+            "event": last_event
         }
+        if last_event == "user_answer_validated":
+            data["answer_ms"] = self.time_elapsed_ms()
+            data["is_correct"] = True
+
         return data
 
     @staticmethod

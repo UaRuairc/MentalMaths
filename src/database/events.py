@@ -4,57 +4,104 @@ from src.config.config_management import ConfigManager as cm
 from src.utils import get_ranges
 import json
 import uuid6
+from dataclasses import dataclass, field, fields, replace, asdict
+from typing import Any, Optional
+from collections import deque
 
+
+@dataclass
+class ProblemData:
+    event_id: Optional[str]
+    session_id: str
+    user_id: str
+    problem_id: int
+    event: str
+    created_at: Optional[str]
+    problem_type: Optional[str]
+
+    left_num: Optional[int] = None
+    left_den: Optional[int] = None
+    left_operand: Optional[float] = None
+    right_num: Optional[int] = None
+    right_den: Optional[int] = None
+    right_operand: Optional[float] = None
+    answer: Optional[float] = None
+    is_correct: Optional[bool] = None
+    answer_ms: Optional[int] = None
+    modifiers: Optional[Any] = None
+
+    keystroke_sequence: Optional[str] = None
+    keystroke_count: Optional[int] = 0
+    status: str = "active"
+
+    def to_dict(self):
+        return asdict(self)
+
+    def update(self, data: dict):
+        allowed_data = {field_.name for field_ in fields(self)}
+        disallowed_data = data.keys() - allowed_data
+        if disallowed_data:
+            raise ValueError(f"Invalid fields for ProblemEvent: {disallowed_data}")
+
+        # need to
+        # figure out when we should update, and what we should do it,
+
+
+        for key, value in data.items():
+            setattr(self, key, value)
+
+        return self
+
+@dataclass
+class SessionData:
+    session_id: str
+    user_id: str
+    game_mode: str
+    active_problem_types: list
+    modifiers: Optional[Any]
+    started_at: str
+
+    ended_at: Optional[str] = None
+    ended_early: bool = False
+    num_questions: int = 0
+    num_correct: int = 0
+    payload: Optional[Any] = None
+    event_history: Optional[list] = None
+    total_keystroke_count: int = 0
+    total_expected_keystroke_count: int = 0
+    status: str = "active"
+
+    def to_dict(self):
+        return asdict(self)
+
+    def update(self, data: dict):
+        allowed_data = {field_.name for field_ in fields(self)}
+        disallowed_data = data.keys() - allowed_data
+        if disallowed_data:
+            raise ValueError(f"Invalid fields for ProblemEvent: {disallowed_data}")
+
+        # need to
+        # figure out when we should update, and what we should do it,
+
+
+        for key, value in data.items():
+            setattr(self, key, value)
+
+        return self
 
 class GameTelemetry:
 
-    def __init__(self, game_mode, active_problem_types, event="session_started"):
+    def __init__(self, event="session_started"):
         """
         Initialize a new game session with the given parameters.
         """
         self.session_id = str(uuid6.uuid7())
+        self.supabase_session_id = None
         self.user_id = st.session_state["supabase_client"].auth.get_user().user.id if st.session_state.get("user") is not None else None
-
-        self.current_problem_event={
-            "event_id": None,
-            "session_id": self.session_id,
-            "user_id": self.user_id,
-            "problem_id": None,
-            "problem_type": None,
-            "is_correct": True,
-            "answer_ms": None,
-            "created_at": None,
-            "left_num": None, # for fractions
-            "left_den": None, # for fractions
-            "left_operand": None,
-            "right_num": None, # for fractions
-            "right_den": None, # for fractions
-            "right_operand": None,
-            "answer": None,
-            "event": event,
-            "keystroke_sequence": None,
-            "keystroke_count": 0,
-            "status": "active",  # could be active, correct_answer, wrong_answer, duration_expired
-        }
-        # Could do something like event=game_pause, event=game_resume, e.g. getting an ended_early=True game from the db and resuming it?
-
-        self.current_session_event = {
-            "session_id": self.session_id,
-            "user_id": self.user_id,
-            "game_mode": game_mode,
-            "active_problem_types": active_problem_types,
-            "modifiers": None,
-            "started_at": str(datetime.now(timezone.utc)),
-            "ended_at": None,
-            "ended_early": False,
-            "num_questions": 0,
-            "num_correct": 0,
-            "payload": None,
-            "total_keystroke_count": 0,
-            "total_expected_keystroke_count": 0,
-            "event": None,
-            "status": "active",  # could be active, ended or ended_early
-        }
+        self.session_event_buffer = None
+        self.problem_event_buffer = []
+        self.current_problem_payload = None
+        self.current_session_payload = None
 
         try:
             print("not storing right now")
@@ -64,78 +111,30 @@ class GameTelemetry:
             res = None
 
 
-    def update_problem_event(self, keystroke_sequence, keystroke_count, event="correct_answer"):
+    def new_problem_payload(self, record_last_payload, problem_id, data):
 
-        if event == "problem_created":
-            self.reset_problem_event()
+        if record_last_payload and self.current_problem_payload is not None:
+            self.record("problem")
 
-        problem_snapshot = st.session_state["current_problem"].snapshot(event)
+        self.current_problem_payload = ProblemData(
+            event_id = str(uuid6.uuid7()),
+            session_id = self.session_id,
+            user_id = self.user_id,
+            problem_id=problem_id,
+            **data
+        )
 
-        data = {
-            "event_id": str(uuid6.uuid7()),
-            "problem_id": st.session_state["current_problem_id"],
-            "keystroke_sequence": keystroke_sequence, "keystroke_count": keystroke_count,
-         }
+    def new_session_payload(self, record_last_payload, data):
 
-        data.update(problem_snapshot)
+        if record_last_payload and self.current_session_payload is not None:
+            self.current_session_payload.status = "ended"
+            self.record("session")
 
-
-
-        self.current_problem_event.update(data)
-
-        self.update_session_event(event=event)
-
-    def update_session_event(self, event="correct_answer"):
-
-        if event == "session_started":
-            self.current_session_event["total_expected_keystroke_count"] += len(
-                str(st.session_state["current_problem"].answer)) if event in ("correct_answer", "wrong_answer") else 0
-            self.current_session_event["modifiers"] = st.session_state["current_problem"].modifiers
-            self.current_session_event["status"] = event
-
-        self.current_session_event["num_questions"] += 1 if event in ("correct_answer", "wrong_answer") else 0
-        self.current_session_event["num_correct"] = st.session_state["game_score"]
-
-        self.current_session_event["total_keystroke_count"] += self.current_problem_event["keystroke_count"] if event in ("correct_answer", "wrong_answer") else 0
-        self.current_session_event["total_expected_keystroke_count"] += len(
-            str(st.session_state["current_problem"].answer)) if event in ("correct_answer", "wrong_answer") else 0
-
-        self.current_session_event["modifiers"] = st.session_state["current_problem"].modifiers
-        self.current_session_event["status"] = "active" if event in ("correct_answer", "wrong_answer") else event
-        self.current_session_event["ended_at"] = (str(datetime.now(timezone.utc))) if self.current_session_event["status"] != "active" else None
-        self.current_session_event["payload"] = self.build_event_payload()
-        if event == "game_ended_early":
-            self.current_session_event["ended_early"] = True
-        return
-
-    def store_problem_event(self, event=None):
-        print("We would have stored the following problem in the database:")
-        data_to_store = json.dumps(self.current_problem_event, indent=2, sort_keys=True, default=str)
-        #print(data_to_store)
-        try:
-            print("not storing right now")
-            # res = st.session_state["supabase_client"].schema("api").from_("problem_events").insert(self.current_problem_event).execute()
-        except Exception as e:
-            print(f"Error storing problem event: {e}")
-            res = None
-            return None
-        #st.session_state["supabase_client"].table("problem_events").insert(self.current_problem_event).execute()
-
-    def store_session_event(self, event=None):
-        print("We would have stored the following session in the database:")
-        event_copy = self.current_session_event.copy()
-        data_to_store = json.dumps(event_copy, indent=2, sort_keys=True, default=str)
-        #print(data_to_store)
-        try:
-            print("not storing right now")
-            print(self.current_session_event)
-
-            #res = st.session_state["supabase_client"].schema("api").from_("game_sessions").insert(self.current_session_event).execute()
-        except Exception as e:
-            print(f"Error storing session event: {e}")
-            res = None
-
-
+        self.current_session_payload = SessionData(
+            session_id=self.session_id,
+            user_id=self.user_id,
+            **data
+        )
 
     @staticmethod
     def build_event_payload(game_mode="standard"):
@@ -168,35 +167,62 @@ class GameTelemetry:
 
         return payload
 
-    def reset_problem_event(self):
-        self.current_problem_event = {
-            "session_id": self.current_problem_event["session_id"],
-            "user_id": self.current_problem_event["user_id"],
-            "problem_id": None,
-            "problem_type": None,
-            "is_correct": True,
-            "answer_ms": None,
-            "created_at": None,
-            "left_num": None,
-            "left_den": None,
-            "left_operand": None,
-            "right_num": None,
-            "right_den": None,
-            "right_operand": None,
-            "answer": None,
-            "keystroke_sequence": None,
-            "keystroke_count": 0,
-            "status": "reset",
-            "event": "reset"
-        }
+    def record(self, payload_type):
 
-    def send_initial_session_event(self):
-        """
-        Send the initial session event to the database.
-        """
-        self.update_session_event(event="session_started")
-        self.store_problem_event(event="session_started")
-        return
+        if payload_type == "session":
+            self.session_event_buffer = self.current_session_payload
+        elif payload_type == "problem":
+            self.problem_event_buffer.append(self.current_problem_payload)
+
+    def send(self):
+        failed = False
+        if self.session_event_buffer:
+            next_payload = self.session_event_buffer
+            next_payload = next_payload.to_dict()
+            try:
+
+                res = (
+                    st.session_state["supabase_client"]
+                    .schema("api")
+                    .from_("game_sessions")
+                    .insert(next_payload)
+                    .execute()
+                    )
+
+            except Exception as e:
+                print(f"Error storing session event: {e}")
+                failed = True
+                res = None
+
+        while self.problem_event_buffer:
+
+            BATCH_SIZE = 100
+            next_payload_batch = self.problem_event_buffer[:BATCH_SIZE]
+            next_payload_batch = [payload.to_dict() for payload in next_payload_batch]
+            self.problem_event_buffer = self.problem_event_buffer[BATCH_SIZE:]
+
+            try:
+                res = (
+                    st.session_state["supabase_client"]
+                    .schema("api")
+                    .from_("problem_events")
+                    .insert(next_payload_batch)
+                    .execute()
+                )
+
+            except Exception as e:
+                print(f"Error storing problem event: {e}")
+                failed = True
+                res = None
+
+
+
+
+
+
+
+
+
 
 
 
