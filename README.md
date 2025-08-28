@@ -8,12 +8,21 @@ Goal: To create an application using LLM integration, suggesting ways for the us
 
 ## App
   `app.py` navigates between three screens: **Setup**, **Game** and **Stats**
+    
+Progress:
+- [x] Foundations: problem engine, ui, custom widgets and functional game mode
+- [x] Switch to a single-source-of-truth config wrapper & multipage app structure
+- [x] Authentication & PostgreSQL Supabase integration
+- [x] Record meaningful analytics for user development
+- [x] Switch to event-driven game flow
 
-  **Status**: core problem generation, settings, ui and gameplay functional; supabase postgreSQL db integrated; core widget & config wrapper + API complete
+Immediate To-do:
+- [ ] Create basic data queries 
+- [ ] Build statistics dashboard / post-game screen
 
-  **In progress**: track stats in postgreSQL, additional game modes, stat dashboard and training tips
-
-  **Immediate priority**: stable and scalable tracking of meaningful stats
+Road map checkpoints:
+- [ ] Meaningful LLM integration
+- [ ] Alternate game modes
 
 -----------------------
 ## Project Structure
@@ -44,10 +53,10 @@ MentalMaths/
 │   │ 
 │   ├── problem_management/
 │   │   ├── problem_engine.py
-│   │   └── problem_generation.py
+│   │   └── problem_generation.py       # somewhat depreciated
 │   │
-│   ├── state_management/
-│   │   └── game_state.py
+│   ├── game/
+│   │   └── game_manager.py
 │   │ 
 │   └── ui/
 │       ├── pages.py
@@ -66,14 +75,6 @@ MentalMaths/
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── webpack.config.js
-│   │
-│   ├── build/
-│   │   ├── CustomInput.d.ts
-│   │   ├── index.d.ts
-│   │   ├── index.html
-│   │   ├── index.js
-│   │   └── index.js.LICENSE.txt
-│   │ 
 │   ├── public/
 │   │   └── index.html
 │   │
@@ -128,17 +129,44 @@ See the following resources for details:
 - streamlit info: https://docs.streamlit.io/develop/tutorials/databases/supabase
 - supabase Auth: https://supabase.com/docs/guides/auth
 
-### <ins>Why use a custom react component?</ins>
+## <ins>Streamlit shortfalls & workarounds</ins>
 
-Streamlit’s built-in `st.text_input` only syncs on “change” events (e.g. Enter or blur), thus the user entering an answer does NOT count as a on_change event, they must hit enter or streamlit does not know they have inputted an answer. You can use some methods to deal with this, but it results in the widget being created/destroyed and it is visually unappealing. 
+#### TL;DR: widgets can easily lose statefulness, and widget info is tied to widget states, so create a streamlit wrapper that never loses widget info
 
-We want an input component that
+### customisation and session state preservation-- creating a wrapper for streamlit
 
-1. immediately sends the input to streamlit on keystroke 
-2. Be automatically cleared when the user inputs the correct answer, so the user does not have to manually delete their own input or press enter to type in the next answer
+In many ways, this repo can really be called streamlit-wrapper. Generally speaking, one should build a game backend and use streamlit as nothing more than a UI interface, or just use a different framework altogether. But I thought it would be an interesting project to build a streamlit-wrapper that integrated my personal needs into streamlit.
 
-We tried the community `st_keyup` component, but `st_keyup` only holds the last committed value thus setting `value=""` does not clear the box on demand, one cannot access and modify the internal value streamlit displays without rewriting the component.
+The wrapper mostly deals with the fact that: In Streamlit, widgets are identified by a key:value pair in the session_state & Streamlit updates the app by rerunning the entire application with an updated session state.
 
-Rather than switch UI framework, to meet our requirements `frontend/src/CustomInput.tsx` was built:  
+When streamlit reruns, if streamlit doesn't render your widget again (e.g., you reran the app and landed on a different page), it makes the widget stateless, and you lose your widget info. But
+- the app state may depend on widgets that are not currently rendered
+- the app state may depend on widget info beyond the value of the widget
+- the app may want to mutate widgets that are not currently rendered
 
-`CustomInput.tsx` is a React component that takes `value=correctAnswer` and clears input upon user correctly answering the problem. The component judges if the answer is correct and resets the box (this had to be done due to desync issues between streamlit re-runs and the React component) 
+
+There are some suggested solutions by streamlit for this, see https://docs.streamlit.io/develop/concepts/multipage-apps/widgets. But none of these really met out needs. We opt for a config & widgets wrappers/management system—essentially a wrapper for streamlit.
+
+1. We define a config dictionary that persists reruns, and that dictionary holds entries for each widget. The entry does not just store the value of the widget (like the number inside a box), but all widget args. It even holds args beyond the widget's baseline in streamlit (customise baseline widgets).
+2. We create a config manager (`ConfigManager`). The config manager uses streamlit widget signatures to build a baseline config and expands the config to meet our needs. The manager then can dynamically create/mutate widgets during runtime regardless if they have ever been rendered.
+3. We create a widget wrapper (`MakeWidget`). This takes a given widget config and handles the baseline widget rendering as well as any extended widget functionality.
+
+Essentially, combining the three steps about creates a pseudo widget session state that persists reruns and extends streamlit functionality beyond baseline. It will survive streamlit updates to widgets since we directly use widget signatures when constructing the base config prior to extension.
+
+### widget on_change effects
+
+I wanted a widget that detects the key strokes of a user immediately for maths speed-drills. However, Streamlit input widgets sync to Enter/Blur HTML events (the user literally has to press Enter for the app to detect the input).
+
+There are custom community-made components update on key press, but they do not allow mutation of the actual widget itself (if the user gets the answer right, I want to empty the box instantly via the application, I dont want the user to have to press backspace). Destroying/Creating a new widget also causes weird UI artefacts, so that is not a viable option if the box is jumping around giving the user nausea (streamlit containers do not solve this problem).
+
+Thus, `frontend/src/CustomInput.tsx` was built:
+`CustomInput.tsx` is a React component that takes as argument:
+```
+custom_input(
+        key: str,
+        correct_answer: str,
+        problem_id: int,
+    ) -> [user_response, problem_id, keystroke_sequence, keystroke_count]
+```
+
+The component judges if the answer is correct and resets the box (this had to be done due to desync issues between streamlit re-runs and the React component). It also records keystrokes, timings and keystroke sequences for performance analytics.
