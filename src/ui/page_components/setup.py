@@ -1,8 +1,8 @@
 import streamlit as st
 from src.problem_management.problem_engine import Question
 from src.config.config_management import ConfigManager as cm
-from src.game.game_manager import start_game, start_game_old
-from src.ui.widgets import LeftRightSliders, MakeWidget
+from src.game.game_manager import start_game
+from src.ui.widgets import MakeWidget
 from src.utils import inject_centring_css, get_range
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
@@ -195,7 +195,6 @@ def render_range_inputs(type_, symbol="+"):
                 **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": True},
             )
 
-
     with range_display_cols[1]:
         make_number_boxes(type_=type_, position_ = "a")
 
@@ -263,19 +262,6 @@ def is_start_button_disabled():
 
     return disable_start_button_condition, help_message
 
-def display_start_button_and_help_messages_old(settings_containers):
-
-    disable_start_button_condition, help_message = is_start_button_disabled()
-
-    with settings_containers["start_button"]:
-        col1, col2 = st.columns([1, 4], vertical_alignment="center")
-        with col1:
-            if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
-                start_game_old()
-        with col2:
-            if help_message:
-                st.info(help_message)
-
 def display_start_button_and_help_messages(settings_containers):
 
     disable_start_button_condition, help_message = is_start_button_disabled()
@@ -294,52 +280,3 @@ def build_ui_from_map(positioning_map):
         for widget_config, column in widget_column_pairs.items():
             with column:
                 MakeWidget(widget_config_key=widget_config, widget_category=widget_category).render()
-
-# --------------------------------------------- Old stuff below ------------------------------------------------------ #
-
-def base_settings_v1___old(settings_containers):
-    with settings_containers["base_settings"]:
-        st.markdown("Choose base settings")
-
-        base_settings_cols = st.columns(3)
-
-        base_ui_positioning = {
-            "checkboxes": {
-                "add_ints": base_settings_cols[0],
-                "subtract_ints": base_settings_cols[0],
-                "mult_ints": base_settings_cols[1],
-                "div_ints": base_settings_cols[1]
-            },
-            "number_input_boxes": {
-                "duration": base_settings_cols[2],
-            }
-        }
-        for widget_category, widget_column_pairs in base_ui_positioning.items():
-
-            if widget_category == "checkboxes":
-                for checkbox_name, column in widget_column_pairs.items():
-                    with column:
-                        MakeWidget(widget_config_key=checkbox_name, widget_category=widget_category).render()
-                        #Checkbox(checkbox).render_checkbox()
-
-            if widget_category == "number_input_boxes":
-                for input_box_name, column in widget_column_pairs.items():
-                    with column:
-                        MakeWidget(widget_config_key=input_box_name, widget_category=widget_category).render()
-
-def operand_range_slider_controls_v1___old(settings_containers):
-    """create slider wrappers and render. The wrapper updates their state, i.e. the range"""
-    with settings_containers["range_settings"]:
-        for op, type in st.session_state["active_problem_types"]:
-            LeftRightSliders(f"{op}_{type}").render()
-
-def update_active_problem_types_v1___old():
-    """example: if the integer addition and integers division checkboxes are ticked, then we update the session state:
-    st.session_state["active_problem_types"] = (("add", "ints""), ("div", "ints"))"""
-
-    st.session_state["active_problem_types"] = [
-        (op_, dtype_)
-        for full_key in checkbox_keys
-        if st.session_state[full_key]
-        for op_, dtype_, _ in [full_key.split("_")]
-    ]
