@@ -33,11 +33,11 @@ def user_auth():
     Method 2 may just be better than the current 'make cookie with Google tokens' Method. This is because:
 
     1. Streamlit's lacking of decent cookie support means we need to use a custom React widget which causes reruns.
-    2. You should not have reruns queued before events that trigger immediately them if you intend to do anything else
-    importing during that run. For example, you can't queue a rerun, do a http request and store data in session state
+    2. You should not have reruns queued before events that trigger them immediately if you intend to do anything else
+    importing during that run. For example, you can't queue a rerun, do an http request and store data in session state
     because the program ends after the http request
 
-    So you need to make sure you trigger the rerun prior to the request. If you ALWAYS queue a rerun before a HTTP request
+    So you need to make sure you trigger the rerun prior to the request. If you ALWAYS queue a rerun before an HTTP request
     you will NEVER be able to use that data.
 
     For example, if you have
@@ -66,7 +66,7 @@ def user_auth():
     in too many reruns. Need to improve the logic below.
 
     Right now, we use Method 1, but may just move to Method 2. Benefit of Method 1 is that if we ever do need Google login
-    again, we don't need to prompt them gain. Plus, streamlit might just get better cookie support soon, or we could use
+    again, we don't need to prompt them again. Plus, streamlit might just get better cookie support soon, or we could use
     a different UI framework.
 
 
