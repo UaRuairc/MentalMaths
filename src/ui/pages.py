@@ -1,6 +1,5 @@
 import streamlit as st
 from src.config.config_management import ConfigManager as cm
-from src.game.game_manager import end_game
 from src.ui.page_components.auth import user_auth
 from src.ui.page_components.setup import display_settings, display_start_button_and_help_messages
 from src.ui.page_components.game import render_exercise

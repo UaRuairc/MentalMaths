@@ -2,12 +2,9 @@ import time
 import streamlit as st
 from src.config.config_management import ConfigManager as cm
 from src.database.events import GameTelemetry
-from src.problem_management.problem_generation import new_problem
 from src.problem_management.problem_engine import Question
 import random
 from src.utils import get_range
-from dataclasses import dataclass, asdict
-from typing import Any, Optional
 from datetime import datetime, timezone, timedelta
 
 
