@@ -7,39 +7,8 @@ import random
 from src.utils import get_range
 from datetime import datetime, timezone, timedelta
 
-
-def start_game(event="game_session_started"):
-    st.session_state["Game"] = Game(event=event)
-    st.rerun()
-
-def end_game(event="game_ended_early"):
-    """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
-    st.session_state["Game"].last_event = event
-    st.rerun()
-
-def start_game_old(event="game_started"):
-    print("Starting the game.")
-    st.session_state["game_start_time"] = time.time()
-    st.session_state["game_end_time"] = st.session_state["game_start_time"] + cm.get_widget_value("duration", "number_input_boxes")
-
-    st.session_state["GameTelemetry"] = GameTelemetry(
-        game_mode="standard",
-        active_problem_types=st.session_state["active_problem_types"],
-        event=event
-    )
-    new_problem()
-    st.session_state["is_game_running"] = True
-    st.session_state["game_score"] = 0
-    st.rerun()
-
-
-def end_game_old(event="game_ended_early"):
-    """end game: currently sends user to setup page (later, optional results / feedback page will be added?)"""
-    st.session_state["GameTelemetry"].update_problem_event(keystroke_count=0, keystroke_sequence="", event=event)
-    print("Ending the game.")
-    #st.session_state["GameTelemetry"].store_problem_event()
-    #st.session_state["GameTelemetry"].store_session_event()
-    st.session_state["is_game_running"] = False
+def start_game():
+    st.session_state["Game"] = Game(event="game_session_started")
     st.rerun()
 
 @st.fragment(run_every=2)
@@ -71,8 +40,6 @@ class Game:
         self.ended_early = False
         self.num_questions = 0
         self.num_correct = 0
-        #self.score = 0
-        #self.score = 0
         st.session_state["is_game_running"] = self.is_running
         st.session_state["game_score"] = self.num_correct
         self.problem_id = 0 # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
@@ -98,8 +65,6 @@ class Game:
 
         self.last_event = event
 
-
-
     @property
     def last_event(self):
         return self._last_event
@@ -114,7 +79,6 @@ class Game:
             #print(f"Event history: {self.event_history}")
             self.handle_event()
 
-
     def init_telemetry(self):
         if self.GameTelemetry is None:
             print("Initialising telemetry.")
@@ -124,14 +88,6 @@ class Game:
             st.session_state["GameTelemetry"] = self.GameTelemetry
         else:
             print("telemetry already initialised.")
-
-    def end_game(self):
-        if self.is_running:
-            self.handle_event()
-
-
-        print("The game is not running, cannot end the game session.")
-        return
 
 
     def handle_event(self):
