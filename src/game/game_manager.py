@@ -199,10 +199,13 @@ class Game:
 
 
 
-    def validate_answer(self):
+    def validate_answer(self, user_response):
         """check if user got the answer correct"""
-        if not self.last_user_response:
+
+        if not user_response or user_response == self.last_user_response:
             return False
+
+        self.last_user_response = user_response
 
         user_answer, problem_id, _, _ = self.last_user_response
         correct_answer = self.Question.answer

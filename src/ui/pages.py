@@ -41,14 +41,13 @@ def game_page_ui():
         game.Question.Problem.op,
         game.Question.Problem.right
     ]
-    game.last_user_response = render_exercise(
+    user_response = render_exercise(
         problem_details=problem_details,
         should_fade=cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"),
         problem_id=game.problem_id
         )
 
-
-    game.validate_answer()
+    game.validate_answer(user_response)
 
     if cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"):
         if st.button("Show problem again"):
