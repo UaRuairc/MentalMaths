@@ -124,7 +124,6 @@ class Game:
             return
 
         if self.last_event == "new_problem_created":
-            self.total_expected_keystroke_count += len(str(self.Question.answer))
             self.GameTelemetry.new_problem_payload(record_last_payload=True, problem_id=self.problem_id, data=self.Question.snapshot(last_event=self.last_event))
             return
 
