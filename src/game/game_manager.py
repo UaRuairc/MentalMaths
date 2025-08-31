@@ -164,8 +164,8 @@ class Game:
             problem_update = {
                 "is_correct": False,
                 "event": self.last_event,
-                "keystroke_sequence": self.last_user_response[2],
-                "keystroke_count": self.last_user_response[3],
+                "keystroke_sequence": self.last_user_response[2] if self.last_user_response else "",
+                "keystroke_count": self.last_user_response[3] if self.last_user_response else 0,
                 "status": self.last_event
             }
             self.GameTelemetry.current_problem_payload.update(problem_update)
