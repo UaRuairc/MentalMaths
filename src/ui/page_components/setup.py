@@ -49,10 +49,18 @@ def render_modifier_settings(settings_containers):
         st.write("Game Modifiers")
         modifier_settings_cols = st.columns(1, vertical_alignment="center")
 
+        if not cm.is_widget_configured("enable_db", "checkboxes"):
+            cm.add_widget(
+                name="enable_db",
+                widget_category="checkboxes",
+                **{"value": True},
+            )
+
         modifier_ui_positioning = {
             "checkboxes": {
                 "pos_answers_only": modifier_settings_cols[0],
                 "fade_problem": modifier_settings_cols[0],
+                "enable_db": modifier_settings_cols[0]
             }
         }
 

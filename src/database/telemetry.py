@@ -172,6 +172,9 @@ class GameTelemetry:
             self.problem_event_buffer.append(self.current_problem_payload)
 
     def send(self):
+        if not cm.get_widget_value("enable_db", "checkboxes"):
+            print("Not storing data in the db right now...")
+            return
         failed = False
         if self.session_event_buffer:
             next_payload = self.session_event_buffer
