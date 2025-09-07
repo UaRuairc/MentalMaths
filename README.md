@@ -15,10 +15,11 @@ Progress:
 - [x] Authentication & PostgreSQL Supabase integration
 - [x] Record meaningful analytics for user development
 - [x] Switch to event-driven game flow
+- [x] Basic data queries/analysis on historical user data
 
 Immediate To-do:
-- [ ] Create basic data queries 
 - [ ] Build statistics dashboard / post-game screen
+- [ ] Develop a problem-tagging framework for advanced querying
 
 Road map checkpoints:
 - [ ] Meaningful LLM integration
