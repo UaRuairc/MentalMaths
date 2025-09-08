@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Union, Callable, Any
 from datetime import datetime, timezone
 import time
+from src.problem_management.problem_tagger import problem_tagger
 
 op_symbols = {
     "add": "+",
@@ -70,6 +71,9 @@ class Problem(ABC):
         self.operate()
         self.solved = True
 
+    @property
+    def tag_info(self):
+        return problem_tagger(self.left, self.right, self.answer, self.op, self.dtype)
     def operate(self) -> Any:
         pass
     def modify_problem(self) -> Any:
