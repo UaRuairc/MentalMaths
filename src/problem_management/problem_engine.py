@@ -1,11 +1,12 @@
 import random
 from abc import ABC
 from fractions import Fraction
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union, Callable, Any
 from datetime import datetime, timezone
 import time
-op_string = {
+
+op_symbols = {
     "add": "+",
     "sub": "-",
     "mult": chr(215),
@@ -41,30 +42,47 @@ class Generator:
                 for d in [random.randint(1, 9)]
                 ]
 
-PROBLEM_DISPATCH = {}
+PROBLEM_DISPATCH: dict[str, type["Problem"]] = {}
 
 @dataclass
 class Problem(ABC):
     """create a base class (and registry below) """
     left: Any
     right: Any
-    type: Any
-    invert_operation: bool = False
-    modifiers: dict = None
+    op: str
+    dtype: str
+    modifiers: dict = field(default_factory=dict)
+    modify: bool = True
     answer: Any = None
-    op: Any = None
+    solved: bool = False
+
+    def __post_init__(self):
+        try:
+            self.op_symbol = op_symbols[self.op]
+        except:
+            raise ValueError(f"Unknown op: {self.op}")
+
+    def solve(self):
+        if self.solved:
+            return
+        if self.modify:
+            self.modify_problem()
+        self.operate()
+        self.solved = True
 
     def operate(self) -> Any:
         pass
     def modify_problem(self) -> Any:
         pass
 
-def register(type_):
-    """Return a class decorator that registers the decorated class
 
-        """
+
+def register(op):
+    """
+    Return a class decorator that registers the decorated class
+    """
     def _wrap(cls):
-        PROBLEM_DISPATCH[type_] = cls
+        PROBLEM_DISPATCH[op] = cls
         return cls
     return _wrap
 
@@ -89,31 +107,22 @@ class AddProblem(Problem):
     """
 
     def operate(self):
-        self.op = op_string[self.type]
-        self.modify_problem()
-        return self.answer
+        if self.op == "add":
+            self.answer = self.left + self.right
+        else:
+            self.answer = self.left - self.right
 
     def modify_problem(self):
-        if self.type == "add":
-            self.answer = self.left + self.right
-            return
-
         if self.modifiers["pos_answers_only"]:
             self.left, self.right = max(self.left, self.right), min(self.left, self.right)
 
-        self.answer = self.left - self.right
 
 @register("mult")
 @register("div")
 @dataclass
 class MultProblem(Problem):
     def operate(self):
-        self.op = op_string[self.type]
-        self.modify_problem()
-        return self.answer
-
-    def modify_problem(self):
-        if self.type == "mult":
+        if self.op == "mult":
             self.answer = self.left * self.right
             return
 
@@ -129,8 +138,11 @@ class MultProblem(Problem):
         self.right = divisor
         self.answer = quotient
 
-def make_problem(type_, left_, right_, modifiers_=False):
-    return PROBLEM_DISPATCH[type_](left=left_, right=right_, type=type_, modifiers=modifiers_)
+    def modify_problem(self):
+        pass
+
+def make_problem(op_, left_, right_, dtype_, modifiers_=False):
+    return PROBLEM_DISPATCH[op_](left=left_, right=right_, op=op_, dtype=dtype_, modifiers=modifiers_)
 
 class Question:
 
@@ -159,8 +171,9 @@ class Question:
         """Generate a problem instance and compute its answer."""
 
         left, right = self.generator.generate()
-        self.Problem = make_problem(self.op, left, right, self.modifiers)
-        self.answer = self.Problem.operate()
+        self.Problem = make_problem(self.op, left, right, self.dtype, self.modifiers)
+        self.Problem.solve()
+        self.answer = self.Problem.answer
 
     def info(self):
         return to_dict(self)

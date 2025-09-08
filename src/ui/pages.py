@@ -38,7 +38,7 @@ def game_page_ui():
     game = st.session_state["Game"]
     problem_details = [
         game.Question.Problem.left,
-        game.Question.Problem.op,
+        game.Question.Problem.op_symbol,
         game.Question.Problem.right
     ]
     user_response = render_exercise(
