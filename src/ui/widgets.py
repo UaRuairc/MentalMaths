@@ -135,10 +135,10 @@ class LeftRightSliders():
         right_range = st.session_state["config"]["sliders"][f"{type_}_right"]["value"]
         return [left_range, right_range]
 
-def custom_input_box(problem_id_, key_, alignment_="center"):
+def custom_input_box(problem_id_, correct_answer, key_, alignment_="center"):
     result = custom_input(
         key=key_,
-        correctAnswer=str(st.session_state["current_problem"].answer), # correctAnswer is used by CustomInput.tsx to determine if the input field needs resetting.
+        correctAnswer=str(correct_answer),
         alignment=alignment_,
         problemId=problem_id_,
     )
