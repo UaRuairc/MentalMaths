@@ -105,8 +105,9 @@ def get_core_addition_tags(left, right, ans, low, high, equal_operands):
     features = {}
 
     carry_count = count_number_of_carries(left, right)
-    tags.add(f"CARRY_REQUIRED")
-    features["carry_count"] = carry_count
+    if carry_count > 0:
+        tags.add(f"CARRY_REQUIRED")
+        features["carry_count"] = carry_count
 
     return tags, features
 
@@ -115,8 +116,9 @@ def get_core_subtraction_tags(left, right, ans, low, high, equal_operands):
     features = {}
 
     borrow_count = count_number_of_borrows(left, right)
-    tags.add(f"BORROW_REQUIRED")
-    features["borrow_count"] = borrow_count
+    if borrow_count > 0:
+        tags.add(f"BORROW_REQUIRED")
+        features["borrow_count"] = borrow_count
 
     return tags, features
 
