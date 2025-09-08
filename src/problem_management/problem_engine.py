@@ -74,6 +74,8 @@ class Problem(ABC):
     @property
     def tag_info(self):
         return problem_tagger(self.left, self.right, self.answer, self.op, self.dtype)
+    def details(self):
+        return self.left, self.op_symbol, self.right, self.answer
     def operate(self) -> Any:
         pass
     def modify_problem(self) -> Any:
