@@ -120,18 +120,17 @@ class Game:
             return
 
         if self.last_event == "initial_problem_created":
-            self.GameTelemetry.new_problem_payload(record_last_payload=False, problem_id=self.problem_id, data=self.Question.snapshot(last_event=self.last_event))
+            self.GameTelemetry.new_problem_payload(record_last_payload=False, data=self.Question.snapshot(last_event=self.last_event))
             return
 
         if self.last_event == "new_problem_created":
-            self.GameTelemetry.new_problem_payload(record_last_payload=True, problem_id=self.problem_id, data=self.Question.snapshot(last_event=self.last_event))
+            self.GameTelemetry.new_problem_payload(record_last_payload=True, data=self.Question.snapshot(last_event=self.last_event))
             return
 
         if self.last_event == "user_answer_validated":
             self.num_correct += 1
             self.problem_id += 1 # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
             self.total_keystroke_count += self.last_user_response[3]
-            st.session_state["problem_id"] = self.problem_id
             st.session_state["game_score"] = self.num_correct
 
             problem_snapshot = self.Question.snapshot(last_event=self.last_event)
@@ -212,7 +211,6 @@ class Game:
 
         valid = (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)
 
-
         if valid:
             self.last_event = "user_answer_validated"
             return True
@@ -220,10 +218,6 @@ class Game:
         else:
             self.last_event = "user_answer_invalidated"
             return True
-
-
-
-
 
     def generate_new_problem(self):
         """generate a new problem for the user"""
@@ -236,16 +230,11 @@ class Game:
             dtype_=next_data_type_,
             modifiers=self.get_modifiers()
         )
-
-        st.session_state["current_problem"] = self.Question
-
         self.Question.calc()
-        st.session_state["fade_class_identifier"] += 1
-        self.current_problem_id = self.problem_id
-        self.current_problem_type = self.Question.op
-        st.session_state["current_problem_id"] = self.current_problem_id
-        st.session_state["current_problem_type"] = self.current_problem_type
+        self.Question.Problem.id = self.problem_id
         self.num_questions += 1
+        st.session_state["fade_class_identifier"] += 1
+        st.session_state["current_question"] = self.Question
         return
 
     @staticmethod

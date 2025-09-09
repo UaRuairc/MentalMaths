@@ -52,6 +52,7 @@ class Problem(ABC):
     right: Any
     op: str
     dtype: str
+    id: int = None
     modifiers: dict = field(default_factory=dict)
     modify: bool = True
     answer: Any = None
@@ -190,6 +191,7 @@ class Question:
         """
 
         data = {
+            "problem_id": self.Problem.id,
             "problem_type": f"{self.op}_{self.dtype}",
             "created_at": str(self.problem_start_time),
             "left_operand": self.Problem.left,

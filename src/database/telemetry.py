@@ -108,7 +108,7 @@ class GameTelemetry:
             res = None
 
 
-    def new_problem_payload(self, record_last_payload, problem_id, data):
+    def new_problem_payload(self, record_last_payload, data):
 
         if record_last_payload and self.current_problem_payload is not None:
             self.record("problem")
@@ -117,7 +117,6 @@ class GameTelemetry:
             event_id = str(uuid6.uuid7()),
             session_id = self.session_id,
             user_id = self.user_id,
-            problem_id=problem_id,
             **data
         )
 
@@ -158,7 +157,7 @@ class GameTelemetry:
                 "duration": get_val("duration", "number_input_boxes"),
                 "ranges": get_ranges(),
             },
-            "modifiers": st.session_state["current_problem"].modifiers
+            "modifiers": st.session_state["current_question"].modifiers
         }
         # payload = st.session_state["config"].copy()
 
