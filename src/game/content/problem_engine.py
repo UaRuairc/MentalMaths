@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Union, Callable, Any
 from datetime import datetime, timezone
 import time
-from src.problem_management.problem_tagger import problem_tagger
+from src.game.content.problem_tagger import problem_tagger
 
 op_symbols = {
     "add": "+",
