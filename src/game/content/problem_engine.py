@@ -2,7 +2,7 @@ import random
 from abc import ABC
 from fractions import Fraction
 from dataclasses import dataclass, field
-from typing import Union, Callable, Any
+from typing import Union, Callable, Any, TypedDict, Protocol
 from datetime import datetime, timezone
 import time
 from src.game.content.problem_tagger import problem_tagger
@@ -74,7 +74,7 @@ class Problem(ABC):
 
     @property
     def tag_info(self):
-        return problem_tagger(self.left, self.right, self.answer, self.op, self.dtype)
+        return problem_tagger(self)
     def details(self):
         return self.left, self.op_symbol, self.right, self.answer
     def operate(self) -> Any:

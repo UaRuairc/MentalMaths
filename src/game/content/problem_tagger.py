@@ -1,5 +1,9 @@
 import math
-from typing import Callable
+from typing import Callable, TypedDict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.game.content.problem_engine import Problem
+
 
 def count_number_of_carries(left, right):
     """
@@ -167,13 +171,23 @@ OP_TAGGERS: dict[str, Callable] = {
     "div": get_core_division_tags,
 }
 
+class TagInfo(TypedDict):
+    terms: dict
+    operator: dict
+    general: dict
 
-def problem_tagger(left, right, ans, op, dtype):
+def problem_tagger(p: "Problem") -> TagInfo:
     """
 
     Generate tags for a problem
 
     """
+    left = p.left
+    right = p.right
+    ans = p.answer
+    op = p.op
+    dtype = p.dtype
+    modifiers = p.modifiers
 
     info = {
         "terms":{
