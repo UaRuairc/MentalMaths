@@ -285,6 +285,6 @@ def display_start_button_and_help_messages(settings_containers):
 
 def build_ui_from_map(positioning_map):
     for widget_category, widget_column_pairs in positioning_map.items():
-        for widget_config, column in widget_column_pairs.items():
+        for key, column in widget_column_pairs.items():
             with column:
-                MakeWidget(widget_config_key=widget_config, widget_category=widget_category).render()
+                MakeWidget(widget_config_key=key, widget_category=widget_category).render()
