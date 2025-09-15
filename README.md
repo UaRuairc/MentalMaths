@@ -6,24 +6,20 @@ Goal: To create an application using LLM integration, suggesting ways for the us
 
 -----------------------
 
-## App
+# App
   `app.py` navigates between three screens: **Setup**, **Game** and **Stats**
     
 Progress:
-- [x] Foundations: problem engine, ui, custom widgets and functional game mode
+- [x] Foundations: problem engine, ui, custom widgets, and functional game mode
 - [x] Switch to a single-source-of-truth config wrapper & multipage app structure
 - [x] Authentication & PostgreSQL Supabase integration
 - [x] Record meaningful analytics for user development
 - [x] Switch to event-driven game flow
 - [x] Basic data queries/analysis on historical user data
 
-Immediate To-do:
+Short-term To-do's:
+- [ ] Develop a problem-tagging framework for advanced querying and analysis
 - [ ] Build statistics dashboard / post-game screen
-- [ ] Develop a problem-tagging framework for advanced querying
-
-Road map checkpoints:
-- [ ] Meaningful LLM integration
-- [ ] Alternate game modes
 
 -----------------------
 ## Project Structure
@@ -48,16 +44,16 @@ MentalMaths/
 │   │
 │   ├── database/
 │   │   ├── connection.py
-│   │   ├── events.py
+│   │   ├── queries.py
+│   │   ├── telemetry.py
 │   │   └── auth/
 │   │       └── service.py
-│   │ 
-│   ├── problem_management/
-│   │   ├── problem_engine.py
-│   │   └── problem_generation.py       # somewhat depreciated
-│   │
 │   ├── game/
-│   │   └── game_manager.py
+│   │   ├── content/
+│   │   │   ├── problem_engine.py
+│   │   │   ├── problem_tagger.py
+│   │   └── gameplay/
+│   │       └── game_controller.py
 │   │ 
 │   └── ui/
 │       ├── pages.py
@@ -66,7 +62,6 @@ MentalMaths/
 │           ├── auth.py
 │           ├── game.py
 │           ├── setup.py
-│           └── stats.py
 │
 ├── .streamlit/
 │   ├── config.toml     
@@ -170,4 +165,4 @@ custom_input(
     ) -> [user_response, problem_id, keystroke_sequence, keystroke_count]
 ```
 
-The component judges if the answer is correct and resets the box (this had to be done due to desync issues between streamlit re-runs and the React component). It also records keystrokes, timings and keystroke sequences for performance analytics.
+The component judges if the answer is correct and resets the box (this had to be done due to desync issues between streamlit re-runs and the React component). It also records keystrokes, timings, and keystroke sequences for performance analytics.
