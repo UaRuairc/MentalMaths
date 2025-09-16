@@ -34,7 +34,7 @@ class Game:
         self.is_running = False
         self.start_time = None
         self.start_perf_counter = None
-        self.duration_in_seconds = cm.get_widget_value("duration", "number_input_boxes")
+        self.duration_in_seconds = cm.get_widget_value("duration", "number_input_box")
         self.scheduled_end_time = None
         self.actual_end_time = None
         self.ended_early = False
@@ -240,8 +240,8 @@ class Game:
     @staticmethod
     def get_modifiers():
         return {
-            "pos_answers_only":  cm.get_widget_value("pos_answers_only", "checkboxes"),
-            "fade_problem": cm.get_widget_value("fade_problem", "checkboxes")
+            "pos_answers_only":  cm.get_widget_value("pos_answers_only", "checkbox"),
+            "fade_problem": cm.get_widget_value("fade_problem", "checkbox")
     }
 
 

@@ -34,10 +34,10 @@ def set_defaults():
             "div": r"$\div$",
         },
         "callables": {
-            "checkboxes": st.checkbox,
-            "sliders": st.slider,
-            "number_input_boxes": st.number_input,
-            "custom_input_boxes": custom_input_box,
+            "checkbox": st.checkbox,
+            "slider": st.slider,
+            "number_input_box": st.number_input,
+            "custom_input_box": custom_input_box,
             "segmented_control": st.segmented_control,
             "text_input_boxes": st.text_input,
             "buttons": st.button,
@@ -60,10 +60,11 @@ def set_defaults():
 def update_duration_box_on_change():
     choice_ = st.session_state["config"]["segmented_control"]["duration"]["value"]
     if choice_ is not None and choice_ != 3:
-        st.session_state["config"]["number_input_boxes"]["duration"]["value"] = 30 * (2 ** choice_)
+        st.session_state["config"]["number_input_box"]["duration"]["value"] = 30 * (2 ** choice_)
 
     if choice_ is None:
-        st.session_state["config"]["number_input_boxes"]["duration"]["value"] = None
+        st.session_state["config"]["number_input_box"]["duration"]["value"] = None
+
 
 def set_default_config(suppress=True):
     if "suppress" not in st.session_state:
@@ -82,7 +83,7 @@ def set_default_config(suppress=True):
 
     operators = ["add", "subtract", "mult", "div"]
     widget_labels = {
-        "checkboxes": {
+        "checkbox": {
             "add_ints": "addition",
             "subtract_ints": "subtraction",
             "mult_ints": "multiplication",
@@ -90,7 +91,7 @@ def set_default_config(suppress=True):
             "pos_answers_only": "positive answers only?",
             "fade_problem": "fade problem after set number of seconds?",
         },
-        "sliders": {
+        "slider": {
             "add_ints_left": "left digit range",
             "subtract_ints_left": "left digit range",
             "mult_ints_left": "left digit range",
@@ -100,10 +101,10 @@ def set_default_config(suppress=True):
             "mult_ints_right": "right digit range",
             "div_ints_right": "quotient range"
         },
-        "number_input_boxes": {
+        "number_input_box": {
             "duration": "Duration in seconds",
         },
-        "custom_input_boxes": {
+        "custom_input_box": {
             "custom_input": None
         },
         "segmented_control": {
@@ -130,7 +131,7 @@ def set_default_config(suppress=True):
     default_duration = 2
 
     widget_overrides = {
-        "checkboxes": {
+        "checkbox": {
             "pos_answers_only": {"label": "positive answers only?"},
             "fade_problem": {"label": "fade problem after set number of seconds?"},
         },
@@ -153,7 +154,7 @@ def set_default_config(suppress=True):
 
         },
 
-        "sliders": {
+        "slider": {
             **{f"{op}_ints_{side}":
                 {
                     "label": f"{side} digit range",
@@ -164,7 +165,7 @@ def set_default_config(suppress=True):
                for op in operators for side in ["left", "right"]},
             },
 
-        "number_input_boxes": {
+        "number_input_box": {
             "duration": {
                 "label": "Duration in seconds",
                 "value": int(segmented_control_options["duration"][default_duration]),
@@ -175,7 +176,7 @@ def set_default_config(suppress=True):
     }
 
     for widget_category, widgets in widget_labels.items():
-        if widget_category == "custom_input_boxes":
+        if widget_category == "custom_input_box":
             continue
 
         for widget_name, widget_label in widgets.items():

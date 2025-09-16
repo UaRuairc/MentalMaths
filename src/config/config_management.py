@@ -8,10 +8,10 @@ class ConfigManager:
     def generate_config(name: str, widget_category: str, **overrides):
         if "callables" not in st.session_state:
             st.session_state["callables"] = {
-                "checkboxes": st.checkbox,
-                "sliders": st.slider,
-                "number_input_boxes": st.number_input,
-                "custom_input_boxes": custom_input_box,
+                "checkbox": st.checkbox,
+                "slider": st.slider,
+                "number_input_box": st.number_input,
+                "custom_input_box": custom_input_box,
                 "segmented_control": st.segmented_control
             }
 
@@ -34,18 +34,12 @@ class ConfigManager:
         # This is a bit hacky, functional, but improve later...
         config["widget_category"] = widget_category
         config["name"] = name
-        if widget_category[-5:] == "boxes":
-            config["key"] = f"{name}_{widget_category[:-2]}"
-        elif widget_category == "sliders":
-            config["key"] = f"{name}_{widget_category[:-1]}"
-        else:
-            config["key"] = f"{name}_{widget_category}"
-
+        config["key"] = f"{name}_{widget_category}"
         config["label"] = f"{name}"
         config["on_change"] = None
         config["extra_callback"] = None
 
-        if widget_category == "number_input_boxes":
+        if widget_category == "number_input_box":
             config["value"] = 0
 
         # some streamlit widgets do not have a `value` parameter

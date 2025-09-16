@@ -39,12 +39,12 @@ def game_page_ui():
     user_response = render_exercise(
         problem_details=game.Question.Problem.details(),
         problem_id=game.problem_id,
-        should_fade=cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"),
+        should_fade=cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"),
         )
 
     game.validate_answer(user_response)
 
-    if cm.get_widget_value(widget_name="fade_problem", widget_category="checkboxes"):
+    if cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"):
         if st.button("Show problem again"):
             st.session_state["fade_class_identifier"] += 1
             st.rerun()

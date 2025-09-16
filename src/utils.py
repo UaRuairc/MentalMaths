@@ -230,7 +230,7 @@ def track_rerun_to_file(location=""):
     _last_rerun = now
 
 def get_range(next_problem_tag):
-    get_val = lambda name: ConfigManager.get_widget_value(widget_name=name,  widget_category="number_input_boxes")
+    get_val = lambda name: ConfigManager.get_widget_value(widget_name=name,  widget_category="number_input_box")
 
     if next_problem_tag != "div_ints":
         #(l1, r1) + (l2, r2) = ?

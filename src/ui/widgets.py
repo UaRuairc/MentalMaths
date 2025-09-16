@@ -91,7 +91,7 @@ class MakeWidget():
         if render_config["widget_category"] == "segmented_control":
             render_config["default"] = render_config["value"]
 
-        if render_config["widget_category"] != "sliders":
+        if render_config["widget_category"] != "slider":
             render_config.pop("value", None)
 
         for arg in META_ARGS:
