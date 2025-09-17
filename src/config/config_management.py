@@ -2,45 +2,48 @@ import streamlit as st
 import inspect
 from src.ui.widgets import custom_input_box, MakeWidget
 
+CALLABLES = {
+    "streamlit":{
+        "checkbox": st.checkbox,
+        "slider": st.slider,
+        "number_input_box": st.number_input,
+        "segmented_control": st.segmented_control,
+        "text_input_boxes": st.text_input,
+        "buttons": st.button,
+        },
+    "custom": {
+        "custom_input_box": custom_input_box
+    },
+}
+
 class ConfigManager:
 
     @staticmethod
     def generate_config(name: str, widget_category: str, **overrides):
-        if "callables" not in st.session_state:
-            st.session_state["callables"] = {
-                "checkbox": st.checkbox,
-                "slider": st.slider,
-                "number_input_box": st.number_input,
-                "custom_input_box": custom_input_box,
-                "segmented_control": st.segmented_control
-            }
 
-        #Generate config for any widget type using introspection
-        widget_callable = st.session_state["callables"][widget_category]
-        sig = inspect.signature(widget_callable)
+        base_config = ConfigManager.base_config(widget_category=widget_category, framework="streamlit")
+
+        base_config_defaults = {
+            "label": f"{name}",
+            "key": f"{name}_{widget_category}",
+        }
+
+        base_config.update(base_config_defaults)
+
+
+        additional_config = {
+            "widget_category": widget_category,
+            "name": name,
+            "on_change": None,
+            "extra_callback": None
+        }
+
         config = {}
-
-        for param_name, param in sig.parameters.items():
-            if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
-                continue
-            if param.default is not inspect.Parameter.empty:
-                config[param_name] = param.default
-                continue
-
-            # doesn't have a default, needs to be set, assume user provides overrides.
-            config[param_name] = None
+        config.update(base_config)
+        config.update(additional_config)
 
 
-        # This is a bit hacky, functional, but improve later...
-        config["widget_category"] = widget_category
-        config["name"] = name
-        config["key"] = f"{name}_{widget_category}"
-        config["label"] = f"{name}"
-        config["on_change"] = None
-        config["extra_callback"] = None
 
-        if widget_category == "number_input_box":
-            config["value"] = 0
 
         # some streamlit widgets do not have a `value` parameter
         #
@@ -48,11 +51,42 @@ class ConfigManager:
         # a `value` parameter or not. MakeWidget then updates the config so "value" is renamed to whatever key that widget uses
         if "value" not in config:
             config["value"] = None
+        if widget_category == "number_input_box":
+            config["value"] = 0
         # Apply overrides
-        for param in overrides:
-            config[param] = overrides[param]
 
+        config.update(overrides)
         return config
+
+    @staticmethod
+    def base_config(widget_category: str, framework: str="streamlit"):
+
+        if st.session_state["callables"].get(framework, None) is None:
+            raise NotImplementedError(
+                f"Framework {framework} is not supported. Currently, only streamlit is supported.")
+
+        if st.session_state["callables"][framework].get(widget_category, None) is None:
+            raise NotImplementedError(
+                f"Widget category {widget_category} is not supported for framework {framework}.")
+
+        widget_callable = CALLABLES[framework][widget_category]
+        sig = inspect.signature(widget_callable)
+
+        base_config = {}
+        for param_name, param in sig.parameters.items():
+            if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
+                continue
+            if param.default is not inspect.Parameter.empty:
+                base_config[param_name] = param.default
+                continue
+
+            # doesn't have a default, needs to be set, assume user provides overrides.
+            base_config[param_name] = None
+
+        return base_config
+
+
+
 
     @staticmethod
     def add_to_session_state(config):

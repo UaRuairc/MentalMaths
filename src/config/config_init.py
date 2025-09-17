@@ -34,14 +34,17 @@ def set_defaults():
             "div": r"$\div$",
         },
         "callables": {
-            "checkbox": st.checkbox,
-            "slider": st.slider,
-            "number_input_box": st.number_input,
-            "custom_input_box": custom_input_box,
-            "segmented_control": st.segmented_control,
-            "text_input_boxes": st.text_input,
-            "buttons": st.button,
-            },
+            "streamlit":{
+                "checkbox": st.checkbox,
+                "slider": st.slider,
+                "number_input_box": st.number_input,
+                "custom_input_box": custom_input_box,
+                "segmented_control": st.segmented_control,
+                "text_input_boxes": st.text_input,
+                "buttons": st.button,
+                },
+            "custom": custom_input_box
+        },
         "problem_type_index_map": {
             0: {"operation": "add", "dtype": "ints"},
             1: {"operation": "subtract", "dtype": "ints"},

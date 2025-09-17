@@ -49,7 +49,7 @@ class MakeWidget():
         self.widget_state_key = self.widget_config["key"]
         self.previous_widget_value = self.widget_config["value"]
         self.widget_config["on_change"] = self._on_change
-        self.callable = st.session_state["callables"][self.widget_category]
+        self.callable = st.session_state["callables"]["streamlit"][self.widget_category]
         self.extra_on_change = self.widget_config.get("extra_callback", None)
 
 
