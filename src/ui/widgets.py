@@ -107,34 +107,6 @@ class MakeWidget():
     def current_value(widget_category, widget_config_key):
         return st.session_state["config"][widget_category][widget_config_key]["value"]
 
-class LeftRightSliders():
-
-    def __init__(self, problem_type):
-        self.problem_type = problem_type
-        self.cols = None
-        self.left_config_key = f"{self.problem_type}_left"
-        self.right_config_key = f"{self.problem_type}_right"
-        self.left_slider = MakeWidget(self.left_config_key, "sliders")
-        self.right_slider = MakeWidget(self.right_config_key, "sliders")
-
-    def render(self):
-        self.make_columns()
-        with self.cols[0]:
-            st.write(slider_descriptions[self.problem_type[:-5]])
-        with self.cols[1]:
-            self.left_slider.render()
-        with self.cols[2]:
-            self.right_slider.render()
-
-    def make_columns(self):
-        self.cols = st.columns(3)
-
-    @staticmethod
-    def range(type_):
-        left_range = st.session_state["config"]["sliders"][f"{type_}_left"]["value"]
-        right_range = st.session_state["config"]["sliders"][f"{type_}_right"]["value"]
-        return [left_range, right_range]
-
 def custom_input_box(problem_id_, correct_answer, key_, alignment_="center"):
     result = custom_input(
         key=key_,
