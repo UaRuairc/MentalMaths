@@ -1,5 +1,6 @@
 import time
 import streamlit as st
+from src.game.content.modifiers import ModManager as mm
 from src.config.config_management import ConfigManager as cm
 from src.database.telemetry import GameTelemetry
 from src.game.content.problem_engine import Question
@@ -59,6 +60,7 @@ class Game:
         self.current_problem_type = None
         self.GameTelemetry = None
         self.event_history = []
+        self.mod_history = {}
 
 
         self._last_event = None
@@ -120,10 +122,20 @@ class Game:
             return
 
         if self.last_event == "initial_problem_created":
+            mm.mod(self.last_event, target=self.Question.Problem)
+            mm.mod(self.last_event, target=self)
+            self.Question.Problem.solve()
+            self.Question.answer = self.Question.Problem.eff_answer
+
             self.GameTelemetry.new_problem_payload(record_last_payload=False, data=self.Question.snapshot(last_event=self.last_event))
             return
 
         if self.last_event == "new_problem_created":
+            mm.mod(self.last_event, target=self.Question.Problem)
+            mm.mod(self.last_event, target=self)
+            self.Question.Problem.solve()
+            self.Question.answer = self.Question.Problem.eff_answer
+
             self.GameTelemetry.new_problem_payload(record_last_payload=True, data=self.Question.snapshot(last_event=self.last_event))
             return
 
@@ -148,6 +160,13 @@ class Game:
 
             self.create_new_problem()
             st.rerun()
+            return
+
+        if self.last_event == "button_interaction":
+        #if payload["button"] == "reveal_problem":
+        # there is currently only one button dependent modifier, we will do this for now.
+            mm.mod(self.last_event, target=self.Question.Problem)
+            mm.mod(self.last_event, target=self)
             return
 
         if self.last_event == "user_answer_invalidated":
@@ -228,7 +247,6 @@ class Game:
             range_=get_range(next_problem_tag),
             op_=self.op_API_ALIASES[next_problem_op_],
             dtype_=next_data_type_,
-            modifiers=self.get_modifiers()
         )
         self.Question.calc()
         self.Question.Problem.id = self.problem_id
@@ -236,13 +254,6 @@ class Game:
         st.session_state["fade_class_identifier"] += 1
         st.session_state["current_question"] = self.Question
         return
-
-    @staticmethod
-    def get_modifiers():
-        return {
-            "pos_answers_only":  cm.get_widget_value("pos_answers_only", "checkbox"),
-            "fade_problem": cm.get_widget_value("fade_problem", "checkbox")
-    }
 
 
     def update(self, score, problem_id, last_user_response):
@@ -255,7 +266,7 @@ class Game:
         data = {
             "game_mode": "standard",
             "active_problem_types": self.active_problem_types,
-            "modifiers": self.get_modifiers(),
+            "modifiers": None,
             "started_at": str(self.start_time),
             "ended_at": str(self.actual_end_time),
             "ended_early": self.ended_early,

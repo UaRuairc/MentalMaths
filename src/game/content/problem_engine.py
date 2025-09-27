@@ -1,7 +1,7 @@
 import random
 from abc import ABC
 from fractions import Fraction
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Union, Callable, Any, TypedDict, Protocol
 from datetime import datetime, timezone
 import time
@@ -45,42 +45,70 @@ class Generator:
 
 PROBLEM_DISPATCH: dict[str, type["Problem"]] = {}
 
-@dataclass
-class Problem(ABC):
-    """create a base class (and registry below) """
+@dataclass(frozen=True)
+class ProblemComponents:
     left: Any
     right: Any
     op: str
+
+@dataclass
+class Problem(ABC):
+    """create a base class (and registry below) """
     dtype: str
+    components: ProblemComponents
     id: int = None
-    modifiers: dict = field(default_factory=dict)
-    modify: bool = True
-    answer: Any = None
-    solved: bool = False
+    _eff_components: ProblemComponents = None
+    base_answer: Any = None
+    eff_answer: Any = None
+    mod_history: dict = field(default_factory=dict)
+    tags: Any = None
+
+    _tagged: bool = field(default=False, init=False, repr=False)
+    _solved: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self):
-        try:
-            self.op_symbol = op_symbols[self.op]
-        except:
-            raise ValueError(f"Unknown op: {self.op}")
+        self.solve_base()
+        self._eff_components = replace(self.components)
+
+    def solve_base(self):
+        self.base_answer = self.operate(components=self.components)
 
     def solve(self):
-        if self.solved:
+        if self._solved:
             return
-        if self.modify:
-            self.modify_problem()
-        self.operate()
-        self.solved = True
+        self.eff_answer = self.operate(components = self._eff_components)
+        self._solved = True
+        return
 
     @property
     def tag_info(self):
-        return problem_tagger(self)
-    def details(self):
-        return self.left, self.op_symbol, self.right, self.answer
-    def operate(self) -> Any:
+        if not self._solved:
+            raise ValueError("Problem must be solved before tagging.")
+
+        # need to refactor problem_tagger
+        return None
+
+        if not self._tagged:
+            self.tags = problem_tagger(self)
+            self._tagged = True
+
+        return self.tags
+
+    def display_details(self, eff=True):
+        symbol = self.op_symbol(self.components.op)
+        if not eff:
+            return self.components.left, symbol, self.components.right, self.base_answer
+
+        self.solve()
+        return self._eff_components.left, symbol, self._eff_components.right, self.eff_answer
+
+
+    def operate(self, components) -> Any:
         pass
-    def modify_problem(self) -> Any:
-        pass
+
+    @staticmethod
+    def op_symbol(op):
+        return op_symbols[op]
 
 
 
@@ -113,43 +141,37 @@ class AddProblem(Problem):
          50-20 = 30
     """
 
-    def operate(self):
-        if self.op == "add":
-            self.answer = self.left + self.right
+    def operate(self, components):
+        if components.op == "add":
+            return components.left + components.right
         else:
-            self.answer = self.left - self.right
-
-    def modify_problem(self):
-        if self.modifiers["pos_answers_only"]:
-            self.left, self.right = max(self.left, self.right), min(self.left, self.right)
-
+            return components.left - components.right
 
 @register("mult")
 @register("div")
 @dataclass
 class MultProblem(Problem):
-    def operate(self):
-        if self.op == "mult":
-            self.answer = self.left * self.right
-            return
 
-        """ for a division problem that results in integers we need to essentially reverse a multiplication problem """
-        # self.right is the quotient
-        # self.left is the divisor
-        # dividend / divisor = quotient
-        dividend = self.left * self.right
-        divisor = self.left
-        quotient = self.right
-        # for display update left / right values
-        self.left = dividend
-        self.right = divisor
-        self.answer = quotient
+    def __post_init__(self):
+        """
+        Division problems will always be generated via inverting a division problem.
+        """
+        if self.components.op == "div":
+            dividend = self.components.left * self.components.right
+            divisor = self.components.left
+            self.components = replace(self.components, left = dividend, right = divisor)
 
-    def modify_problem(self):
-        pass
+        super().__post_init__()
 
-def make_problem(op_, left_, right_, dtype_, modifiers_=False):
-    return PROBLEM_DISPATCH[op_](left=left_, right=right_, op=op_, dtype=dtype_, modifiers=modifiers_)
+
+    def operate(self, components):
+        if components.op == "mult":
+            return components.left * components.right
+        else:
+            return components.left / components.right
+
+def make_problem(components, dtype_):
+    return PROBLEM_DISPATCH[components.op](components=components, dtype=dtype_)
 
 class Question:
 
@@ -162,25 +184,30 @@ class Question:
 
     In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
     """
-    def __init__(self, range_ = None, op_ = None, dtype_ = None, modifiers = None, seed = None):
+    def __init__(self, range_ = None, op_ = None, dtype_: str = None, seed = None):
         self.range = range_
         self.op = op_
         self.dtype = dtype_
-        self.modifiers = modifiers
         self.generator = Generator(range_=self.range, dtype_=self.dtype, seed=seed)
-        self.answer = None
-        self.Problem = None
+        self.answer = None      # Note: In future a question may have multiple problems associated with it.
+                                #       E.g: 4 problems generated for multiple choice question.
+                                #       We then randomly select problem 3
+                                #       thus self.answer = self.Problem[2].answer, for example.
+                                #       For now, we only have one problem per question
+                                #       But keep this so that at least Question.answer checks never needs to be modified..
+
+        self.Problem = None #
 
         self.problem_start_time = datetime.now(timezone.utc)
         self.problem_start_perf_counter = time.perf_counter()
-
-    def calc(self):
+    def calc(self, question_type="standard"):
+        if question_type != "standard":
+            raise ValueError(f"Only question_type {question_type} is currently supported")
         """Generate a problem instance and compute its answer."""
 
         left, right = self.generator.generate()
-        self.Problem = make_problem(self.op, left, right, self.dtype, self.modifiers)
-        self.Problem.solve()
-        self.answer = self.Problem.answer
+        components = ProblemComponents(left=left, right=right, op=self.op)
+        self.Problem = make_problem(components, self.dtype)
 
     def info(self):
         return to_dict(self)
@@ -189,16 +216,17 @@ class Question:
         """
         Create a snapshot of this Question instance.
         """
+        left, _, right, _ = self.Problem.display_details()
 
         data = {
             "problem_id": self.Problem.id,
             "problem_type": f"{self.op}_{self.dtype}",
             "created_at": str(self.problem_start_time),
-            "left_operand": self.Problem.left,
-            "right_operand": self.Problem.right,
+            "left_operand": left,
+            "right_operand": right,
             "answer": self.answer,
             "status": "unanswered",
-            "modifiers": self.modifiers,
+            "modifiers": None,
             "is_correct": None,
             "event": last_event
         }
@@ -252,7 +280,7 @@ class Question:
 # Example
 if __name__ == "__main__":
     ranges = [[1,99], [1,99]]
-    myProblem = Question(range_=ranges, op_="mult", dtype_="ints", modifiers=None)
+    myProblem = Question(range_=ranges, op_="mult", dtype_="ints")
     myProblem.calc()
     print(myProblem.info())
 

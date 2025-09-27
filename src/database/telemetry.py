@@ -157,7 +157,7 @@ class GameTelemetry:
                 "duration": get_val("duration", "number_input_box"),
                 "ranges": get_ranges(),
             },
-            "modifiers": st.session_state["current_question"].modifiers
+            "modifiers": None
         }
         # payload = st.session_state["config"].copy()
 
@@ -171,6 +171,8 @@ class GameTelemetry:
             self.problem_event_buffer.append(self.current_problem_payload)
 
     def send(self):
+        print("Not storing data in the db right now...")
+        return
         if not cm.get_widget_value("enable_db", "checkbox"):
             print("Not storing data in the db right now...")
             return

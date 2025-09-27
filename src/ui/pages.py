@@ -37,7 +37,7 @@ def game_page_ui():
 
     game = st.session_state["Game"]
     user_response = render_exercise(
-        problem_details=game.Question.Problem.details(),
+        problem_details=game.Question.Problem.display_details(),
         problem_id=game.problem_id,
         should_fade=cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"),
         )
@@ -47,6 +47,7 @@ def game_page_ui():
     if cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"):
         if st.button("Show problem again"):
             st.session_state["fade_class_identifier"] += 1
+            game.last_event = "button_interaction"
             st.rerun()
 
     if st.button("End"):
