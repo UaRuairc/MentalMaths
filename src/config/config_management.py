@@ -179,8 +179,8 @@ class ConfigManager:
             print("That argument does not exist. If you want to add it, use the add_new_widget_arg method.")
             return False
 
-        if type(updated_arg_value) != type(widget_config[arg]):
-            print(f"WARNING: {arg} is of type {type(widget_config[arg])}, but the updated value is of type {type(updated_arg_value)}.")
+        if type(updated_arg_value) != type(widget_config[arg]) and widget_config[arg] is not None:
+            print(f"WARNING WHEN UPDATING {widget_category}|{widget_name}: {arg} is currently of type {type(widget_config[arg])}, but the updated value is of type {type(updated_arg_value)}.")
             print("updated the value anyway, but this may cause issues.")
 
 
@@ -191,6 +191,8 @@ class ConfigManager:
 
 
         widget_config[arg] = updated_arg_value
+        print(f"Updated {widget_category}|{widget_name}:"
+              f"set arg {arg} to: {updated_arg_value}")
 
 
 
