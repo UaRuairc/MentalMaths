@@ -9,18 +9,32 @@ from copy import deepcopy
 
 class Modifier(ABC):
 
-    """Represents a modifier which can be enabled, disabled, and activated, and can handle events.
-
-
-    Attributes:
-        id: Integer identifier for the modifier.
-        name: Name of the modifier.
-        description: Description of the modifier.
-        enabled: Indicates whether the modifier is enabled. Defaults to False.
-        on_event_handler: An optional callable to handle events.
-
 
     """
+    Abstract base class that serves as a blueprint for defining a mod and, importantly, how a mod behaves for a given target.
+
+    Each mod can be extended to be applied to any object, as long as the corresponding method is defined.
+
+    Attributes:
+        id (str): Identifier for the modifier, unique for each modifier instance.
+        mod_origin (str): Indicates the origin of the mod, thus the single source of truth of its enabled status.
+        widget_name (Optional[str]): Name of the widget, if the modification originates
+            from a widget.
+        widget_category (Optional[str]): Category of the widget, if applicable.
+
+    Methods:
+        modify(target, payload):
+            Modifies the target according to the payload by using a handler specific to
+            the target's type. Logs updates if modifications occur.
+
+        is_enabled():
+            Determines whether the modifier is enabled and can be used for modification.
+
+        get_handler(target):
+            Retrieves the handler method for performing a modification, based on the
+            type of the provided target.
+    """
+
     #priority: int
     id: ClassVar[str] = ""
     mod_origin: ClassVar[str] = "" # maybe it comes from a widget, or maybe it doesn't
