@@ -87,7 +87,9 @@ class Game:
             self.GameTelemetry = GameTelemetry(
                 event=self.last_event
             )
+            self.GameTelemetry.new_session_payload(record_last_payload=False, data=self.session_snapshot())
             st.session_state["GameTelemetry"] = self.GameTelemetry
+            self.last_event = "telemetry_initialised"
         else:
             print("telemetry already initialised.")
 
@@ -114,10 +116,10 @@ class Game:
             self.scheduled_end_time = self.start_time + timedelta(seconds=self.duration_in_seconds)
             self.is_running = True
             st.session_state["is_game_running"] = self.is_running
-
             self.init_telemetry()
-            self.GameTelemetry.new_session_payload(record_last_payload=False, data=self.session_snapshot())
+            return
 
+        if self.last_event == "telemetry_initialised":
             self.create_new_problem()
             return
 
@@ -208,7 +210,7 @@ class Game:
         self.generate_new_problem()
         self.total_expected_keystroke_count += len(str(self.Question.answer))
 
-        if self.last_event == "game_session_started":
+        if self.last_event in ["game_session_started", "telemetry_initialised"]:
 
             self.last_event = "initial_problem_created"
         else:
