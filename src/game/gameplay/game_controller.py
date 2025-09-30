@@ -74,7 +74,7 @@ class Game:
     @last_event.setter
     def last_event(self, event):
 
-        if event != self._last_event:
+        if event != self._last_event or event == "button_interaction":
             print(f"Event transition: {self.last_event} -> {event}")
             self._last_event = event
             self.event_history.append(event)
