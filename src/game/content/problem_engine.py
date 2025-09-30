@@ -60,7 +60,7 @@ class Problem(ABC):
     _eff_components: ProblemComponents = None
     base_answer: Any = None
     eff_answer: Any = None
-    mod_history: dict = field(default_factory=dict)
+    mod_log: dict = field(default_factory=dict)
     tags: Any = None
 
     _tagged: bool = field(default=False, init=False, repr=False)
@@ -226,14 +226,15 @@ class Question:
             "right_operand": right,
             "answer": self.answer,
             "status": "unanswered",
-            "modifiers": None,
-            "is_correct": None,
             "event": last_event
         }
         if last_event == "user_answer_validated":
             data["answer_ms"] = self.time_elapsed_ms()
             data["is_correct"] = True
 
+        if last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
+
+            data["mod_log"] = self.Problem.mod_log
         return data
 
     @staticmethod

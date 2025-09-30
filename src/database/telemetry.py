@@ -25,7 +25,7 @@ class ProblemData:
     answer: Optional[float] = None
     is_correct: Optional[bool] = None
     answer_ms: Optional[int] = None
-    modifiers: Optional[Any] = None
+    mod_log: Optional[Any] = None
 
     keystroke_sequence: Optional[str] = None
     keystroke_count: Optional[int] = 0
@@ -55,7 +55,7 @@ class SessionData:
     user_id: str
     game_mode: str
     active_problem_types: list
-    modifiers: Optional[Any]
+    mod_log: Optional[Any]
     started_at: str
 
     ended_at: Optional[str] = None

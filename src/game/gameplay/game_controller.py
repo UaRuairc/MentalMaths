@@ -60,7 +60,7 @@ class Game:
         self.current_problem_type = None
         self.GameTelemetry = None
         self.event_history = []
-        self.mod_history = {}
+        self.mod_log = {}
 
 
         self._last_event = None
@@ -154,6 +154,8 @@ class Game:
                 "status": self.last_event,
             }
             data = {**problem_snapshot, **problem_update}
+            self.mod_log.update(self.Question.Problem.mod_log)
+            self.GameTelemetry.new_problem_payload(record_last_payload=False, data=self.Question.snapshot(last_event=self.last_event))
             self.GameTelemetry.current_problem_payload.update(data)
 
             session_update = self.session_snapshot()
@@ -268,7 +270,7 @@ class Game:
         data = {
             "game_mode": "standard",
             "active_problem_types": self.active_problem_types,
-            "modifiers": None,
+            "mod_log": self.mod_log,
             "started_at": str(self.start_time),
             "ended_at": str(self.actual_end_time),
             "ended_early": self.ended_early,

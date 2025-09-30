@@ -6,7 +6,6 @@ from abc import ABC
 from datetime import datetime, timezone
 from copy import deepcopy
 
-
 class Modifier(ABC):
 
 
@@ -40,30 +39,54 @@ class Modifier(ABC):
     mod_origin: ClassVar[str] = "" # maybe it comes from a widget, or maybe it doesn't
     widget_name: ClassVar[Optional[str]]= None
     widget_category: ClassVar[Optional[str]] = None
-    override: ClassVar[Optional[bool]] = None
 
     def modify(self, target, payload):
+        handler = self.get_handler(target)
+        if not handler:
+            return None
+
+        log_update = handler(target, payload)
+        return self._log(target, log_update) if log_update else None
+
+    def _log(self, target, log_update):
+
+        target.mod_log.setdefault("event_history", [])
+        target.mod_log.setdefault("stats", {})
+        target.mod_log["stats"].setdefault(self.id, {
+            "calls": 0,
+            "activations": 0
+        })
+
+
+
+        target.mod_log["event_history"].append(log_update)
+        target.mod_log["stats"][self.id]["calls"] += 1
+        target.mod_log["stats"][self.id]["activations"] += 1 if log_update["activated"] else 0
+        # log any custom stuff below.
         for cls in type(target).__mro__:
-            fn = getattr(self, f"_modify_{cls.__name__.lower()}", None)
+            fn = getattr(self, f"_update_{cls.__name__.lower()}_log", None)
             if fn:
-                return fn(target, payload)
+                return fn(target, log_update)
 
         return None
 
-    def _modify_game(self, g, payload): pass
+    def _modify_game(self, g, payload): return None
 
-    def _update_game_mod_history(self, g, payload):
-        g.mod_history.setdefault(self.id, [])
-        g.mod_history[self.id].append(payload)
+    def _update_game_log(self, g, log_update): pass
 
-    def _modify_problem(self, p, payload): pass
+    def _modify_problem(self, p, payload): return None
 
-    def _update_problem_mod_history(self, p, payload):
-        p.mod_history.setdefault(self.id, [])
-        p.mod_history[self.id].append(payload)
+    def _update_problem_log(self, p, log_update): pass
 
     def is_enabled(self):
         pass
+
+    def get_handler(self, target):
+        for cls in type(target).__mro__:
+            fn = getattr(self, f"_modify_{cls.__name__.lower()}", None)
+            if fn:
+                return fn
+        return None
 
 class PosOnly(Modifier):
 
@@ -75,10 +98,9 @@ class PosOnly(Modifier):
 
     def _modify_problem(self, p, payload):
         was_modified = False
+        log_update = None
         if payload["event"] not in ["new_problem_created", "initial_problem_created"]:
-            return
-
-
+            return log_update
         if p.components.op not in ["add", "sub", "mult", "div"]:
             raise NotImplementedError(f"Operator {p.op} not implemented for pos_only modifier.")
 
@@ -96,15 +118,10 @@ class PosOnly(Modifier):
                 p._eff_components = replace(p._eff_components, left=new_left, right=new_right)
                 was_modified = True
 
-        payload_update = {
-            "was_modified": was_modified,
+        return payload | {
+            "activated": was_modified,
             "prev_components":  old_eff_components if was_modified else None
         }
-
-        payload.update(payload_update)
-
-        self._update_problem_mod_history(p, payload)
-        return
 
     def is_enabled(self):
         return cm.get_widget_value("pos_answers_only", "checkbox")
@@ -118,11 +135,11 @@ class Fade(Modifier):
 
     def _modify_problem(self, p, payload):
 
-        self._update_problem_mod_history(p, payload)
+        return payload.copy()
 
     def _modify_game(self, g, payload):
 
-        self._update_game_mod_history(g, payload)
+        return payload.copy()
 
     def is_enabled(self):
         return cm.get_widget_value("fade_problem", "checkbox")
@@ -147,24 +164,24 @@ MOD_REGISTRY = {
 
 MOD_PAYLOADS = {
     "pos_answers_only": {
+        "mod_id": "pos_answers_only",
         "event": None,
         "timestamp": None,
-        "was_modified": False,
+        "activated": False,
         "prev_state": None,
     },
     "fade_problem": {
+        "mod_id": "fade_problem",
         "event": None,
         "timestamp": None,
-        "was_modified": True,
+        "activated": True,
         "duration": 1,
     }
 }
 
 def build_payload(mod_id: str, event: str, extra: dict | None = None) -> dict:
     template = MOD_PAYLOADS.get(mod_id, {})
-    # make a new dict; resolve callables inline (no deepcopy needed)
     payload = {k: (v() if callable(v) else v) for k, v in template.items()}
-    # fill timestamp if template left it None
     if payload.get("timestamp") is None:
         payload["timestamp"] = str(datetime.now(timezone.utc))
     payload["event"] = event
