@@ -1,5 +1,6 @@
 import math
 from typing import Callable, TypedDict, TYPE_CHECKING
+from dataclasses import replace
 
 if TYPE_CHECKING:
     from src.game.content.problem_engine import Problem
@@ -171,23 +172,30 @@ OP_TAGGERS: dict[str, Callable] = {
     "div": get_core_division_tags,
 }
 
-class TagInfo(TypedDict):
+class TagData(TypedDict):
     terms: dict
     operator: dict
     general: dict
 
-def problem_tagger(p: "Problem") -> TagInfo:
+def problem_tagger(p: "Problem", eff=True) -> TagData:
     """
 
     Generate tags for a problem
 
     """
-    left = p.left
-    right = p.right
-    ans = p.answer
-    op = p.op
+    if eff:
+        components = replace(p._eff_components)
+    else:
+        components = replace(p.components)
+
+    left = components.left
+    op = components.op
+    right = components.right
+
+    ans = p.eff_answer
     dtype = p.dtype
-    modifiers = p.modifiers
+
+    enabled_modifiers = p.mod_log["stats"].keys()
 
     info = {
         "terms":{
@@ -247,4 +255,11 @@ def problem_tagger(p: "Problem") -> TagInfo:
     if equal_operands:
         info["general"]["tags"].add("EQUAL_OPERANDS")
 
-    return info
+    for mod_id in enabled_modifiers:
+        info["general"]["tags"].add(f"MOD_{mod_id.upper()}")
+
+    info["general"]["tags"].add(dtype)
+
+    tag_data = TagData(terms = info["terms"], operator = info["operator"], general = info["general"])
+
+    return tag_data
