@@ -255,6 +255,22 @@ class Question:
         if last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
 
             data["mod_log"] = self.Problem.mod_log
+
+            terms = ["left", "right", "ans"]
+            # The "effective" problem is just stored as the normal problem, i.e,
+            # left_tags = self.Problem.eff_tag_info["terms"]["left"]["tags"]
+            # But for the "base" problem it will be
+            # base_left_tags = self.Problem.base_tag_info["terms"]["left"]["tags"]
+            for suffix in ["tags", "features"]:
+                for prefix, tag_info in (("base_", self.Problem.base_tag_info), ("", self.Problem.eff_tag_info)):
+
+                    for term in terms:
+                        data[f"{prefix}{term}_{suffix}"] = tag_info["terms"][f"{term}"][f"{suffix}"]
+
+                    data[f"{prefix}operator_{suffix}"] = tag_info["operator"][f"{suffix}"]
+                    data[f"{prefix}general_{suffix}"] = tag_info["general"][f"{suffix}"]
+
+
         return data
 
     @staticmethod
