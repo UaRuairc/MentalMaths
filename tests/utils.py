@@ -1,9 +1,6 @@
-# tests/test_problem_engine.py
-import pytest
-from game.content.problem_engine import Question
-
 #leftrights = [[2, 1004], [6, 1003], [4, 1008], [9, 1007], [103, 1126], [177, 1146], [193, 1164], [135, 1183], [4, 1005], [3, 1004], [6, 1008], [4, 1009], [131, 1173], [138, 1127], [198, 1179], [134, 1127], [5, 1002], [2, 1003], [7, 1004], [4, 1006], [136, 1171], [133, 1130], [176, 1110], [109, 1183], [5, 1004], [4, 1004], [6, 1004], [7, 1006], [162, 1167], [187, 1149], [176, 1157], [113, 1127]]
 #answers = [2008, 6018, 4032, 9063, 115978, 202842, 224652, 159705, 4020, 3012, 6048, 4036, 153663, 155526, 233442, 151018, 5010, 2006, 7028, 4024, 159256, 150290, 195360, 128947, 5020, 4016, 6024, 7042, 189054, 214863, 203632, 127351]
+
 ops = [
         "add",
         "sub",
@@ -78,58 +75,3 @@ def static_ranges():
         RANGES["mult"].append((i, 2 * i))
         RANGES["div"].append((i, 2 * i))
     return RANGES
-
-SEEDS = static_seeds()
-RANGES = static_ranges()
-
-TEST_CASES = [(op, seed, ranges, i%8) for op in ops for i, (seed,ranges) in enumerate(zip(SEEDS[op], RANGES[op]))]
-
-@pytest.mark.parametrize("op, seed, ranges, i", TEST_CASES)
-def test_problem_generation(op, seed, ranges, i):
-    modifiers = {
-        "pos_answers_only": False,
-        "fade_problem": False
-    }
-
-    l1, r1 = ranges
-    l2, r2 = l1 + 1000, r1 + 1000
-
-    q = Question(range_ = ((l1, r1), (l2, r2)), op_=op, seed=seed, dtype_ = "ints", modifiers=modifiers)
-    q.calc()
-
-    assert q.answer == EXPECTED_ANSWERS[op][i]
-
-@pytest.mark.parametrize("op, seed, ranges, i", TEST_CASES)
-def test_left_right_operands(op, seed, ranges, i):
-    modifiers = {
-        "pos_answers_only": False,
-        "fade_problem": False
-    }
-
-    l1, r1 = ranges
-    l2, r2 = l1 + 1000, r1 + 1000
-
-    q = Question(range_=((l1, r1), (l2, r2)), op_=op, seed=seed, dtype_="ints", modifiers=modifiers)
-    q.calc()
-
-    assert (q.Problem.left, q.Problem.right) == EXPECTED_OPERANDS[op][i]
-
-@pytest.mark.parametrize("op, seed, ranges, i", TEST_CASES)
-def test_modifier_pos_answers_only(op, seed, ranges, i):
-
-    modifiers = {
-        "pos_answers_only": True,
-        "fade_problem": False
-    }
-
-    l1, r1 = ranges
-    l2, r2 = l1 + 1000, r1 + 1000
-
-
-    q = Question(range_ = ((l1, r1), (l2, r2)), op_=op, seed=seed, dtype_ = "ints", modifiers=modifiers)
-    q.calc()
-
-
-    assert q.answer == abs(EXPECTED_ANSWERS[op][i])
-
-
