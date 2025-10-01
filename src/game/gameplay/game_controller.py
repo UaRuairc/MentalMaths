@@ -257,7 +257,7 @@ class Game:
             op_=self.op_API_ALIASES[next_problem_op_],
             dtype_=next_data_type_,
         )
-        self.Question.calc()
+        self.Question.prepare()
         self.Question.Problem.id = self.problem_id
         self.num_questions += 1
         st.session_state["fade_class_identifier"] += 1

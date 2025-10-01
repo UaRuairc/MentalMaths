@@ -220,7 +220,7 @@ class Question:
 
         self.problem_start_time = datetime.now(timezone.utc)
         self.problem_start_perf_counter = time.perf_counter()
-    def calc(self, question_type="standard"):
+    def prepare(self, question_type="standard"):
         if question_type != "standard":
             raise ValueError(f"Only question_type {question_type} is currently supported")
         """Generate a problem instance and compute its answer."""
@@ -313,10 +313,3 @@ class Question:
         elapsed = time.perf_counter() - self.problem_start_perf_counter
         elapsed_ms = elapsed * 1000
         return int(round(elapsed_ms))
-
-# Example
-if __name__ == "__main__":
-    ranges = [[1,99], [1,99]]
-    myProblem = Question(range_=ranges, op_="mult", dtype_="ints")
-    myProblem.calc()
-    print(myProblem.info())
