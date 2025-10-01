@@ -214,6 +214,10 @@ class ModManager:
         return subscribed_mods
 
     @staticmethod
+    def get_specific_mods(mod_list, event):
+        return [(MOD_REGISTRY[mod_id](), build_payload(mod_id, event)) for mod_id in mod_list]
+
+    @staticmethod
     def get_base_mod_payload(mod_id):
         return deepcopy(MOD_PAYLOADS[mod_id])
 
@@ -243,7 +247,11 @@ class ModManager:
         return states
 
     @staticmethod
-    def mod(event, target):
-        subscribed_mods = ModManager.get_subscribed_mods(event)
-        for mod, default_payload in subscribed_mods:
+    def mod(event, target, mod_list_override = None):
+
+        if mod_list_override:
+            mods = ModManager.get_specific_mods(mod_list_override, event)
+        else:
+            mods = ModManager.get_subscribed_mods(event)
+        for mod, default_payload in mods:
             mod.modify(target, default_payload)
