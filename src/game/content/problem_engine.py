@@ -61,9 +61,11 @@ class Problem(ABC):
     base_answer: Any = None
     eff_answer: Any = None
     mod_log: dict = field(default_factory=dict)
-    tags: Any = None
+    base_tags: Any = None
+    eff_tags: Any = None
 
-    _tagged: bool = field(default=False, init=False, repr=False)
+    _base_tagged: bool = field(default=False, init=False, repr=False)
+    _eff_tagged: bool = field(default=False, init=False, repr=False)
     _solved: bool = field(default=False, init=False, repr=False)
 
     def __post_init__(self):
@@ -81,18 +83,29 @@ class Problem(ABC):
         return
 
     @property
-    def tag_info(self):
+    def base_tag_info(self):
         if not self._solved:
             raise ValueError("Problem must be solved before tagging.")
 
-        # need to refactor problem_tagger
-        return None
+        if not self._base_tagged:
+            self.base_tags = problem_tagger(self, eff=False)
+            self._base_tagged = True
 
-        if not self._tagged:
-            self.tags = problem_tagger(self)
-            self._tagged = True
+        return self.base_tags
 
-        return self.tags
+    @property
+    def eff_tag_info(self):
+        if not self._solved:
+            raise ValueError("Problem must be solved before tagging.")
+
+
+        if not self._eff_tagged:
+            self.eff_tags = problem_tagger(self, eff=True)
+            self._eff_tagged = True
+
+        return self.eff_tags
+
+
 
     def display_details(self, eff=True):
         symbol = self.op_symbol(self.components.op)
@@ -101,6 +114,13 @@ class Problem(ABC):
 
         self.solve()
         return self._eff_components.left, symbol, self._eff_components.right, self.eff_answer
+
+    def details(self, eff=True):
+        if not eff:
+            return self.components.left, self.components.op, self.components.right, self.base_answer
+
+        self.solve()
+        return self._eff_components.left, self._eff_components.op, self._eff_components.right, self.eff_answer
 
 
     def operate(self, components) -> Any:
@@ -127,12 +147,12 @@ def register(op):
 class AddProblem(Problem):
     """
          This is baseline addition.
-         
+
          We can convert it to a subtraction problem
          if we convert it to a subtraction problem, let the user decide:
          "do I want to deal with negative results?"
 
-         eg if 
+         eg if
          self.left = 20
          self.right = 50
          then 20-50 = -30
@@ -284,17 +304,3 @@ if __name__ == "__main__":
     myProblem = Question(range_=ranges, op_="mult", dtype_="ints")
     myProblem.calc()
     print(myProblem.info())
-
-
-
-
-
-
-
-
-
-
-
-
-
-

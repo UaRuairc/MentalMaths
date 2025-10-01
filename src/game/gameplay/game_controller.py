@@ -7,6 +7,8 @@ from src.game.content.problem_engine import Question
 import random
 from src.utils import get_range
 from datetime import datetime, timezone, timedelta
+from src.game.content.session_tagger import update_session_tags
+import json
 
 def start_game():
     st.session_state["Game"] = Game(event="game_session_started")
@@ -61,6 +63,7 @@ class Game:
         self.GameTelemetry = None
         self.event_history = []
         self.mod_log = {}
+        self.tags = {}
 
 
         self._last_event = None
@@ -158,6 +161,7 @@ class Game:
             self.GameTelemetry.new_problem_payload(record_last_payload=False, data=self.Question.snapshot(last_event=self.last_event))
             self.GameTelemetry.current_problem_payload.update(data)
 
+            update_session_tags(self, self.Question.Problem.eff_tag_info)
             session_update = self.session_snapshot()
 
             self.GameTelemetry.current_session_payload.update(session_update)
@@ -191,6 +195,7 @@ class Game:
             }
             self.GameTelemetry.current_problem_payload.update(problem_update)
 
+            update_session_tags(self, self.Question.Problem.eff_tag_info)
             session_update = {
                     "payload": self.GameTelemetry.build_event_payload(),
                     "status": self.last_event
@@ -279,6 +284,11 @@ class Game:
             "num_correct": self.num_correct,
             "total_keystroke_count": self.total_keystroke_count,
             "total_expected_keystroke_count": self.total_expected_keystroke_count,
+            "left_tags": self.tags.get("left", None),
+            "right_tags": self.tags.get("right", None),
+            "ans_tags": self.tags.get("ans", None),
+            "operator_tags": self.tags.get("operator", None),
+            "general_tags": self.tags.get("general", None),
         }
 
         return data

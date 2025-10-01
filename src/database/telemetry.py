@@ -23,8 +23,33 @@ class ProblemData:
     right_den: Optional[int] = None
     right_operand: Optional[float] = None
     answer: Optional[float] = None
-    is_correct: Optional[bool] = None
     answer_ms: Optional[int] = None
+    is_correct: Optional[bool] = None
+
+    left_tags: Optional[Any] = None
+    right_tags: Optional[Any] = None
+    ans_tags: Optional[Any] = None
+    operator_tags: Optional[Any] = None
+    general_tags: Optional[Any] = None
+
+    base_left_tags: Optional[Any] = None
+    base_right_tags: Optional[Any] = None
+    base_ans_tags: Optional[Any] = None
+    base_operator_tags: Optional[Any] = None
+    base_general_tags: Optional[Any] = None
+
+    left_features: Optional[Any] = None
+    right_features: Optional[Any] = None
+    ans_features: Optional[Any] = None
+    operator_features: Optional[Any] = None
+    general_features: Optional[Any] = None
+
+    base_left_features: Optional[Any] = None
+    base_right_features: Optional[Any] = None
+    base_ans_features: Optional[Any] = None
+    base_operator_features: Optional[Any] = None
+    base_general_features: Optional[Any] = None
+
     mod_log: Optional[Any] = None
 
     keystroke_sequence: Optional[str] = None
@@ -67,6 +92,12 @@ class SessionData:
     total_keystroke_count: int = 0
     total_expected_keystroke_count: int = 0
     status: str = "active"
+
+    left_tags: Optional[Any] = None
+    right_tags: Optional[Any] = None
+    ans_tags: Optional[Any] = None
+    operator_tags: Optional[Any] = None
+    general_tags: Optional[Any] = None
 
     def to_dict(self):
         return asdict(self)
