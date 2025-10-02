@@ -16,9 +16,11 @@ Progress:
 - [x] Record meaningful analytics for user development
 - [x] Switch to event-driven game flow
 - [x] Basic data queries/analysis on historical user data
+- [x] Develop a problem-tagging framework
+- [x] Develop a Modifier framework
 
 Short-term To-do's:
-- [ ] Develop a problem-tagging framework for advanced querying and analysis
+
 - [ ] Build statistics dashboard / post-game screen
 
 -----------------------
@@ -29,55 +31,54 @@ MentalMaths/
 ├── page_navigation.py
 ├── requirements.txt
 ├── README.md
-│ 
-├── pages/
+├── pages/                              # keep this folder in the root
 │   ├── 1_setup_screen.py
 │   ├── 2_stats_screen.py
 │   └── game_screen.py
-│ 
 ├── src/
 │   ├── utils.py
-│   │  
+│   │ 
+│   ├── game/
+│   │   ├── content/
+│   │   │   ├── modifiers.py
+│   │   │   ├── problem_engine.py
+│   │   │   ├── problem_tagger.py
+│   │   │   ├── session_tagger.py
+│   │   └── gameplay/
+│   │       └── game_controller.py
+│   ├── ui/
+│   │   ├── pages.py
+│   │   ├── widgets.py
+│   │   └── page_components/
+│   │       ├── auth.py
+│   │       ├── game.py
+│   │       └── setup.py
 │   ├── config/
 │   │   ├── config_init.py
 │   │   └── config_management.py
-│   │
-│   ├── database/
-│   │   ├── connection.py
-│   │   ├── queries.py
-│   │   ├── telemetry.py
-│   │   └── auth/
-│   │       └── service.py
-│   ├── game/
-│   │   ├── content/
-│   │   │   ├── problem_engine.py
-│   │   │   ├── problem_tagger.py
-│   │   └── gameplay/
-│   │       └── game_controller.py
-│   │ 
-│   └── ui/
-│       ├── pages.py
-│       ├── widgets.py
-│       └── page_components/
-│           ├── auth.py
-│           ├── game.py
-│           ├── setup.py
-│
+│   └── database/
+│       ├── connection.py
+│       ├── queries.py
+│       ├── telemetry.py
+│       └── auth/
+│           └── service.py
 ├── .streamlit/
 │   ├── config.toml     
 │   └── secrets.example.toml            # Rename to secrets.toml and put Supabase secrets here 
-│
 ├── frontend/                           # Build custom widget with node (see Installation)
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── webpack.config.js
 │   ├── public/
 │   │   └── index.html
-│   │
-│   └── src/
-│       ├── CustomInput.tsx
-│       ├── custom_range_input.tsx
-│       └── index.tsx
+│   ├── src/
+│   │   ├── CustomInput.tsx
+│   │   └── index.tsx
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── webpack.config.js
+├── tests/
+│   ├── test_mod_pos_answers_only.py
+│   ├── test_problem_components.py
+│   ├── test_problem_generation.py
+│   └── utils.py
 ```
 
 -----------------------
