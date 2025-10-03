@@ -40,28 +40,35 @@ class Modifier(ABC):
     widget_name: ClassVar[Optional[str]]= None
     widget_category: ClassVar[Optional[str]] = None
 
-    def modify(self, target, payload):
+    def modify(self, target, payload) -> bool:
         handler = self.get_handler(target)
         if not handler:
-            return None
+            return False
 
         log_update = handler(target, payload)
-        return self._log(target, log_update) if log_update else None
+
+        self._log(target, log_update)
+
+        return log_update["activated"]
 
     def _log(self, target, log_update):
 
         target.mod_log.setdefault("event_history", [])
+        target.mod_log.setdefault("mods_activated", [])
         target.mod_log.setdefault("stats", {})
         target.mod_log["stats"].setdefault(self.id, {
             "calls": 0,
             "activations": 0
         })
 
-
-
         target.mod_log["event_history"].append(log_update)
         target.mod_log["stats"][self.id]["calls"] += 1
-        target.mod_log["stats"][self.id]["activations"] += 1 if log_update["activated"] else 0
+        if log_update["activated"]:
+            target.mod_log["mods_activated"].append(self.id)
+            target.mod_log["stats"][self.id]["activations"] += 1
+
+
+
         # log any custom stuff below.
         for cls in type(target).__mro__:
             fn = getattr(self, f"_update_{cls.__name__.lower()}_log", None)
@@ -249,9 +256,25 @@ class ModManager:
     @staticmethod
     def mod(event, target, mod_list_override = None):
 
-        if mod_list_override:
+        seen = set()
+        activated = set()
+
+        if mod_list_override is not None:
             mods = ModManager.get_specific_mods(mod_list_override, event)
         else:
             mods = ModManager.get_subscribed_mods(event)
+
         for mod, default_payload in mods:
-            mod.modify(target, default_payload)
+            if mod.id in seen:
+                continue
+            seen.add(mod.id)
+
+            try:
+                if mod.modify(target, default_payload):
+                    activated.add(mod.id)
+
+            except Exception as e:
+                print(Exception)
+
+
+        return seen, activated
