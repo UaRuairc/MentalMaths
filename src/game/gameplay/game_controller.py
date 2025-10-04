@@ -8,7 +8,7 @@ import random
 from src.utils import get_range
 from datetime import datetime, timezone, timedelta
 from src.game.content.session_tagger import update_session_tags
-import json
+from dataclasses import dataclass, field, asdict
 
 def start_game():
     st.session_state["Game"] = Game(event="game_session_started")
@@ -31,23 +31,39 @@ def game_countdown_timer(verbosity=1):
             if verbosity == 1: print("Game has ended.")
             game.last_event = "game_timed_out"
 
+
+@dataclass
+class GameStats:
+    num_questions: int = 0
+    num_correct: int = 0
+    score: int = 0
+    total_keystroke_count: int = 0
+    total_expected_keystroke_count: int = 0
+    mods_seen: set = field(default_factory=set)
+    mods_activated: set = field(default_factory=set)
+
+    start_time = None
+    scheduled_end_time = None
+    actual_end_time = None
+    ended_early: bool = False
+
+    def to_dict(self):
+        return asdict(self)
+
+
 class Game:
 
     def __init__(self, event="game_session_started"):
-        self.is_running = False
-        self.start_time = None
+        self.active_problem_types=st.session_state["active_problem_types"]
+        self.game_duration = cm.get_widget_value("duration", "number_input_box")
+
+        self.stats = GameStats()
+        self.is_running: bool = False
         self.start_perf_counter = None
-        self.duration_in_seconds = cm.get_widget_value("duration", "number_input_box")
-        self.scheduled_end_time = None
-        self.actual_end_time = None
-        self.ended_early = False
-        self.num_questions = 0
-        self.num_correct = 0
-        st.session_state["is_game_running"] = self.is_running
-        st.session_state["game_score"] = self.num_correct
-        self.problem_id = 0 # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
-        self.total_keystroke_count = 0
-        self.total_expected_keystroke_count = 0
+
+        self.Question = None
+        self.GameTelemetry = None
+        self.problem_id = None # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
         self.last_user_response = None # will be a list: [user_answer, problem_id, keystroke_sequence, keystroke_count]
         self.ops = ["add", "subtract", "mult", "div"]
         self.op_API_ALIASES = {
@@ -56,19 +72,29 @@ class Game:
             "mult": "mult",
             "div": "div"
         }
-        self.active_problem_types = st.session_state["active_problem_types"]
-        self.Question = None
-        self.current_problem_id = None # if we create a new problem with a new problem id, but the same answer as the last problem, the different problem_id will prevent any buggy double validation
-        self.current_problem_type = None
-        self.GameTelemetry = None
+
         self.event_history = []
         self.mod_log = {}
         self.tags = {}
 
+        st.session_state["game_score"] = self.stats.score
+        st.session_state["is_game_running"] = self.is_running
 
         self._last_event = None
-
         self.last_event = event
+
+    def start(self):
+        self.is_running = True
+        st.session_state["is_game_running"] = self.is_running
+        self.stats.start_time = datetime.now(timezone.utc)
+        self.start_perf_counter = time.perf_counter()
+        self.stats.scheduled_end_time = self.stats.start_time + timedelta(seconds=self.game_duration)
+
+    def stop(self):
+        self.is_running = False
+        self.stats.actual_end_time = datetime.now(timezone.utc)
+        st.session_state["is_game_running"] = self.is_running
+        self.stats.ended_early = (self.last_event == "user_pressed_end_game")
 
     @property
     def last_event(self):
@@ -114,11 +140,7 @@ class Game:
         """
 
         if self.last_event == "game_session_started":
-            self.start_time = datetime.now(timezone.utc)
-            self.start_perf_counter = time.perf_counter()
-            self.scheduled_end_time = self.start_time + timedelta(seconds=self.duration_in_seconds)
-            self.is_running = True
-            st.session_state["is_game_running"] = self.is_running
+            self.start()
             self.init_telemetry()
             return
 
@@ -126,88 +148,55 @@ class Game:
             self.create_new_problem()
             return
 
-        if self.last_event == "initial_problem_created":
-            mm.mod(self.last_event, target=self.Question.Problem)
-            mm.mod(self.last_event, target=self)
+        if self.last_event in ["initial_problem_created", "new_problem_created"]:
+            self.mod(targets=(self.Question.Problem, self))
             self.Question.Problem.solve()
             self.Question.answer = self.Question.Problem.eff_answer
-
-            self.GameTelemetry.new_problem_payload(record_last_payload=False, data=self.Question.snapshot(last_event=self.last_event))
+            self.GameTelemetry.new_problem_payload(record_last_payload=(self.last_event == "new_problem_created"), data=self.Question.snapshot(last_event=self.last_event))
             return
 
-        if self.last_event == "new_problem_created":
-            mm.mod(self.last_event, target=self.Question.Problem)
-            mm.mod(self.last_event, target=self)
-            self.Question.Problem.solve()
-            self.Question.answer = self.Question.Problem.eff_answer
 
-            self.GameTelemetry.new_problem_payload(record_last_payload=True, data=self.Question.snapshot(last_event=self.last_event))
-            return
-
-        if self.last_event == "user_answer_validated":
-            self.num_correct += 1
-            self.problem_id += 1 # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
-            self.total_keystroke_count += self.last_user_response[3]
-            st.session_state["game_score"] = self.num_correct
-
+        if self.last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
             problem_snapshot = self.Question.snapshot(last_event=self.last_event)
             problem_update = {
-                "keystroke_sequence": self.last_user_response[2],
-                "keystroke_count": self.last_user_response[3],
+                "is_correct": True if "user_answer_validated" else False,
+                "event": self.last_event,
+                "keystroke_sequence": self.last_user_response[2] if self.last_user_response else "",
+                "keystroke_count": self.last_user_response[3] if self.last_user_response else 0,
                 "status": self.last_event,
             }
             data = {**problem_snapshot, **problem_update}
             self.mod_log.update(self.Question.Problem.mod_log)
-            self.GameTelemetry.new_problem_payload(record_last_payload=False, data=self.Question.snapshot(last_event=self.last_event))
             self.GameTelemetry.current_problem_payload.update(data)
 
             update_session_tags(self, self.Question.Problem.eff_tag_info)
-            session_update = self.session_snapshot()
-
+            snapshot = self.session_snapshot()
+            session_update = {
+                "payload": self.GameTelemetry.build_event_payload(),
+                "status": self.last_event,
+                **snapshot
+            }
             self.GameTelemetry.current_session_payload.update(session_update)
 
+
+        if self.last_event == "user_answer_validated":
+            self.stats.num_correct += 1
+            st.session_state["game_score"] = self.stats.num_correct
             self.create_new_problem()
             st.rerun()
-            return
+
+        if self.last_event == "user_answer_invalidated":
+            st.rerun()
 
         if self.last_event == "button_interaction":
         #if payload["button"] == "reveal_problem":
         # there is currently only one button dependent modifier, we will do this for now.
-            mm.mod(self.last_event, target=self.Question.Problem)
-            mm.mod(self.last_event, target=self)
+            self.mod(targets=(self.Question.Problem, self))
             return
-
-        if self.last_event == "user_answer_invalidated":
-            return
-
-
 
         if self.last_event in ["game_timed_out", "user_pressed_end_game"]:
-            self.ended_early = True if self.last_event == "user_pressed_end_game" else False
-            self.actual_end_time = datetime.now(timezone.utc)
-            # the last problem event was never updatd or recorded, so
-            problem_update = {
-                "is_correct": False,
-                "event": self.last_event,
-                "keystroke_sequence": self.last_user_response[2] if self.last_user_response else "",
-                "keystroke_count": self.last_user_response[3] if self.last_user_response else 0,
-                "status": self.last_event
-            }
-            self.GameTelemetry.current_problem_payload.update(problem_update)
-
-            update_session_tags(self, self.Question.Problem.eff_tag_info)
-            session_update = {
-                    "payload": self.GameTelemetry.build_event_payload(),
-                    "status": self.last_event
-            }
-
-            snapshot = self.session_snapshot()
-            session_update = {**session_update, **snapshot}
-            self.GameTelemetry.current_session_payload.update(session_update)
+            self.stop()
             self.GameTelemetry.record("session")
-
-            self.is_running = False
-            st.session_state["is_game_running"] = self.is_running
             self.GameTelemetry.send()
             st.rerun()
 
@@ -215,12 +204,14 @@ class Game:
 
     def create_new_problem(self):
         self.generate_new_problem()
-        self.total_expected_keystroke_count += len(str(self.Question.answer))
+        self.problem_id = self.problem_id + 1 if self.problem_id is not None else 0  # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
 
         if self.last_event in ["game_session_started", "telemetry_initialised"]:
 
             self.last_event = "initial_problem_created"
         else:
+            self.stats.total_keystroke_count += self.last_user_response[3]
+            self.stats.total_expected_keystroke_count += len(str(self.Question.answer))
             self.last_event = "new_problem_created"
 
 
@@ -259,14 +250,14 @@ class Game:
         )
         self.Question.prepare()
         self.Question.Problem.id = self.problem_id
-        self.num_questions += 1
+        self.stats.num_questions += 1
         st.session_state["fade_class_identifier"] += 1
         st.session_state["current_question"] = self.Question
         return
 
 
     def update(self, score, problem_id, last_user_response):
-        self.score = score
+        self.stats.score = score
         self.problem_id = problem_id
         self.last_user_response = last_user_response
 
@@ -276,14 +267,14 @@ class Game:
             "game_mode": "standard",
             "active_problem_types": self.active_problem_types,
             "mod_log": self.mod_log,
-            "started_at": str(self.start_time),
-            "ended_at": str(self.actual_end_time),
-            "ended_early": self.ended_early,
+            "started_at": str(self.stats.start_time),
+            "ended_at": str(self.stats.actual_end_time),
+            "ended_early": self.stats.ended_early,
             "event_history": self.event_history,
-            "num_questions": self.num_questions,
-            "num_correct": self.num_correct,
-            "total_keystroke_count": self.total_keystroke_count,
-            "total_expected_keystroke_count": self.total_expected_keystroke_count,
+            "num_questions": self.stats.num_questions,
+            "num_correct": self.stats.num_correct,
+            "total_keystroke_count": self.stats.total_keystroke_count,
+            "total_expected_keystroke_count": self.stats.total_expected_keystroke_count,
             "left_tags": self.tags.get("left", None),
             "right_tags": self.tags.get("right", None),
             "ans_tags": self.tags.get("ans", None),
@@ -294,11 +285,10 @@ class Game:
         return data
 
     def check_timeout(self):
-        return datetime.now(timezone.utc) > self.scheduled_end_time
+        return datetime.now(timezone.utc) > self.stats.scheduled_end_time
 
-
-
-
-
-
-
+    def mod(self, targets):
+        for target in targets:
+            seen, activated = mm.mod(self.last_event, target=target)
+            self.stats.mods_seen |= seen
+            self.stats.mods_activated |= activated
