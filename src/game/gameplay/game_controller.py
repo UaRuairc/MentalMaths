@@ -155,6 +155,8 @@ class Game:
             self.GameTelemetry.new_problem_payload(record_last_payload=(self.last_event == "new_problem_created"), data=self.Question.snapshot(last_event=self.last_event))
             return
 
+        if self.last_event == "user_pressed_end_game":
+            self.stats.ended_early = True
 
         if self.last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
             problem_snapshot = self.Question.snapshot(last_event=self.last_event)
