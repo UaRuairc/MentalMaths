@@ -168,9 +168,8 @@ class Game:
                 "status": self.last_event,
             }
             data = {**problem_snapshot, **problem_update}
-            self.mod_log.update(self.Question.Problem.mod_log)
-            self.GameTelemetry.current_problem_payload.update(data)
 
+            self.GameTelemetry.current_problem_payload.update(data)
             update_session_tags(self, self.Question.Problem.eff_tag_info)
             snapshot = self.session_snapshot()
             session_update = {
