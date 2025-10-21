@@ -9,6 +9,7 @@ from src.utils import get_range
 from datetime import datetime, timezone, timedelta
 from src.game.content.session_tagger import update_session_tags
 from dataclasses import dataclass, field, asdict
+from typing import Optional
 
 def start_game():
     st.session_state["Game"] = Game(event="game_session_started")
@@ -42,14 +43,22 @@ class GameStats:
     mods_seen: set = field(default_factory=set)
     mods_activated: set = field(default_factory=set)
 
-    start_time = None
-    scheduled_end_time = None
-    actual_end_time = None
+    start_time: Optional[datetime] = None
+    scheduled_end_time: Optional[datetime] = None
+    actual_end_time: Optional[datetime] = None
     ended_early: bool = False
 
     def to_dict(self):
         return asdict(self)
 
+    def get_payload(self):
+        stats = self.to_dict()
+        stats["mods_seen"] = list(self.mods_seen)
+        stats["mods_activated"] = list(self.mods_activated)
+        stats["started_at"] = stats.pop("start_time")
+        stats["ended_at"] = stats.pop("actual_end_time")
+        stats.pop("scheduled_end_time")
+        return stats
 
 class Game:
 
@@ -129,14 +138,6 @@ class Game:
         Handles game events based on the last emitted event, updating telemetry, session state, and game logic
         accordingly. Executes logic specific to each game event type to maintain proper game state and telemetry
         synchronization.
-
-        Typical flow:
-
-        game_session_started -> initial_problem_created -> user_answer_validated/new_problem_created (repeats) -> game_timed_out/user_pressed_end_game
-
-        or
-
-        user_answer_invalidated -> user_answer_validated/new_problem_created (repeats) -> game_timed_out/user_pressed_end_game
         """
 
         if self.last_event == "game_session_started":
@@ -196,9 +197,15 @@ class Game:
             return
 
         if self.last_event in ["game_timed_out", "user_pressed_end_game"]:
-            self.GameTelemetry.record("session")
-            self.GameTelemetry.send()
+            self.last_event = "session_ended"
             st.rerun()
+
+        if self.last_event == "session_ended":
+            self.GameTelemetry.record("session")
+            self.last_event = self.GameTelemetry.commit(event=self.last_event)
+
+        if self.last_event in ["session_committed", "session_commit_skipped"]:
+            pass
 
         return
 
@@ -263,18 +270,13 @@ class Game:
 
     def session_snapshot(self):
 
+        stats = self.stats.get_payload()
         data = {
+            **stats,
             "game_mode": "standard",
             "active_problem_types": self.active_problem_types,
             "mod_log": self.mod_log,
-            "started_at": str(self.stats.start_time),
-            "ended_at": str(self.stats.actual_end_time),
-            "ended_early": self.stats.ended_early,
             "event_history": self.event_history,
-            "num_questions": self.stats.num_questions,
-            "num_correct": self.stats.num_correct,
-            "total_keystroke_count": self.stats.total_keystroke_count,
-            "total_expected_keystroke_count": self.stats.total_expected_keystroke_count,
             "left_tags": self.tags.get("left", None),
             "right_tags": self.tags.get("right", None),
             "ans_tags": self.tags.get("ans", None),

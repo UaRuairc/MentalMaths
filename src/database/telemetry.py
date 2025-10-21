@@ -1,19 +1,20 @@
 import streamlit as st
 from src.config.config_management import ConfigManager as cm
-from src.utils import get_ranges
+from src.utils import get_ranges, make_json_safe
 import uuid6
+from uuid import UUID
 from dataclasses import dataclass, fields, asdict
 from typing import Any, Optional
-
+from datetime import datetime
 
 @dataclass
 class ProblemData:
-    event_id: Optional[str]
-    session_id: str
-    user_id: str
+    event_id: Optional[UUID]
+    session_id: UUID
+    user_id: UUID
     problem_id: int
     event: str
-    created_at: Optional[str]
+    created_at: Optional[datetime]
     problem_type: Optional[str]
 
     left_num: Optional[int] = None
@@ -52,7 +53,7 @@ class ProblemData:
 
     mod_log: Optional[Any] = None
 
-    keystroke_sequence: Optional[str] = None
+    keystroke_sequence: Optional[Any] = None
     keystroke_count: Optional[int] = 0
     status: str = "active"
 
@@ -65,19 +66,20 @@ class ProblemData:
         if disallowed_data:
             raise ValueError(f"Invalid fields for ProblemEvent: {disallowed_data}")
 
-        # need to
-        # figure out when we should update, and what we should do it,
-
-
         for key, value in data.items():
             setattr(self, key, value)
 
         return self
 
+    def serialise(self):
+        data = asdict(self)
+        data = make_json_safe(data)
+        return data
+
 @dataclass
 class SessionData:
-    session_id: str
-    user_id: str
+    session_id: UUID
+    user_id: UUID
     game_mode: str
     active_problem_types: list
     mod_log: Optional[Any]
@@ -87,11 +89,14 @@ class SessionData:
     ended_early: bool = False
     num_questions: int = 0
     num_correct: int = 0
+    score: int = 0
     payload: Optional[Any] = None
     event_history: Optional[list] = None
     total_keystroke_count: int = 0
     total_expected_keystroke_count: int = 0
     status: str = "active"
+    mods_seen: list = None
+    mods_activated: list = None
 
     left_tags: Optional[Any] = None
     right_tags: Optional[Any] = None
@@ -117,14 +122,20 @@ class SessionData:
 
         return self
 
+    def serialise(self):
+        data = asdict(self)
+        data = make_json_safe(data)
+        return data
+
+
+
 class GameTelemetry:
 
     def __init__(self, event="session_started"):
         """
         Initialize a new game session with the given parameters.
         """
-        self.session_id = str(uuid6.uuid7())
-        self.supabase_session_id = None
+        self.session_id = uuid6.uuid7()
         self.user_id = st.session_state["supabase_client"].auth.get_user().user.id if st.session_state.get("user") is not None else None
         self.session_event_buffer = None
         self.problem_event_buffer = []
@@ -145,7 +156,7 @@ class GameTelemetry:
             self.record("problem")
 
         self.current_problem_payload = ProblemData(
-            event_id = str(uuid6.uuid7()),
+            event_id = uuid6.uuid7(),
             session_id = self.session_id,
             user_id = self.user_id,
             **data
@@ -201,51 +212,30 @@ class GameTelemetry:
         elif payload_type == "problem":
             self.problem_event_buffer.append(self.current_problem_payload)
 
-    def send(self):
-        print("Not storing data in the db right now...")
-        return
+
+    def commit(self, event):
         if not cm.get_widget_value("enable_db", "checkbox"):
             print("Not storing data in the db right now...")
-            return
-        failed = False
-        if self.session_event_buffer:
-            next_payload = self.session_event_buffer
-            next_payload = next_payload.to_dict()
-            try:
+            return "session_commit_skipped"
 
-                res = (
-                    st.session_state["supabase_client"]
-                    .schema("api")
-                    .from_("game_sessions")
-                    .insert(next_payload)
-                    .execute()
-                    )
+        if event == "session_ended":
+            print(self.problem_event_buffer)
+            try:
+                res = st.session_state["supabase_client"].schema("api").rpc("save_session_and_events", {
+                    "p_session": self.session_event_buffer.serialise(),  # dict with keys/values matching the types above
+                    "p_events": [p.serialise() for p in self.problem_event_buffer]  # list[dict]
+                    }
+                ).execute()
 
             except Exception as e:
                 print(f"Error storing session event: {e}")
-                failed = True
-                res = None
+                return "session_commit_skipped"
 
-        while self.problem_event_buffer:
+            else:
+                return "session_committed"
 
-            BATCH_SIZE = 100
-            next_payload_batch = self.problem_event_buffer[:BATCH_SIZE]
-            next_payload_batch = [payload.to_dict() for payload in next_payload_batch]
-            self.problem_event_buffer = self.problem_event_buffer[BATCH_SIZE:]
 
-            try:
-                res = (
-                    st.session_state["supabase_client"]
-                    .schema("api")
-                    .from_("problem_events")
-                    .insert(next_payload_batch)
-                    .execute()
-                )
 
-            except Exception as e:
-                print(f"Error storing problem event: {e}")
-                failed = True
-                res = None
 
 
 
