@@ -15,7 +15,7 @@ def test_problem_generation(op, seed, ranges, i):
     l2, r2 = l1 + 1000, r1 + 1000
 
     q = Question(range_ = ((l1, r1), (l2, r2)), op_=op, seed=seed, dtype_ = "ints")
-    q.prepare()
+    q.prepare(problem_id=i)
     q.Problem.solve()
     q.answer = q.Problem.eff_answer
 
