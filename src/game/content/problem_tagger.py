@@ -195,7 +195,7 @@ def problem_tagger(p: "Problem", eff=True) -> TagData:
     ans = p.eff_answer
     dtype = p.dtype
 
-    enabled_modifiers = p.mod_log["stats"].keys()
+    enabled_modifiers = p.mod_log.get("stats", {}).keys()
 
     info = {
         "terms":{
