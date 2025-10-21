@@ -44,7 +44,6 @@ class Modifier(ABC):
         handler = self.get_handler(target)
         if not handler:
             return False
-
         log_update = handler(target, payload)
 
         self._log(target, log_update)
@@ -77,11 +76,11 @@ class Modifier(ABC):
 
         return None
 
-    def _modify_game(self, g, payload): return None
+    def _modify_game(self, g, payload): return payload
 
     def _update_game_log(self, g, log_update): pass
 
-    def _modify_problem(self, p, payload): return None
+    def _modify_problem(self, p, payload): return payload
 
     def _update_problem_log(self, p, log_update): pass
 
@@ -105,9 +104,9 @@ class PosOnly(Modifier):
 
     def _modify_problem(self, p, payload):
         was_modified = False
-        log_update = None
+        log_update = payload
         if payload["event"] not in ["new_problem_created", "initial_problem_created"]:
-            return log_update
+            return log_update | {"activated": False, "prev_components": None}
         if p.components.op not in ["add", "sub", "mult", "div"]:
             raise NotImplementedError(f"Operator {p.op} not implemented for pos_only modifier.")
 
