@@ -94,7 +94,7 @@ class Game:
         self.is_running = False
         self.stats.actual_end_time = datetime.now(timezone.utc)
         st.session_state["is_game_running"] = self.is_running
-        self.stats.ended_early = (self.last_event == "user_pressed_end_game")
+        self.stats.ended_early = (self.last_event != "game_timed_out")
 
     @property
     def last_event(self):
@@ -155,8 +155,8 @@ class Game:
             self.GameTelemetry.new_problem_payload(record_last_payload=(self.last_event == "new_problem_created"), data=self.Question.snapshot(last_event=self.last_event))
             return
 
-        if self.last_event == "user_pressed_end_game":
-            self.stats.ended_early = True
+        if self.last_event in ["user_pressed_end_game", "game_timed_out"]:
+            self.stop()
 
         if self.last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
             problem_snapshot = self.Question.snapshot(last_event=self.last_event)
@@ -196,7 +196,6 @@ class Game:
             return
 
         if self.last_event in ["game_timed_out", "user_pressed_end_game"]:
-            self.stop()
             self.GameTelemetry.record("session")
             self.GameTelemetry.send()
             st.rerun()
