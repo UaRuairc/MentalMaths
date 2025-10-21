@@ -16,7 +16,7 @@ def start_game():
     st.rerun()
 
 @st.fragment(run_every=2)
-def game_countdown_timer(verbosity=1):
+def game_countdown_timer(verbosity=0):
     """
     Right now, we are printing debug statements. So, run_every= 2 seconds to prevent verbose output
     Will need to make a game logger helper soon
@@ -262,12 +262,6 @@ class Game:
         st.session_state["fade_class_identifier"] += 1
         st.session_state["current_question"] = self.Question
         return
-
-
-    def update(self, score, problem_id, last_user_response):
-        self.stats.score = score
-        self.problem_id = problem_id
-        self.last_user_response = last_user_response
 
     def session_snapshot(self):
 
