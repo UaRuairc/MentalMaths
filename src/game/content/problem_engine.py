@@ -107,21 +107,13 @@ class Problem(ABC):
 
 
 
-    def display_details(self, eff=True):
+    def render_details(self, eff=True):
         symbol = self.op_symbol(self.components.op)
         if not eff:
-            return self.components.left, symbol, self.components.right, self.base_answer
+            return self.components, symbol, self.base_answer, self.id
 
         self.solve()
-        return self._eff_components.left, symbol, self._eff_components.right, self.eff_answer
-
-    def details(self, eff=True):
-        if not eff:
-            return self.components.left, self.components.op, self.components.right, self.base_answer
-
-        self.solve()
-        return self._eff_components.left, self._eff_components.op, self._eff_components.right, self.eff_answer
-
+        return self._eff_components, symbol, self.eff_answer, self.id
 
     def operate(self, components) -> Any:
         pass
@@ -204,8 +196,9 @@ class Question:
 
     In which case we may need to make multiple problem objects of different problem types, and this class wraps them all
     """
-    def __init__(self, range_ = None, op_ = None, dtype_: str = None, seed = None):
+    def __init__(self, range_ = None, op_ = None, dtype_: str = None, seed = None, q_type_="standard"):
         self.range = range_
+        self.q_type = q_type_
         self.op = op_
         self.dtype = dtype_
         self.generator = Generator(range_=self.range, dtype_=self.dtype, seed=seed)
@@ -220,14 +213,15 @@ class Question:
 
         self.problem_start_time = datetime.now(timezone.utc)
         self.problem_start_perf_counter = time.perf_counter()
-    def prepare(self, question_type="standard"):
-        if question_type != "standard":
-            raise ValueError(f"Only question_type {question_type} is currently supported")
+    def prepare(self, problem_id):
+        if self.q_type != "standard":
+            raise ValueError(f"Only question_type {self.q_type} is currently supported")
         """Generate a problem instance and compute its answer."""
 
         left, right = self.generator.generate()
         components = ProblemComponents(left=left, right=right, op=self.op)
         self.Problem = make_problem(components, self.dtype)
+        self.Problem.id = problem_id
 
     def info(self):
         return to_dict(self)
@@ -236,7 +230,7 @@ class Question:
         """
         Create a snapshot of this Question instance.
         """
-        left, _, right, _ = self.Problem.display_details()
+        left, right = self.Problem.components.left, self.Problem.components.right
 
         data = {
             "problem_id": self.Problem.id,
@@ -272,6 +266,14 @@ class Question:
 
 
         return data
+
+    def render_details(self):
+        if self.q_type != "standard":
+            raise ValueError(f"Only question_type {self.q_type} is currently supported")
+
+
+        return self.Problem.render_details(eff=True)
+
 
     @staticmethod
     def calc_theoretical_range(type_, ranges_: Union[tuple, Callable[[], tuple]], pos_answers_only: Union[bool, Callable[[], bool]]=False):

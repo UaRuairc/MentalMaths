@@ -36,11 +36,8 @@ def game_page_ui():
     st.write(f"Score: {st.session_state["game_score"]}")
 
     game = st.session_state["Game"]
-    user_response = render_exercise(
-        problem_details=game.Question.Problem.display_details(),
-        problem_id=game.problem_id,
-        should_fade=cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"),
-        )
+
+    user_response = render_exercise()
 
     game.validate_answer(user_response)
 

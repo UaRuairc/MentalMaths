@@ -72,8 +72,7 @@ class Game:
 
         self.Question = None
         self.GameTelemetry = None
-        self.problem_id = None # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
-        self.last_user_response = None # will be a list: [user_answer, problem_id, keystroke_sequence, keystroke_count]
+        self.last_user_response = None # will be a list: [user_answer, question_id, keystroke_sequence, keystroke_count]
         self.ops = ["add", "subtract", "mult", "div"]
         self.op_API_ALIASES = {
             "add": "add",
@@ -146,7 +145,7 @@ class Game:
             return
 
         if self.last_event == "telemetry_initialised":
-            self.create_new_problem()
+            self.next_question()
             return
 
         if self.last_event in ["initial_problem_created", "new_problem_created"]:
@@ -184,7 +183,7 @@ class Game:
         if self.last_event == "user_answer_validated":
             self.stats.num_correct += 1
             st.session_state["game_score"] = self.stats.num_correct
-            self.create_new_problem()
+            self.next_question()
             st.rerun()
 
         if self.last_event == "user_answer_invalidated":
@@ -209,9 +208,8 @@ class Game:
 
         return
 
-    def create_new_problem(self):
-        self.generate_new_problem()
-        self.problem_id = self.problem_id + 1 if self.problem_id is not None else 0  # this is just a number used to sync between the custom widget and streamlit, so we don't validate the same problem twice
+    def next_question(self):
+        self.new_question()
 
         if self.last_event in ["game_session_started", "telemetry_initialised"]:
 
@@ -227,26 +225,28 @@ class Game:
         """check if user got the answer correct"""
 
         if not user_response or user_response == self.last_user_response:
-            return False
+            return
 
         self.last_user_response = user_response
+        user_answer, question_id, _, _ = self.last_user_response
 
-        user_answer, problem_id, _, _ = self.last_user_response
-        correct_answer = self.Question.answer
-        correct_problem_id = self.problem_id
-
-        valid = (int(user_answer) == correct_answer) and (problem_id == correct_problem_id)
-
-        if valid:
-            self.last_event = "user_answer_validated"
-            return True
-
+        if self.Question.q_type == "standard":
+            # there's a 1 to 1 correspondence between question_id and problem_id for standard question types
+            # only the standard question types exist at this moment
+            correct_id = self.Question.Problem.id
+            correct_answer = self.Question.answer
         else:
-            self.last_event = "user_answer_invalidated"
-            return True
+            NotImplementedError("Unsupported question type")
 
-    def generate_new_problem(self):
-        """generate a new problem for the user"""
+
+        valid = (int(user_answer) == correct_answer) and (question_id == correct_id)
+
+        self.last_event = "user_answer_validated" if valid else "user_answer_invalidated"
+
+
+
+
+    def new_question(self, q_type="standard"):
         next_problem_op_, next_data_type_ = random.choice(st.session_state["active_problem_types"])
         next_problem_tag = next_problem_op_ + "_" + next_data_type_
 
@@ -254,9 +254,10 @@ class Game:
             range_=get_range(next_problem_tag),
             op_=self.op_API_ALIASES[next_problem_op_],
             dtype_=next_data_type_,
+            q_type_=q_type
         )
-        self.Question.prepare()
-        self.Question.Problem.id = self.problem_id
+
+        self.Question.prepare(self.stats.num_questions+1)
         self.stats.num_questions += 1
         st.session_state["fade_class_identifier"] += 1
         st.session_state["current_question"] = self.Question
