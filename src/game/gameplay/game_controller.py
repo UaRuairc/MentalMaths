@@ -154,6 +154,10 @@ class Game:
         if self.last_event in ["user_pressed_end_game", "game_timed_out"]:
             self.stop()
 
+        if self.last_event == "user_answer_validated":
+            self.stats.num_correct += 1
+            st.session_state["game_score"] = self.stats.num_correct
+
         if self.last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
             problem_snapshot = self.Question.snapshot(last_event=self.last_event)
             problem_update = {
@@ -177,8 +181,6 @@ class Game:
 
 
         if self.last_event == "user_answer_validated":
-            self.stats.num_correct += 1
-            st.session_state["game_score"] = self.stats.num_correct
             self.next_question()
             st.rerun()
 
