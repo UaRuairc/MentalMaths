@@ -46,6 +46,9 @@ class Modifier(ABC):
             return False
         log_update = handler(target, payload)
 
+        if log_update is None:
+            return False
+
         self._log(target, log_update)
 
         return log_update["activated"]
@@ -243,16 +246,6 @@ class ModManager:
         return sorted(valid_ids, key=lambda m_id: (MOD_PRIO.get(m_id, 1), m_id))
 
     @staticmethod
-    def get_mod_states():
-
-        states = {
-            "positive_answers_only": cm.get_widget_value("positive_answers_only", "checkbox"),
-            "fade_problem": cm.get_widget_value("fade_problem", "checkbox")
-        }
-
-        return states
-
-    @staticmethod
     def mod(event, target, mod_list_override = None):
 
         seen = set()
@@ -269,11 +262,11 @@ class ModManager:
             seen.add(mod.id)
 
             try:
-                if mod.modify(target, default_payload):
+                if mod.modify(target, payload=default_payload):
                     activated.add(mod.id)
 
             except Exception as e:
-                print(Exception)
+                print(f"modifier error: | mod_id:{mod.id} | target:{target} | reason: {e} |")
 
 
         return seen, activated
