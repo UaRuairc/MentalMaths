@@ -208,19 +208,6 @@ class Game:
 
         return
 
-    def next_question(self):
-        self.new_question()
-
-        if self.last_event in ["game_session_started", "telemetry_initialised"]:
-
-            self.last_event = "initial_problem_created"
-        else:
-            self.stats.total_keystroke_count += self.last_user_response[3]
-            self.stats.total_expected_keystroke_count += len(str(self.Question.answer))
-            self.last_event = "new_problem_created"
-
-
-
     def validate_answer(self, user_response):
         """check if user got the answer correct"""
 
@@ -243,10 +230,7 @@ class Game:
 
         self.last_event = "user_answer_validated" if valid else "user_answer_invalidated"
 
-
-
-
-    def new_question(self, q_type="standard"):
+    def next_question(self, q_type="standard"):
         next_problem_op_, next_data_type_ = random.choice(st.session_state["active_problem_types"])
         next_problem_tag = next_problem_op_ + "_" + next_data_type_
 
@@ -259,8 +243,11 @@ class Game:
 
         self.Question.prepare(self.stats.num_questions+1)
         self.stats.num_questions += 1
+        if self.last_user_response is not None:
+            self.stats.total_keystroke_count += self.last_user_response[3]
+        self.stats.total_expected_keystroke_count += len(str(self.Question.answer))
         st.session_state["fade_class_identifier"] += 1
-        st.session_state["current_question"] = self.Question
+        self.last_event = "initial_problem_created" if self.stats.num_questions == 1 else "new_problem_created"
         return
 
     def session_snapshot(self):
