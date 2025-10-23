@@ -105,7 +105,7 @@ class PosOnly(Modifier):
     def _modify_problem(self, p, payload):
         was_modified = False
         log_update = payload
-        if payload["event"] not in ["new_problem_created", "initial_problem_created"]:
+        if payload["event"] not in ["new_question_created", "initial_question_created"]:
             return log_update | {"activated": False, "prev_components": None}
         if p.components.op not in ["add", "sub", "mult", "div"]:
             raise NotImplementedError(f"Operator {p.op} not implemented for pos_only modifier.")
@@ -153,8 +153,8 @@ class Fade(Modifier):
 
 MOD_EVENT_SUBSCRIPTIONS = {
     "game_session_started": [],
-    "initial_problem_created": ["pos_answers_only"],
-    "new_problem_created": ["pos_answers_only"],
+    "initial_question_created": ["pos_answers_only"],
+    "new_question_created": ["pos_answers_only"],
     "user_answer_validated": [],
     "user_answer_invalidated": [],
     "modifier_activated": [],

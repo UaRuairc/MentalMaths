@@ -143,12 +143,11 @@ class Game:
             self.start()
             return
 
-
-        if self.last_event in ["initial_problem_created", "new_problem_created"]:
+        if self.last_event in ["initial_question_created", "new_question_created"]:
             self.mod(targets=(self.Question.Problem, self))
             self.Question.Problem.solve()
             self.Question.answer = self.Question.Problem.eff_answer
-            self.GameTelemetry.new_problem_payload(record_last_payload=(self.last_event == "new_problem_created"), data=self.Question.snapshot(last_event=self.last_event))
+            self.GameTelemetry.new_problem_payload(record_last_payload=(self.last_event == "new_question_created"), data=self.Question.snapshot(last_event=self.last_event))
             return
 
         if self.last_event in ["user_pressed_end_game", "game_timed_out"]:
@@ -245,7 +244,7 @@ class Game:
             self.stats.total_keystroke_count += self.last_user_response[3]
         self.stats.total_expected_keystroke_count += len(str(self.Question.answer))
         st.session_state["fade_class_identifier"] += 1
-        self.last_event = "initial_problem_created" if self.stats.num_questions == 1 else "new_problem_created"
+        self.last_event = "initial_question_created" if self.stats.num_questions == 1 else "new_question_created"
         return
 
     def session_snapshot(self):

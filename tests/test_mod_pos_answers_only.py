@@ -17,7 +17,7 @@ def test_modifier_pos_answers_only(op, seed, ranges, i):
 
     q = Question(range_ = ((l1, r1), (l2, r2)), op_=op, seed=seed, dtype_ = "ints")
     q.prepare(problem_id=i)
-    mm.mod("new_problem_created", q.Problem, ["pos_answers_only"])
+    mm.mod("new_question_created", q.Problem, ["pos_answers_only"])
     q.Problem.solve()
     q.answer = q.Problem.eff_answer
 
