@@ -12,7 +12,7 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional
 
 def start_game():
-    st.session_state["Game"] = Game(event="game_session_started")
+    st.session_state["Game"] = Game()
     st.rerun()
 
 @st.fragment(run_every=2)
@@ -62,7 +62,7 @@ class GameStats:
 
 class Game:
 
-    def __init__(self, event="game_session_started"):
+    def __init__(self):
         self.active_problem_types=st.session_state["active_problem_types"]
         self.game_duration = cm.get_widget_value("duration", "number_input_box")
 
@@ -89,7 +89,7 @@ class Game:
         st.session_state["is_game_running"] = self.is_running
 
         self._last_event = None
-        self.last_event = event
+        self.last_event = "game_session_initialised"
 
     def start(self):
         self.is_running = True
@@ -97,6 +97,8 @@ class Game:
         self.stats.start_time = datetime.now(timezone.utc)
         self.start_perf_counter = time.perf_counter()
         self.stats.scheduled_end_time = self.stats.start_time + timedelta(seconds=self.game_duration)
+        self.init_telemetry()
+        self.next_question()
 
     def stop(self):
         self.is_running = False
@@ -125,8 +127,6 @@ class Game:
                 event=self.last_event
             )
             self.GameTelemetry.new_session_payload(record_last_payload=False, data=self.session_snapshot())
-            st.session_state["GameTelemetry"] = self.GameTelemetry
-            self.last_event = "telemetry_initialised"
         else:
             print("telemetry already initialised.")
 
@@ -139,14 +139,10 @@ class Game:
         synchronization.
         """
 
-        if self.last_event == "game_session_started":
+        if self.last_event == "game_session_initialised":
             self.start()
-            self.init_telemetry()
             return
 
-        if self.last_event == "telemetry_initialised":
-            self.next_question()
-            return
 
         if self.last_event in ["initial_problem_created", "new_problem_created"]:
             self.mod(targets=(self.Question.Problem, self))
