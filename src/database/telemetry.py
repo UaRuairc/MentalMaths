@@ -142,14 +142,6 @@ class GameTelemetry:
         self.current_problem_payload = None
         self.current_session_payload = None
 
-        try:
-            print("not storing right now")
-            # self.send_initial_session_event()
-        except Exception as e:
-            print(f"Error storing session event: {e}")
-            res = None
-
-
     def new_problem_payload(self, record_last_payload, data):
 
         if record_last_payload and self.current_problem_payload is not None:
