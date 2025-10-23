@@ -278,6 +278,7 @@ class ModManager:
             except Exception as e:
                 print(f"modifier error: | mod_id:{mod.id} | target:{target} | reason: {e} |")
 
+        return seen, activated, ModManager.get_subtargets(target)
 
     @staticmethod
     def get_subtargets(target):

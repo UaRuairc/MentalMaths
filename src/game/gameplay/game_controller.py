@@ -144,7 +144,7 @@ class Game:
             return
 
         if self.last_event in ["initial_question_created", "new_question_created"]:
-            self.mod(targets=(self.Question.Problem, self))
+            self.mod(targets=[self])
             self.Question.Problem.solve()
             self.Question.answer = self.Question.Problem.eff_answer
             self.GameTelemetry.new_problem_payload(record_last_payload=(self.last_event == "new_question_created"), data=self.Question.snapshot(last_event=self.last_event))
@@ -189,7 +189,7 @@ class Game:
         if self.last_event == "button_interaction":
         #if payload["button"] == "reveal_problem":
         # there is currently only one button dependent modifier, we will do this for now.
-            self.mod(targets=(self.Question.Problem, self))
+            self.mod(targets=[self])
             return
 
         if self.last_event in ["game_timed_out", "user_pressed_end_game"]:
@@ -268,8 +268,13 @@ class Game:
     def check_timeout(self):
         return datetime.now(timezone.utc) > self.stats.scheduled_end_time
 
-    def mod(self, targets):
+    def mod(self, targets: list):
         for target in targets:
-            seen, activated = mm.mod(self.last_event, target=target)
+            seen, activated, cascade_targets = mm.mod(self.last_event, target=target)
             self.stats.mods_seen |= seen
             self.stats.mods_activated |= activated
+
+            if cascade_targets:
+                self.mod(targets = cascade_targets)
+            else:
+                return
