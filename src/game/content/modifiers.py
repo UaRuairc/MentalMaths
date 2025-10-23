@@ -269,4 +269,13 @@ class ModManager:
                 print(f"modifier error: | mod_id:{mod.id} | target:{target} | reason: {e} |")
 
 
-        return seen, activated
+    @staticmethod
+    def get_subtargets(target):
+        potential_sub_targets = ["Game", "Question", "Problem"]
+        cascade_targets = []
+        for sub_target in potential_sub_targets:
+            attr = getattr(target, sub_target, None)
+            if attr is not None:
+                cascade_targets.append(attr)
+        return cascade_targets
+
