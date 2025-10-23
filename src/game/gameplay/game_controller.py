@@ -161,7 +161,7 @@ class Game:
         if self.last_event in ["user_answer_validated", "game_timed_out", "user_pressed_end_game"]:
             problem_snapshot = self.Question.snapshot(last_event=self.last_event)
             problem_update = {
-                "is_correct": True if "user_answer_validated" else False,
+                "is_correct": (self.last_event == "user_answer_validated"),
                 "event": self.last_event,
                 "keystroke_sequence": self.last_user_response[2] if self.last_user_response else "",
                 "keystroke_count": self.last_user_response[3] if self.last_user_response else 0,
