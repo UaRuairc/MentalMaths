@@ -83,6 +83,10 @@ class Modifier(ABC):
 
     def _update_game_log(self, g, log_update): pass
 
+    def _modify_question(self, q, payload): return payload
+
+    def _update_question_log(self, q, log_update): pass
+
     def _modify_problem(self, p, payload): return payload
 
     def _update_problem_log(self, p, log_update): pass
@@ -104,6 +108,9 @@ class PosOnly(Modifier):
     description = "Only positive answers are allowed."
     widget_name = "pos_answers_only"
     widget_category = "checkbox"
+
+    def _modify_question(self, q, payload):
+        return None
 
     def _modify_problem(self, p, payload):
         was_modified = False
@@ -141,6 +148,9 @@ class Fade(Modifier):
     description = "Fade the problem from sight after a set number of seconds."
     widget_name = "fade_problem"
     widget_category = "checkbox"
+
+    def _modify_question(self, q, payload):
+        return None
 
     def _modify_problem(self, p, payload):
 
