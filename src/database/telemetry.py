@@ -182,13 +182,12 @@ class GameTelemetry:
         #stats = config_stats(st.session_state["config"])
         #print({k: stats[k] for k in ("json_kib", "gzip_kib", "sha256")})
 
-        get_val = cm.get_widget_value
         payload = {
             "version": "0.2",
             "game_mode": game_mode,
             "base_settings": {
                 "active_problem_types": st.session_state["active_problem_types"],
-                "duration": get_val("duration", "number_input_box"),
+                "duration": cm.get_value("duration", "number_input_box"),
                 "ranges": get_ranges(),
             },
             "modifiers": None
@@ -206,7 +205,7 @@ class GameTelemetry:
 
 
     def commit(self, event):
-        if not cm.get_widget_value("enable_db", "checkbox"):
+        if not cm.get_value("enable_db", "checkbox"):
             print("Not storing data in the db right now...")
             return "session_commit_skipped"
 

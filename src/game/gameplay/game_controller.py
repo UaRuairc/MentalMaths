@@ -64,7 +64,7 @@ class Game:
 
     def __init__(self):
         self.active_problem_types=st.session_state["active_problem_types"]
-        self.game_duration = cm.get_widget_value("duration", "number_input_box")
+        self.game_duration = cm.get_value("duration", "number_input_box")
 
         self.stats = GameStats()
         self.is_running: bool = False

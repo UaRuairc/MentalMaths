@@ -140,7 +140,7 @@ class PosOnly(Modifier):
         }
 
     def is_enabled(self):
-        return cm.get_widget_value("pos_answers_only", "checkbox")
+        return cm.get_value("pos_answers_only", "checkbox")
 
 class Fade(Modifier):
     id = "fade_problem"
@@ -161,7 +161,7 @@ class Fade(Modifier):
         return payload.copy()
 
     def is_enabled(self):
-        return cm.get_widget_value("fade_problem", "checkbox")
+        return cm.get_value("fade_problem", "checkbox")
 
 
 MOD_EVENT_SUBSCRIPTIONS = {

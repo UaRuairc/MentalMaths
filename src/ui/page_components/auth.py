@@ -120,14 +120,14 @@ def display_auth_login_ui():
         st.markdown("**Or login with email**")
 
         # Email/Password login
-        ConfigManager.add_widget("login_email", "text_input_boxes",
-                                 **{"label": "Email", "placeholder": "your@email.com"})
+        ConfigManager.register("login_email", "text_input_boxes",
+                               **{"label": "Email", "placeholder": "your@email.com"})
         MakeWidget(
             "login_email",
             "text_input_boxes",
         ).render()
-        ConfigManager.add_widget("login_password", "text_input_boxes",
-                                 **{"label": "Email", "placeholder": "password"})
+        ConfigManager.register("login_password", "text_input_boxes",
+                               **{"label": "Email", "placeholder": "password"})
         MakeWidget(
             "login_password",
             "text_input_boxes",

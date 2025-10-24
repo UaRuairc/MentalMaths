@@ -49,9 +49,9 @@ def render_modifier_settings(settings_containers):
         st.write("Game Modifiers")
         modifier_settings_cols = st.columns(1, vertical_alignment="center")
 
-        if not cm.is_widget_configured("enable_db", "checkbox"):
-            cm.add_widget(
-                name="enable_db",
+        if not cm.is_registered(widget_name="enable_db", widget_category="checkbox"):
+            cm.register(
+                widget_name="enable_db",
                 widget_category="checkbox",
                 **{"value": True},
             )
@@ -74,7 +74,7 @@ def update_active_problem_types():
 
     """
     index_map = st.session_state["problem_type_index_map"]
-    selections = sorted(cm.get_widget_value("problem_types", "segmented_control"))
+    selections = sorted(cm.get_value("problem_types", "segmented_control"))
     st.session_state["active_problem_types"] = [
         (index_map[index_]["operation"], index_map[index_]["dtype"])
         for index_ in selections
@@ -128,14 +128,14 @@ def render_range_inputs(type_, symbol="+"):
             min_, max_ = Question.calc_theoretical_range(
                 type_=type_[:-5],
                 ranges_=lambda: get_range(type_),
-                pos_answers_only= lambda: cm.get_widget_value("pos_answers_only", "checkbox"))
+                pos_answers_only= lambda: cm.get_value("pos_answers_only", "checkbox"))
 
-            cm.update_widget_arg(f"{type_}_{disabled_box}_min", "number_input_box", min_)
-            cm.update_widget_arg(f"{type_}_{disabled_box}_max", "number_input_box", max_)
+            cm.set_value(f"{type_}_{disabled_box}_min", "number_input_box", min_)
+            cm.set_value(f"{type_}_{disabled_box}_max", "number_input_box", max_)
 
         return wrapper
 
-    if not cm.is_widget_configured(keys[0], "number_input_box"):
+    if not cm.is_registered(widget_name=keys[0], widget_category="number_input_box"):
         # the widgets need to be added to the config
         # add the ones that are not disabled first, then the disabled one last
 
@@ -152,7 +152,7 @@ def render_range_inputs(type_, symbol="+"):
             c_min, c_max = Question.calc_theoretical_range(
                 type_=type_[:-5],
                 ranges_=( (a_min, a_max), (b_min, b_max) ),
-                pos_answers_only=cm.get_widget_value("pos_answers_only", "checkbox")
+                pos_answers_only=cm.get_value("pos_answers_only", "checkbox")
             )
 
 
@@ -172,7 +172,7 @@ def render_range_inputs(type_, symbol="+"):
             a_min, a_max = Question.calc_theoretical_range(
                 type_=type_[:-5],
                 ranges_=( (b_min, b_max), (c_min, c_max) ),
-                pos_answers_only=cm.get_widget_value("pos_answers_only", "checkbox")
+                pos_answers_only=cm.get_value("pos_answers_only", "checkbox")
             )
 
             active = [
@@ -188,8 +188,8 @@ def render_range_inputs(type_, symbol="+"):
 
         for val, widget_name in active:
 
-            cm.add_widget(
-                name=widget_name,
+            cm.register(
+                widget_name=widget_name,
                 widget_category="number_input_box",
                 **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": False},
                 extra_callback=update_disabled_boxes_on_change(type_, disabled_box)
@@ -197,8 +197,8 @@ def render_range_inputs(type_, symbol="+"):
 
         for val, widget_name in disabled:
 
-            cm.add_widget(
-                name=widget_name,
+            cm.register(
+                widget_name=widget_name,
                 widget_category="number_input_box",
                 **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": True},
             )
@@ -219,18 +219,18 @@ def render_range_inputs(type_, symbol="+"):
         make_number_boxes(type_=type_, position_="c")
 
     if type_ == "subtract_ints":
-        if cm.get_widget_value(
+        if cm.get_value(
                 widget_name="pos_answers_only",
                 widget_category="checkbox",
                 arg="extra_callback") is None:
             #need a callback to update the answer range when the pos_answers_only checkbox is toggled
-            cm.update_widget_arg(widget_name="pos_answers_only", widget_category="checkbox",
-                                            arg="extra_callback",
-                                            updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
+            cm.set_value(widget_name="pos_answers_only", widget_category="checkbox",
+                         arg="extra_callback",
+                         updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
 
 
 def make_number_boxes(type_, position_):
-    get_val = lambda key_: cm.get_widget_value(widget_name=key_, widget_category="number_input_box")
+    get_val = lambda key_: cm.get_value(widget_name=key_, widget_category="number_input_box")
     flip = {"min": "max", "max": "min"}
     render_box = lambda kind_: MakeWidget(
                                     widget_config_key=f"{type_}_{position_}_{kind_}",
@@ -250,8 +250,8 @@ def make_number_boxes(type_, position_):
 
 def is_start_button_disabled():
 
-    current_duration_value = cm.get_widget_value("duration", "number_input_box")
-    current_duration_option = cm.get_widget_value("duration", "segmented_control")
+    current_duration_value = cm.get_value("duration", "number_input_box")
+    current_duration_option = cm.get_value("duration", "segmented_control")
 
     no_types_selected = not st.session_state["active_problem_types"]
     duration_not_set = (

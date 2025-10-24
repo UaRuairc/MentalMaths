@@ -185,9 +185,8 @@ def set_default_config(suppress=True):
         for widget_name, widget_label in widgets.items():
             overrides = (widget_overrides.get(widget_category, {}).get(widget_name, {}))
 
-            #print(f"about to add {widget_name} : {widget_category}")
-            ConfigManager.add_widget(
-                name = widget_name,
+            ConfigManager.register(
+                widget_name= widget_name,
                 widget_category=widget_category,
                 **overrides
             )

@@ -9,13 +9,13 @@ default_style = ("text-align: center; font-size: 3rem; font-weight: bold; width:
 def render_exercise(style=default_style):
     """display the problem for the user, and return the column we'll put the user input box in"""
 
-    if st.session_state["Game"].Question.q_type is not "standard":
+    if st.session_state["Game"].Question.q_type != "standard":
         raise NotImplementedError("Only standard question types are supported in the game UI at this time.")
 
     components, symbol, answer, question_id = st.session_state["Game"].Question.render_details()
 
     unique_class = f"fade-problem-{st.session_state["fade_class_identifier"]}"
-    if cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"):
+    if cm.get_value(widget_name="fade_problem", widget_category="checkbox"):
         html = get_fade_html(unique_class=unique_class, base_style=style)
         inject_fade_css(unique_class=unique_class)
     else:

@@ -41,7 +41,7 @@ def game_page_ui():
 
     game.validate_answer(user_response)
 
-    if cm.get_widget_value(widget_name="fade_problem", widget_category="checkbox"):
+    if cm.get_value(widget_name="fade_problem", widget_category="checkbox"):
         if st.button("Show problem again"):
             st.session_state["fade_class_identifier"] += 1
             game.last_event = "button_interaction"
