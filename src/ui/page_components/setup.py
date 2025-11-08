@@ -2,7 +2,7 @@ import streamlit as st
 from src.game.content.problem_engine import Question
 from src.config.config_management import ConfigManager as cm
 from src.game.gameplay.game_controller import start_game
-from src.ui.widgets import MakeWidget
+from src.ui.widgets import widget
 from src.utils import inject_centring_css, get_range
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
@@ -232,11 +232,11 @@ def render_range_inputs(type_, symbol="+"):
 def make_number_boxes(type_, position_):
     get_val = lambda key_: cm.get_value(widget_name=key_, widget_category="number_input_box")
     flip = {"min": "max", "max": "min"}
-    render_box = lambda kind_: MakeWidget(
-                                    widget_config_key=f"{type_}_{position_}_{kind_}",
-                                    widget_category="number_input_box",
+    render_box = lambda kind_: widget(
+                                    name=f"{type_}_{position_}_{kind_}",
+                                    category="number_input_box",
                                     **{flip[kind_] + "_value": get_val(f"{type_}_{position_}_" + flip[kind_])},
-    ).render()
+    )
 
 
     with st.container(border=True):
@@ -285,6 +285,6 @@ def display_start_button_and_help_messages(settings_containers):
 
 def build_ui_from_map(positioning_map):
     for widget_category, widget_column_pairs in positioning_map.items():
-        for key, column in widget_column_pairs.items():
+        for name, column in widget_column_pairs.items():
             with column:
-                MakeWidget(widget_config_key=key, widget_category=widget_category).render()
+                widget(name=name, category=widget_category)

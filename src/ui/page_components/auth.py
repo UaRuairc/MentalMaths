@@ -2,7 +2,7 @@ import streamlit as st
 from streamlit_cookies_controller import CookieController, RemoveEmptyElementContainer
 from src.database.auth.service import SupabaseLogin
 from src.config.config_management import ConfigManager
-from src.ui.widgets import MakeWidget
+from src.ui.widgets import widget
 from src.utils import file_log
 ENABLE_GOOGLE_LOGIN = True
 ENABLE_GITHUB_LOGIN = False
@@ -122,17 +122,17 @@ def display_auth_login_ui():
         # Email/Password login
         ConfigManager.register("login_email", "text_input_boxes",
                                **{"label": "Email", "placeholder": "your@email.com"})
-        MakeWidget(
+        widget(
             "login_email",
             "text_input_boxes",
-        ).render()
+        )
         ConfigManager.register("login_password", "text_input_boxes",
                                **{"label": "Email", "placeholder": "password"})
-        MakeWidget(
+        widget(
             "login_password",
             "text_input_boxes",
             **{"label": "Password", "type": "password"}
-        ).render()
+        )
 
         with container:
             st.button("login_email_button", key="login_submit_button", on_click=flag_login, args=("email",))
