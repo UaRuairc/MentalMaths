@@ -180,7 +180,7 @@ class MultProblem(Problem):
         if components.op == "mult":
             return components.left * components.right
         else:
-            return components.left / components.right
+            return int(components.left / components.right)
 
 def make_problem(components, dtype_):
     return PROBLEM_DISPATCH[components.op](components=components, dtype=dtype_)
