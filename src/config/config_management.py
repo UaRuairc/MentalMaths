@@ -82,6 +82,11 @@ class WidgetConfig:
     _framework_return_param: Optional["str"] = None
 
     def __post_init__(self, init_config = None):
+
+        if "framework" in init_config:
+            self.framework = init_config["framework"]
+            init_config.pop("framework")
+
         base_framework_config = build_framework_config(widget_category=self.category, framework=self.framework)
         base_extended_config = build_extended_config(name=self.name, category=self.category)
         self._framework_return_param = get_return_param(config=base_framework_config)
@@ -287,3 +292,45 @@ class StreamlitWidgetAdapter(WidgetAdapter):
     def render(cls, name, category, **kwargs):
         renderer = st.session_state["callables"]["streamlit"][category]
         renderer(**(cls.render_params(name, category) | kwargs))
+class CustomWidgetAdapter(WidgetAdapter):
+    @classmethod
+    def render_params(cls, name, category):
+        widget_config = st.session_state["config"][category][name]
+        render_config = widget_config.framework_params
+        cls.wrap_on_change(widget_config=widget_config)
+        return render_config
+
+    @classmethod
+    def sync(cls, widget_config):
+        pass
+
+    @classmethod
+    def initialise(cls, name, category):
+        if not (category in st.session_state["config"] and name in st.session_state["config"][
+            category]):
+            raise RuntimeError(
+                f"Widget not registered: Register [{category}:{name}] before creating the widget instance")
+
+    @classmethod
+    def wrap_on_change(cls, widget_config):
+        if "on_change" in widget_config:
+            def on_change():
+                cls.sync(widget_config)
+                extra_callback = widget_config.get("extra_callback", None)
+                if extra_callback:
+                    extra_callback()
+
+            widget_config["on_change"] = on_change
+
+    @classmethod
+    def render(cls, name, category, **kwargs):
+        renderer = st.session_state["callables"]["custom"][category]
+        value = renderer(**(cls.render_params(name, category) | kwargs))
+        return value
+
+
+
+WIDGET_ADAPTERS = {
+    "streamlit": StreamlitWidgetAdapter,
+    "custom": CustomWidgetAdapter,
+}
