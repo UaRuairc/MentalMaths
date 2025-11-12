@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_cookies_controller import CookieController, RemoveEmptyElementContainer
 from src.database.auth.service import SupabaseLogin
-from src.config.config_management import ConfigManager
+from src.config.config_management import WidgetRegistry
 from src.ui.widgets import widget
 from src.utils import file_log
 ENABLE_GOOGLE_LOGIN = True
@@ -120,14 +120,14 @@ def display_auth_login_ui():
         st.markdown("**Or login with email**")
 
         # Email/Password login
-        ConfigManager.register("login_email", "text_input_boxes",
-                               **{"label": "Email", "placeholder": "your@email.com"})
+        WidgetRegistry.register("login_email", "text_input_boxes",
+                                **{"label": "Email", "placeholder": "your@email.com"})
         widget(
             "login_email",
             "text_input_boxes",
         )
-        ConfigManager.register("login_password", "text_input_boxes",
-                               **{"label": "Email", "placeholder": "password"})
+        WidgetRegistry.register("login_password", "text_input_boxes",
+                                **{"label": "Email", "placeholder": "password"})
         widget(
             "login_password",
             "text_input_boxes",

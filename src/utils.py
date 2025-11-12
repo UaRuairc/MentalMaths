@@ -3,7 +3,7 @@ import logging, json, threading, inspect, time, gzip, hashlib, functools
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 from collections import defaultdict
 from contextlib import contextmanager
-from src.config.config_management import ConfigManager
+from src.config.config_management import WidgetRegistry
 from datetime import datetime
 from uuid import UUID
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"
@@ -231,7 +231,7 @@ def track_rerun_to_file(location=""):
     _last_rerun = now
 
 def get_range(next_problem_tag):
-    get_val = lambda name: ConfigManager.get_value(widget_name=name, widget_category="number_input_box")
+    get_val = lambda name: WidgetRegistry.get_widget_value(widget_name=name, widget_category="number_input_box")
 
     if next_problem_tag != "div_ints":
         #(l1, r1) + (l2, r2) = ?

@@ -145,8 +145,8 @@ When streamlit reruns, if streamlit doesn't render your widget again (e.g., you 
 There are some suggested solutions by streamlit for this, see https://docs.streamlit.io/develop/concepts/multipage-apps/widgets. But none of these really met out needs. We opt for a config & widgets wrappers/management system—essentially a wrapper for streamlit.
 
 1. We define a config dictionary that persists reruns, and that dictionary holds entries for each widget. The entry does not just store the value of the widget (like the number inside a box), but all widget args. It even holds args beyond the widget's baseline in streamlit (customise baseline widgets).
-2. We create a config manager (`ConfigManager`). The config manager uses streamlit widget signatures to build a baseline config and expands the config to meet our needs. The manager then can dynamically create/mutate widgets during runtime regardless if they have ever been rendered.
-3. We create a widget wrapper (`MakeWidget`). This takes a given widget config and handles the baseline widget rendering as well as any extended widget functionality.
+2. We create a config manager (`WidgetRegistry`). The config manager uses streamlit widget signatures to build a baseline config and expands the config to meet our needs. The manager then can dynamically create/mutate widgets during runtime regardless if they have ever been rendered.
+3. We create a widget wrapper (`widget`). This takes a given widget name and category, and handles the baseline widget rendering as well as any extended widget functionality.
 
 Essentially, combining the three steps about creates a pseudo widget session state that persists reruns and extends streamlit functionality beyond baseline. It will survive streamlit updates to widgets since we directly use widget signatures when constructing the base config prior to extension.
 

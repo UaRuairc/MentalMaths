@@ -1,5 +1,5 @@
 import streamlit as st
-from src.config.config_management import ConfigManager as cm
+from src.config.config_management import WidgetRegistry 
 from src.utils import get_ranges, make_json_safe
 import uuid6
 from uuid import UUID
@@ -187,7 +187,7 @@ class GameTelemetry:
             "game_mode": game_mode,
             "base_settings": {
                 "active_problem_types": st.session_state["active_problem_types"],
-                "duration": cm.get_value("duration", "number_input_box"),
+                "duration": WidgetRegistry.get_widget_value("duration", "number_input_box"),
                 "ranges": get_ranges(),
             },
             "modifiers": None
@@ -205,7 +205,7 @@ class GameTelemetry:
 
 
     def commit(self, event):
-        if not cm.get_value("enable_db", "checkbox"):
+        if not WidgetRegistry.get_widget_value("enable_db", "checkbox"):
             print("Not storing data in the db right now...")
             return "session_commit_skipped"
 

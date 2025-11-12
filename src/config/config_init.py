@@ -1,11 +1,10 @@
 import streamlit as st
 
 from src.database.connection import init_connection
-from src.config.config_management import ConfigManager
+from src.config.config_management import WidgetRegistry
 from src.ui.widgets import custom_input_box
 from src.utils import file_log
 from collections import defaultdict
-
 
 def set_defaults():
     """set session state variables defaults"""
@@ -185,7 +184,7 @@ def set_default_config(suppress=True):
         for widget_name, widget_label in widgets.items():
             overrides = (widget_overrides.get(widget_category, {}).get(widget_name, {}))
 
-            ConfigManager.register(
+            WidgetRegistry.register(
                 widget_name= widget_name,
                 widget_category=widget_category,
                 **overrides

@@ -1,7 +1,7 @@
 import streamlit as st
 from src.ui.widgets import custom_input_box
 from src.utils import get_fade_html, inject_fade_css
-from src.config.config_management import ConfigManager as cm
+from src.config.config_management import WidgetRegistry
 
 default_style = ("text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; "
                  "display: flex; align-items: center; justify-content: center; min-height: 80px;")
@@ -15,7 +15,7 @@ def render_exercise(style=default_style):
     components, symbol, answer, question_id = st.session_state["Game"].Question.render_details()
 
     unique_class = f"fade-problem-{st.session_state["fade_class_identifier"]}"
-    if cm.get_value(widget_name="fade_problem", widget_category="checkbox"):
+    if WidgetRegistry.get_widget_value(widget_name="fade_problem", widget_category="checkbox"):
         html = get_fade_html(unique_class=unique_class, base_style=style)
         inject_fade_css(unique_class=unique_class)
     else:

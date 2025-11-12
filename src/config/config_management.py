@@ -124,13 +124,15 @@ class WidgetConfig:
     def __contains__(self, key): return key in self._params
     def __setitem__(self, key, value): self._params[key] = value
 
-class ConfigManager:
+class WidgetRegistry:
     """
     Handles widget config generation and mutation.
     """
+    def __init__(self, config):
+        self.config = config
 
     @staticmethod
-    def register(widget_name: str, widget_category: str, **overrides):
+    def register(widget_name: str, widget_category: str, **overrides) -> bool:
         """
         Create and register a widget config to the session state.
         Args:
@@ -139,10 +141,22 @@ class ConfigManager:
             widget_category: The category of the widget you would like to create. This must be from an existing library.
             **overrides: Additional overrides to overwrite any defaults.
         """
-        if ConfigManager.is_registered(widget_name, widget_category):
-            print(f"widget {widget_name} of category {widget_category} is already registered.")
+        if WidgetRegistry.is_registered(widget_name, widget_category):
             return False
+
         st.session_state["config"][widget_category][widget_name] = WidgetConfig(widget_name, widget_category, init_config=overrides)
+
+        return True
+
+    @staticmethod
+    def deregister(widget_name: str, widget_category: str) -> bool:
+        """
+        For a given widget of category widget_category, removes the widget's config from the streamlit session state.
+        """
+        try:
+            st.session_state["config"][widget_category].pop(widget_name)
+        except KeyError:
+            return False
         return True
 
     @staticmethod
@@ -158,69 +172,59 @@ class ConfigManager:
         config = st.session_state.get("config")
         if not isinstance(config, dict):
             raise RuntimeError(f"The config is not present in the session state")
-        return widget_category in config and widget_name in config[widget_category]
+        try:
+            return widget_name in config[widget_category]
+        except KeyError:
+            return False
 
     @staticmethod
-    def get_config(widget_name, widget_category):
+    def get_widget_config(widget_name, widget_category) -> WidgetConfig | None:
         """
         Return the config for a given widget.
         Args:
             widget_name: The name of the widget.
             widget_category: The category of the widget. This must be an existing widget from a given library.
         """
-        if not ConfigManager.is_registered(widget_name, widget_category):
-            raise KeyError(f"{widget_name} of category {widget_category } does not exist.")
-        return st.session_state["config"][widget_category][widget_name]
+        try:
+            return st.session_state["config"][widget_category][widget_name]
+        except KeyError:
+            return None
 
     @staticmethod
-    def get_value(widget_name, widget_category, arg="value"):
+    def get_widget_value(widget_name, widget_category, arg="value"):
         """
         By default, this method returns the value belonging to key arg = "value" Essentially, the value that the
         streamlit session state normally assigns to the widget key. However, optional arg can be used to return any value
         desired.
         """
-        return st.session_state["config"][widget_category][widget_name][arg]
+        try:
+            return st.session_state["config"][widget_category][widget_name][arg]
+        except KeyError:
+            return None
 
     @staticmethod
-    def set_value(widget_name: str, widget_category: str, updated_arg_value, arg: str= "value") -> bool:
+    def set_widget_value(widget_name: str, widget_category: str, updated_arg_value, arg: str= "value") -> bool:
         """
         Update arguments to existing widget configs.
         """
-        if not ConfigManager.is_registered(widget_name, widget_category):
-            raise KeyError(f"{widget_name} of category {widget_category} does not exist to update it")
-        widget_config = st.session_state["config"][widget_category][widget_name]
-        if arg not in widget_config:
-            raise KeyError(f"arg {arg!r} is not in the {widget_name!r} config")
+        try:
+            widget_config = st.session_state["config"][widget_category][widget_name]
+            current = widget_config[arg]
+        except KeyError as e:
+            raise KeyError(
+                f"Missing path while updating: {widget_category!r}/{widget_name!r}/{arg!r}"
+            ) from e
+
         if arg == "extra_callback" and updated_arg_value is not None and not callable(updated_arg_value):
                 raise TypeError(f"extra_callback must be a callable, got {type(updated_arg_value).__name__} instead.")
+
         if updated_arg_value != widget_config[arg]:
             widget_config[arg] = updated_arg_value
-            print(f"Updated {widget_category}|{widget_name}:"
-                  f" set {arg} to: {updated_arg_value}")
-        return True
+            #print(f"Updated {widget_category}|{widget_name}:"
+                  #f" set {arg} to: {updated_arg_value}")
+            return True
+        return False
 
-    @staticmethod
-    def remove_widget(widget_name: str, widget_category: str):
-        """
-        For a given widget of category widget_category, removes the widget's config from the streamlit session state.
-        """
-        if ConfigManager.is_registered(widget_name, widget_category):
-            st.session_state["config"][widget_category].pop(widget_name)
-
-    @staticmethod
-    def add_param(widget_name, widget_category, new_arg, new_arg_value):
-        """
-        Add a new argument to the widget config in session state.
-        This is used to add new arguments to existing widgets.
-        """
-        if not ConfigManager.is_registered(widget_name, widget_category):
-            raise KeyError(f"{widget_name} of category {widget_category} does not exist to add a param to it.")
-        widget_config = ConfigManager.get_config(widget_name, widget_category)
-        if new_arg in widget_config:
-            raise KeyError(f"{new_arg} already exists in {widget_category}. Use set_value to update it")
-        widget_config[new_arg] = new_arg_value
-
-        return
 
 class WidgetAdapter(abc.ABC):
     @classmethod
@@ -291,7 +295,10 @@ class StreamlitWidgetAdapter(WidgetAdapter):
     @classmethod
     def render(cls, name, category, **kwargs):
         renderer = st.session_state["callables"]["streamlit"][category]
-        renderer(**(cls.render_params(name, category) | kwargs))
+        value = renderer(**(cls.render_params(name, category) | kwargs))
+        return value
+
+
 class CustomWidgetAdapter(WidgetAdapter):
     @classmethod
     def render_params(cls, name, category):
