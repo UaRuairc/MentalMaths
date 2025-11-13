@@ -214,15 +214,13 @@ class Game:
         self.last_user_response = user_response
         user_answer, question_id, _, _ = self.last_user_response
 
-        if self.Question.q_type == "standard":
+        if self.Question.q_type != "standard":
             # there's a 1 to 1 correspondence between question_id and problem_id for standard question types
             # only the standard question types exist at this moment
-            correct_id = self.Question.Problem.id
-            correct_answer = self.Question.answer
-        else:
             NotImplementedError("Unsupported question type")
 
-
+        correct_id = self.Question.Problem.id
+        correct_answer = self.Question.answer
         valid = (int(user_answer) == correct_answer) and (question_id == correct_id)
 
         self.last_event = "user_answer_validated" if valid else "user_answer_invalidated"
