@@ -1,6 +1,5 @@
 # Maths Trainer
 
-**OLD README - updated in following commit
 
 An interactive mental maths game built in Python, currently using UI app framework [Streamlit](https://streamlit.io/).
 
@@ -37,33 +36,39 @@ MentalMaths/
 │   ├── 1_setup_screen.py
 │   ├── 2_stats_screen.py
 │   └── game_screen.py
+│ 
 ├── src/
 │   ├── utils.py
-│   │ 
+│   ├── config/
+│   │   └── config_init.py
+│   │
 │   ├── game/
 │   │   ├── content/
 │   │   │   ├── modifiers.py
 │   │   │   ├── problem_engine.py
 │   │   │   ├── problem_tagger.py
 │   │   │   ├── session_tagger.py
+│   │   │
 │   │   └── gameplay/
 │   │       └── game_controller.py
+│   │
 │   ├── ui/
 │   │   ├── pages.py
-│   │   ├── widgets.py
-│   │   └── page_components/
-│   │       ├── auth.py
-│   │       ├── game.py
-│   │       └── setup.py
-│   │  
-│   ├── config/
-│   │   ├── config_init.py
-│   │   └── config_management.py
-│   │  
+│   │   ├── page_components/
+│   │   │   ├── auth.py
+│   │   │   ├── game.py
+│   │   │   └── setup.py
+│   │   │
+│   │   └── widgets/
+│   │       ├── adapters.py
+│   │       ├── config.py
+│   │       ├── registry.py
+│   │       └── widgets.py
+│   │ 
 │   ├── analytics/
 │   │   ├── core.py
-│   │   └── visualisation.py
-│   │  
+│   │   └── visualisation.py  
+│   │ 
 │   └── database/
 │       ├── connection.py
 │       ├── queries.py
@@ -74,6 +79,7 @@ MentalMaths/
 ├── .streamlit/
 │   ├── config.toml     
 │   └── secrets.example.toml            # Rename to secrets.toml and put Supabase secrets here 
+│
 ├── frontend/                           # Build custom widget with node (see Installation)
 │   ├── public/
 │   │   └── index.html
@@ -83,6 +89,7 @@ MentalMaths/
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── webpack.config.js
+│
 ├── tests/
 │   ├── test_mod_pos_answers_only.py
 │   ├── test_problem_components.py
@@ -137,27 +144,65 @@ See the following resources for details:
 
 ## <ins>Streamlit shortfalls & workarounds</ins>
 
-#### TL;DR: widgets can easily lose statefulness, and widget info is tied to widget states, so create a streamlit wrapper that never loses widget info
+#### TL;DR: widgets can easily lose statefulness, and widget info is tied to widget states, so create a streamlit wrapper that maintains all widget information.
 
-### customisation and session state preservation-- creating a wrapper for streamlit
+### Motivation:
 
-In many ways, this repo can really be called streamlit-wrapper. Generally speaking, one should build a game backend and use streamlit as nothing more than a UI interface, or just use a different framework altogether. But I thought it would be an interesting project to build a streamlit-wrapper that integrated my personal needs into streamlit.
+I thought it would be an interesting project to build a streamlit-wrapper that integrated my personal needs into streamlit and build a mental mathematics game. In many ways, this repo can really be called streamlit-wrapper. 
 
 The wrapper mostly deals with the fact that: In Streamlit, widgets are identified by a key:value pair in the session_state & Streamlit updates the app by rerunning the entire application with an updated session state.
 
-When streamlit reruns, if streamlit doesn't render your widget again (e.g., you reran the app and landed on a different page), it makes the widget stateless, and you lose your widget info. But
-- the app state may depend on widgets that are not currently rendered
-- the app state may depend on widget info beyond the value of the widget
-- the app may want to mutate widgets that are not currently rendered
+When streamlit reruns, if streamlit doesn't render your widget again (e.g., you reran the app and landed on a different page), it makes the widget stateless, and you lose your widget info. But the app state may:
+- depend on the details of widgets beyond a single return `value`
+- depend on the details of widgets that are no longer rendered
+- want to mutate widgets that are not currently rendered (in preparation for their next render)
 
 
 There are some suggested solutions by streamlit for this, see https://docs.streamlit.io/develop/concepts/multipage-apps/widgets. But none of these really met out needs. We opt for a config & widgets wrappers/management system—essentially a wrapper for streamlit.
 
-1. We define a config dictionary that persists reruns, and that dictionary holds entries for each widget. The entry does not just store the value of the widget (like the number inside a box), but all widget args. It even holds args beyond the widget's baseline in streamlit (customise baseline widgets).
-2. We create a config manager (`WidgetRegistry`). The config manager uses streamlit widget signatures to build a baseline config and expands the config to meet our needs. The manager then can dynamically create/mutate widgets during runtime regardless if they have ever been rendered.
-3. We create a widget wrapper (`widget`). This takes a given widget name and category, and handles the baseline widget rendering as well as any extended widget functionality.
+To register widgets, we created a `WidgetRegistry` that handles widget registration.
 
-Essentially, combining the three steps about creates a pseudo widget session state that persists reruns and extends streamlit functionality beyond baseline. It will survive streamlit updates to widgets since we directly use widget signatures when constructing the base config prior to extension.
+"Widget registration" (which is done via calling `WidgetRegistry.register(widget_name, widget_category, **overrides)`) amounts to creating a `WidgetConfig` object and then storing this object in a master `config`. The master `config` is stored in `st.session_state["config"]`. A particular widget's config is then stored at 
+
+```
+st.session_state["config"][category][name]
+```
+
+As for the `WidgetConfig` object, it is responsible for:
+
+1. **Framework compatability**:
+
+    `WidgetConfig` detects the framework (e.g, streamlit number_input_box vs custom-made game_input_box), then guarantees (via introspection) that the correct widget is made and that the config contains all parameters necessary at render time to ensure compatability.
+
+2. **Extension**
+
+    After building a base config, `WidgetConfig` overrides and extends this baseline config, assuming the user provides overrides.
+
+3. **Mutation**
+
+    One can mutate a `WidgetConfig` via `.update()`, for example.
+
+
+At rendering time, an `Adapter` interfaces between the `WidgetConfig` object and streamlit. The `StreamlitWidgetAdapter` is used for typical streamlit widgets, while `CustomWidgetAdapter` is used for our React widget. 
+
+The adapter handles:
+
+1. **Rendering**:
+
+   The adapter determines which parameters are needed for rendering. It also ensures that any dynamic parameters are resolved prior to rendering.
+
+2. **Return values**:
+
+    The adapter handles how the widget returns a value.
+
+3. **synchronisation:**
+
+    The adapter ensures the widget and widget_config are synchronised at all times, via `.initialise()` and `.sync()`. 
+
+    The first, `.initialise()`, ensures the widgets initial value sources it's truth from the widget_config. The second, `Adapter.sync()`, ensures that any mutation to a widget on streamlit's end immediately updates the widget_config.
+
+
+Essentially, this ensures a single source of truth for a widget state that persists reruns and extends functionality beyond baseline. One can mutate or query a widget without needing to be on the page it was last rendered, or without it even being rendered. It preserves all widget details (beyond just the _framework_return_value) when switching pages. This has the added benefit of allowing us to save widget settings, and easily load them into the application.
 
 ### widget on_change effects
 
