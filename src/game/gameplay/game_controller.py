@@ -1,6 +1,6 @@
 import time
 import streamlit as st
-from src.game.content.modifiers import ModManager as mm
+from src.game.content.modifiers import ModManager
 from src.config.config_management import WidgetRegistry
 from src.database.telemetry import GameTelemetry
 from src.game.content.problem_engine import Question
@@ -270,7 +270,7 @@ class Game:
 
     def mod(self, targets: list):
         for target in targets:
-            seen, activated, cascade_targets = mm.mod(self.last_event, target=target)
+            seen, activated, cascade_targets = ModManager.mod(self.last_event, target=target)
             self.stats.mods_seen |= seen
             self.stats.mods_activated |= activated
 
