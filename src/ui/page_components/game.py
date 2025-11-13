@@ -1,5 +1,5 @@
 import streamlit as st
-from src.ui.widgets import custom_input_box
+from src.ui.widgets import widget
 from src.utils import get_fade_html, inject_fade_css
 from src.config.config_management import WidgetRegistry
 
@@ -32,6 +32,7 @@ def render_exercise(style=default_style):
             st.markdown(f"{html} {detail}</div>",unsafe_allow_html=True)
 
     with input_column:
-        user_input = custom_input_box(problem_id_=question_id, correct_answer=answer, key_="constant_input_key")
+        #user_input = custom_input_box(problem_id_=question_id, correct_answer=answer, key_="constant_input_key")
+        user_input = widget(name="game_input_box", category="number_input_box", problem_id_=question_id, correct_answer=answer, key_="constant_input_key")
 
     return user_input

@@ -37,12 +37,13 @@ def set_defaults():
                 "checkbox": st.checkbox,
                 "slider": st.slider,
                 "number_input_box": st.number_input,
-                "custom_input_box": custom_input_box,
                 "segmented_control": st.segmented_control,
                 "text_input_boxes": st.text_input,
                 "buttons": st.button,
                 },
-            "custom": custom_input_box
+            "custom": {
+                "number_input_box": custom_input_box
+            }
         },
         "problem_type_index_map": {
             0: {"operation": "add", "dtype": "ints"},
@@ -105,9 +106,7 @@ def set_default_config(suppress=True):
         },
         "number_input_box": {
             "duration": "Duration in seconds",
-        },
-        "custom_input_box": {
-            "custom_input": None
+            "game_input_box": None,
         },
         "segmented_control": {
             "problem_types": None,
@@ -137,8 +136,6 @@ def set_default_config(suppress=True):
             "pos_answers_only": {"label": "positive answers only?"},
             "fade_problem": {"label": "fade problem after set number of seconds?"},
         },
-
-
         "segmented_control": {
             "problem_types": {
                 "options": segmented_control_options["problem_types"],
@@ -173,13 +170,12 @@ def set_default_config(suppress=True):
                 "value": int(segmented_control_options["duration"][default_duration]),
                 "disabled": lambda: st.session_state["config"]["segmented_control"]["duration"]["value"] != 3,
                 "step": 1
-            }
+            },
+            "game_input_box": {"framework": "custom"},
         },
     }
 
     for widget_category, widgets in widget_labels.items():
-        if widget_category == "custom_input_box":
-            continue
 
         for widget_name, widget_label in widgets.items():
             overrides = (widget_overrides.get(widget_category, {}).get(widget_name, {}))

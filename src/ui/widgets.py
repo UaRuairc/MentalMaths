@@ -1,6 +1,6 @@
 import streamlit.components.v1 as components
 import os
-from src.config.config_management import StreamlitWidgetAdapter
+from src.config.config_management import WIDGET_ADAPTERS, WidgetRegistry
 
 custom_input = components.declare_component(
     "custom_input",
@@ -8,8 +8,10 @@ custom_input = components.declare_component(
 )
 
 def widget(name, category, **kwargs):
-    StreamlitWidgetAdapter.initialise(name, category)
-    StreamlitWidgetAdapter.render(name, category, **kwargs)
+    adapter = WIDGET_ADAPTERS[WidgetRegistry.get_widget_config(name, category).framework]
+    adapter.initialise(name, category)
+    value = adapter.render(name, category, **kwargs)
+    return value
 
 def custom_input_box(problem_id_, correct_answer, key_, alignment_="center"):
     result = custom_input(
