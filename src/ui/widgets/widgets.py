@@ -1,6 +1,7 @@
 import streamlit.components.v1 as components
 import os
-from src.config.config_management import WIDGET_ADAPTERS, WidgetRegistry
+from src.ui.widgets.adapters import WIDGET_ADAPTERS
+from src.ui.widgets.registry import WidgetRegistry
 
 custom_input = components.declare_component(
     "custom_input",

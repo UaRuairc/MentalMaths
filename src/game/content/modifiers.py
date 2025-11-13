@@ -1,6 +1,6 @@
 from dataclasses import dataclass, replace
 from typing import ClassVar, Optional
-from src.config.config_management import WidgetRegistry 
+from src.ui.widgets.registry import WidgetRegistry
 from collections.abc import Iterable
 from abc import ABC
 from datetime import datetime, timezone

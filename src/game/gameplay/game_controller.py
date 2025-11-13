@@ -1,7 +1,7 @@
 import time
 import streamlit as st
 from src.game.content.modifiers import ModManager
-from src.config.config_management import WidgetRegistry
+from src.ui.widgets.registry import WidgetRegistry
 from src.database.telemetry import GameTelemetry
 from src.game.content.problem_engine import Question
 import random

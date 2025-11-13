@@ -1,8 +1,8 @@
 import streamlit as st
 from src.game.content.problem_engine import Question
-from src.config.config_management import WidgetRegistry 
+from src.ui.widgets.registry import WidgetRegistry
 from src.game.gameplay.game_controller import start_game
-from src.ui.widgets import widget
+from src.ui.widgets.widgets import widget
 from src.utils import inject_centring_css, get_range
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",

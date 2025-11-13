@@ -3,7 +3,7 @@ import logging, json, threading, inspect, time, gzip, hashlib, functools
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 from collections import defaultdict
 from contextlib import contextmanager
-from src.config.config_management import WidgetRegistry
+from src.ui.widgets.registry import WidgetRegistry
 from datetime import datetime
 from uuid import UUID
 default_style = "text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; min-height: 80px;"

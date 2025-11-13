@@ -1,7 +1,7 @@
 import streamlit as st
-from src.ui.widgets import widget
+from src.ui.widgets.widgets import widget
 from src.utils import get_fade_html, inject_fade_css
-from src.config.config_management import WidgetRegistry
+from src.ui.widgets.registry import WidgetRegistry
 
 default_style = ("text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; "
                  "display: flex; align-items: center; justify-content: center; min-height: 80px;")

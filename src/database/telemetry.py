@@ -1,5 +1,5 @@
 import streamlit as st
-from src.config.config_management import WidgetRegistry 
+from src.ui.widgets.registry import WidgetRegistry
 from src.utils import get_ranges, make_json_safe
 import uuid6
 from uuid import UUID

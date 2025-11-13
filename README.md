@@ -1,5 +1,7 @@
 # Maths Trainer
 
+**OLD README - updated in following commit
+
 An interactive mental maths game built in Python, currently using UI app framework [Streamlit](https://streamlit.io/).
 
 Goal: To create an application using LLM integration, suggesting ways for the user to optimise their mental maths training
@@ -53,15 +55,22 @@ MentalMaths/
 │   │       ├── auth.py
 │   │       ├── game.py
 │   │       └── setup.py
+│   │  
 │   ├── config/
 │   │   ├── config_init.py
 │   │   └── config_management.py
+│   │  
+│   ├── analytics/
+│   │   ├── core.py
+│   │   └── visualisation.py
+│   │  
 │   └── database/
 │       ├── connection.py
 │       ├── queries.py
 │       ├── telemetry.py
 │       └── auth/
 │           └── service.py
+│   
 ├── .streamlit/
 │   ├── config.toml     
 │   └── secrets.example.toml            # Rename to secrets.toml and put Supabase secrets here 
