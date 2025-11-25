@@ -56,8 +56,8 @@ WIDGET_CALLABLES = {
 }
 
 def _init_custom_widgets():
-    from src.ui.widgets.widgets import custom_input_box
-    WIDGET_CALLABLES["custom"]["number_input_box"] = custom_input_box
+    from src.ui.widgets.widgets import custom_input
+    WIDGET_CALLABLES["custom"]["number_input_box"] = custom_input
 
 DEFAULT_WIDGETS = {
 

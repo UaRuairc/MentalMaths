@@ -33,6 +33,7 @@ def render_exercise(style=default_style):
 
     with input_column:
         #user_input = custom_input_box(problem_id_=question_id, correct_answer=answer, key_="constant_input_key")
-        user_input = widget(name="game_input_box", category="number_input_box", problem_id_=question_id, correct_answer=answer, key_="constant_input_key")
+        user_input = widget(name="game_input_box", category="number_input_box", problem_id=question_id, correct_answer=answer)
+
 
     return user_input
