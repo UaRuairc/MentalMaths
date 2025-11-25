@@ -1,5 +1,6 @@
 import streamlit as st
 import abc
+from src.ui.widgets.registry import WidgetRegistry
 
 class WidgetAdapter(abc.ABC):
     @classmethod
@@ -9,7 +10,7 @@ class WidgetAdapter(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def sync(cls, widget_config):
+    def _sync(cls, widget_config):
         pass
 
     @classmethod
@@ -31,19 +32,18 @@ class StreamlitWidgetAdapter(WidgetAdapter):
     @classmethod
     def render_params(cls, name, category):
         widget_config = st.session_state["config"][category][name]
-
         render_config = widget_config.framework_params
 
-        if widget_config.category == "slider": render_config[widget_config._framework_return_param] = widget_config._params["value"]
+        for key, value in render_config.items():
+            if key not in ["on_change", "format_func"] and callable(value):
+                render_config[key] = value()
+            elif key == "on_change":
+                render_config[key] = cls.wrap_on_change(widget_config=widget_config)
 
-        if "disabled" in render_config and callable(render_config["disabled"]): render_config["disabled"] = \
-        render_config["disabled"]()
-
-        cls.wrap_on_change(widget_config=widget_config)
         return render_config
 
     @classmethod
-    def sync(cls, widget_config):
+    def _sync(cls, widget_config):
         widget_config.set(st.session_state[widget_config["key"]])
 
     @classmethod
@@ -58,14 +58,16 @@ class StreamlitWidgetAdapter(WidgetAdapter):
 
     @classmethod
     def wrap_on_change(cls, widget_config):
-        if "on_change" in widget_config:
+        if "on_change" in widget_config.framework_params:
             def on_change():
-                cls.sync(widget_config)
+                cls._sync(widget_config)
                 extra_callback = widget_config.get("extra_callback", None)
                 if extra_callback:
                     extra_callback()
 
-            widget_config["on_change"] = on_change
+            return on_change
+        return None
+
 
     @classmethod
     def render(cls, name, category, **kwargs):
@@ -74,17 +76,8 @@ class StreamlitWidgetAdapter(WidgetAdapter):
         return value
 
 
-class CustomWidgetAdapter(WidgetAdapter):
-    @classmethod
-    def render_params(cls, name, category):
-        widget_config = st.session_state["config"][category][name]
-        render_config = widget_config.framework_params
-        cls.wrap_on_change(widget_config=widget_config)
-        return render_config
+class CustomWidgetAdapter(StreamlitWidgetAdapter):
 
-    @classmethod
-    def sync(cls, widget_config):
-        pass
 
     @classmethod
     def initialise(cls, name, category):
@@ -92,17 +85,6 @@ class CustomWidgetAdapter(WidgetAdapter):
             category]):
             raise RuntimeError(
                 f"Widget not registered: Register [{category}:{name}] before creating the widget instance")
-
-    @classmethod
-    def wrap_on_change(cls, widget_config):
-        if "on_change" in widget_config:
-            def on_change():
-                cls.sync(widget_config)
-                extra_callback = widget_config.get("extra_callback", None)
-                if extra_callback:
-                    extra_callback()
-
-            widget_config["on_change"] = on_change
 
     @classmethod
     def render(cls, name, category, **kwargs):
