@@ -63,7 +63,7 @@ class WidgetRegistry:
         try:
             return st.session_state["config"][widget_category][widget_name]
         except KeyError:
-            return None
+            raise KeyError(f"Widget not registered: Register [{widget_category}:{widget_name}] before creating the widget instance")
 
     @staticmethod
     def get_widget_value(widget_name, widget_category, arg="value"):
@@ -72,10 +72,7 @@ class WidgetRegistry:
         streamlit session state normally assigns to the widget key. However, optional arg can be used to return any value
         desired.
         """
-        try:
-            return st.session_state["config"][widget_category][widget_name][arg]
-        except KeyError:
-            return None
+        return WidgetRegistry.get_widget_config(widget_name, widget_category)[arg]
 
     @staticmethod
     def set_widget_value(widget_name: str, widget_category: str, updated_arg_value, arg: str= "value") -> bool:
@@ -84,7 +81,6 @@ class WidgetRegistry:
         """
         try:
             widget_config = st.session_state["config"][widget_category][widget_name]
-            current = widget_config[arg]
         except KeyError as e:
             raise KeyError(
                 f"Missing path while updating: {widget_category!r}/{widget_name!r}/{arg!r}"
@@ -93,9 +89,22 @@ class WidgetRegistry:
         if arg == "extra_callback" and updated_arg_value is not None and not callable(updated_arg_value):
                 raise TypeError(f"extra_callback must be a callable, got {type(updated_arg_value).__name__} instead.")
 
-        if updated_arg_value != widget_config[arg]:
-            widget_config[arg] = updated_arg_value
-            #print(f"Updated {widget_category}|{widget_name}:"
-                  #f" set {arg} to: {updated_arg_value}")
-            return True
-        return False
+        widget_config.update({arg: updated_arg_value})
+
+        return True
+
+    @staticmethod
+    def set(widget_name: str, widget_category: str, val):
+        try:
+            widget_config = st.session_state["config"][widget_category][widget_name]
+        except KeyError as e:
+            raise KeyError(
+                f"Missing path while setting value for: {widget_category!r}/{widget_name!r}"
+            ) from e
+
+        widget_config.set(val)
+
+    @staticmethod
+    def sync(widget_name: str, widget_category: str, val) -> bool:
+        widget_config = WidgetRegistry.get_widget_config(widget_name, widget_category)
+        return widget_config._sync(val)

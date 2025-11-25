@@ -1,7 +1,7 @@
 import streamlit as st
 import inspect
 from dataclasses import dataclass, field, InitVar
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Callable
 from functools import lru_cache
 
 
@@ -58,17 +58,29 @@ def build_extended_config(name: str, category: str):
         "extra_callback": None
     }
 
-def get_return_param(config: dict):
-    if "value" not in config:
-        if "index" in config and "options" in config:
-            return_param = "index"
-        elif "default" in config:
-            return_param = "default"
-        else:
-            return_param = None
-    else:
-        return_param = "value"
-    return return_param
+@dataclass(frozen=True)
+class WidgetSpec:
+    settable: bool
+    value_param: str
+    transform: Optional[Callable[[Any, dict], Any]] =  lambda val, params: val
+
+
+
+WIDGET_SPECS = {
+    "streamlit": {
+        "checkbox": WidgetSpec(True, "value"),
+        "slider": WidgetSpec(True, "value"),
+        "number_input_box": WidgetSpec(True, "value"),
+        "segmented_control": WidgetSpec(True, "default", lambda default, params: params["options"][default]),
+        "text_input_boxes": WidgetSpec(True, "value"),
+        "buttons": WidgetSpec(False, "value"),
+        "select_box": WidgetSpec(True, "index", lambda index, params: params["options"][index]),
+        "title_box": WidgetSpec(True, "body"),
+    },
+    "custom": {
+        "number_input_box": WidgetSpec(False, "user_response"),
+    }
+}
 
 
 @dataclass
@@ -80,17 +92,23 @@ class WidgetConfig:
 
     _params: dict = field(default_factory=dict)
     _framework_keys: set = field(default_factory=set)
-    _framework_return_param: Optional["str"] = None
 
     def __post_init__(self, init_config = None):
+
+        init_config = (init_config or {}).copy()
 
         if "framework" in init_config:
             self.framework = init_config["framework"]
             init_config.pop("framework")
 
+        if ("value" != self.spec.value_param) and ("value" in init_config and self.spec.value_param in init_config):
+            raise ValueError(f"Cannot set both 'value' and '{self.spec.value_param}' in initial config.")
+
+        if "value" in init_config:
+            init_config[self.spec.value_param] = init_config.pop("value")
+
         base_framework_config = build_framework_config(widget_category=self.category, framework=self.framework)
         base_extended_config = build_extended_config(name=self.name, category=self.category)
-        self._framework_return_param = get_return_param(config=base_framework_config)
         self._framework_keys = set(base_framework_config)
 
         try:
@@ -106,21 +124,51 @@ class WidgetConfig:
             raise RuntimeError(e)
 
     def update(self, params):
-        if self._framework_return_param in params or "value" in params:
-            raise RuntimeError(f"The parameter linked to the framework's return value can only be modified via a widget action (via set()).")
+        params = params.copy()
+        if ("value" != self.spec.value_param) and ("value" in params and self.spec.value_param in params):
+            raise ValueError(f"Cannot set both 'value' and '{self.spec.value_param}' params.")
+
+        if self.spec.value_param in params:
+            self.set(params.pop(self.spec.value_param))
+        elif "value" in params:
+            self.set(params.pop("value"))
+
+
         self._params.update(params)
 
-    def set(self, value):
-        if not self._framework_return_param:
-            return
-        self._params["value"] = value
+        return True
+
+    def set(self, val):
+        if self.spec.settable: self._params[self.spec.value_param] = val
+
+    def _sync(self, value):
+        self._params[self.spec.value_param] = value
+        return True
+
+    @property
+    def value_param(self): return self.spec.value_param
+
+    @property
+    def value(self): return self._params.get(self.spec.value_param)
 
     def get(self, key, default=None): return self._params.get(key, default)
+
+    @property
+    def spec(self):
+        return WIDGET_SPECS.get(self.framework, {}).get(self.category)
 
     @property
     def framework_params(self):
         return {key: self._params[key] for key in self._framework_keys}
 
-    def __getitem__(self, key): return self._params[key]
-    def __contains__(self, key): return key in self._params
-    def __setitem__(self, key, value): self._params[key] = value
+    def __getitem__(self, key, default=None):
+        if key == "value": key = self.spec.value_param
+        return self._params.get(key, default)
+    def __contains__(self, key):
+        if key == "value": key = self.spec.value_param
+        return key in self._params
+    def __setitem__(self, key, value):
+        if key == self.value_param or key == "value":
+            self.set(value)
+        else:
+            self._params[key] = value

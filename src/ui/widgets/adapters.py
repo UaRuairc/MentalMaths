@@ -44,17 +44,15 @@ class StreamlitWidgetAdapter(WidgetAdapter):
 
     @classmethod
     def _sync(cls, widget_config):
-        widget_config.set(st.session_state[widget_config["key"]])
+        widget_config._sync(st.session_state[widget_config["key"]])
 
     @classmethod
     def initialise(cls, name, category):
-        if not (category in st.session_state["config"] and name in st.session_state["config"][
-            category]):
-            raise RuntimeError(
-                f"Widget not registered: Register [{category}:{name}] before creating the widget instance")
+        widget_config = WidgetRegistry.get_widget_config(name, category)
 
-        widget_config = st.session_state["config"][category][name]
-        st.session_state[widget_config["key"]] = widget_config._params["value"]
+        if widget_config.spec.settable:
+            if widget_config["key"] not in st.session_state or st.session_state[widget_config["key"]] != widget_config.value:
+                st.session_state[widget_config["key"]] =  widget_config.value
 
     @classmethod
     def wrap_on_change(cls, widget_config):
