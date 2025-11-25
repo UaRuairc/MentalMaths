@@ -1,4 +1,7 @@
 import streamlit as st
+from src.ui.widgets.registry import WidgetRegistry
+from src.game.content.problem_engine import Question
+from src.utils import get_range
 
 
 def update_duration_box_on_change():
@@ -8,6 +11,19 @@ def update_duration_box_on_change():
 
     if choice_ is None:
         st.session_state["config"]["number_input_box"]["duration"]["value"] = None
+
+def update_disabled_boxes_on_change(type_, disabled_box):
+    def wrapper():
+        min_, max_ = Question.calc_theoretical_range(
+            type_=type_[:-5],
+            ranges_=lambda: get_range(type_),
+            pos_answers_only=lambda: WidgetRegistry.get_widget_value("pos_answers_only", "checkbox"))
+
+        WidgetRegistry.set_widget_value(f"{type_}_{disabled_box}_min", "number_input_box", min_)
+        WidgetRegistry.set_widget_value(f"{type_}_{disabled_box}_max", "number_input_box", max_)
+
+    return wrapper
+
 
 OPERATOR_SYMBOLS =  {
             "add": r"$+$",
@@ -111,6 +127,7 @@ DEFAULT_WIDGETS_V_02 = {
     "checkbox": {
         "pos_answers_only": {
             "label": "positive answers only?",
+            "extra_callback": update_disabled_boxes_on_change(type_="subtract_ints", disabled_box="c")
         },
         "fade_problem": {
             "label": "fade problem after set number of seconds?"
@@ -140,5 +157,39 @@ DEFAULT_WIDGETS_V_02 = {
         "game_input_box": {"framework": "custom"},
     },
 }
+
+initial_range = {
+            "add_ints": ((3, 100), (3, 100)),
+            "subtract_ints": ((3, 100), (3, 100)),
+            "mult_ints": ((3, 12), (3, 12)),
+            "div_ints": ((3, 12), (3, 12)),
+        }
+
+
+for type_, active_ranges_ in initial_range.items():
+
+    operation = type_[:-5]
+    disabled_ranges = Question.calc_theoretical_range(operation, active_ranges_, False)
+
+    if type_ != "div_ints":
+        disabled_box = "c"
+        ranges_ = (active_ranges_[0], active_ranges_[1], disabled_ranges)
+    else:
+        disabled_box = "a"
+        ranges_ = (disabled_ranges, active_ranges_[0], active_ranges_[1])
+
+
+    for box, range_ in zip(("a", "b", "c"), ranges_):
+        for suffix, val in zip(("min", "max"), range_):
+            DEFAULT_WIDGETS_V_02["number_input_box"][f"{type_}_{box}_{suffix}"] = {
+                "step": 1,
+                "label_visibility": "collapsed",
+                "value": val,
+                "disabled": box == disabled_box,
+                "extra_callback": update_disabled_boxes_on_change(type_, disabled_box) if box != disabled_box else None
+            }
+
+
+
 
 

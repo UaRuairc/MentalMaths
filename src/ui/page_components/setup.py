@@ -1,16 +1,13 @@
 import streamlit as st
-from src.game.content.problem_engine import Question
 from src.ui.widgets.registry import WidgetRegistry
 from src.game.gameplay.game_controller import start_game
 from src.ui.widgets.widgets import widget
-from src.utils import inject_centring_css, get_range
+from src.utils import inject_centring_css
 
 checkbox_keys = ["add_ints_checkbox", "subtract_ints_checkbox", "mult_ints_checkbox",
                  "div_ints_checkbox"]
 default_style = ("text-align: center; font-size: 3rem; font-weight: bold; width: 80px; margin: 0 auto; "
                  "display: flex; align-items: center; justify-content: center; min-height: 80px;")
-# currently dynamically make some widget configurations on this page at runtime, so defaults not in config yet, initialise here
-
 
 
 def display_settings(settings_containers):
@@ -92,7 +89,7 @@ def render_active_problem_type_settings(settings_containers):
         for op, type in st.session_state["active_problem_types"]:
             render_range_inputs(f"{op}_{type}",  symbol=st.session_state["symbols"][op])
 
-def render_range_inputs(type_, symbol="+"):
+def render_range_inputs(type_, symbol):
 
     """
 
@@ -112,97 +109,6 @@ def render_range_inputs(type_, symbol="+"):
     range_display_cols = st.columns([1, 8, 1, 8, 1, 8, 1], vertical_alignment="center")
     inject_centring_css()
 
-    if type_ != "div_ints":
-        disabled_box = "c"
-    else:
-        disabled_box = "a"
-
-
-    keys = (
-        f"{type_}_a_min", f"{type_}_a_max", f"{type_}_b_min", f"{type_}_b_max", f"{type_}_c_min", f"{type_}_c_max"
-    )
-
-    def update_disabled_boxes_on_change(type_, disabled_box):
-        def wrapper():
-            #print(type_, disabled_box)
-            min_, max_ = Question.calc_theoretical_range(
-                type_=type_[:-5],
-                ranges_=lambda: get_range(type_),
-                pos_answers_only= lambda: WidgetRegistry.get_widget_value("pos_answers_only", "checkbox"))
-
-            WidgetRegistry.set_widget_value(f"{type_}_{disabled_box}_min", "number_input_box", min_)
-            WidgetRegistry.set_widget_value(f"{type_}_{disabled_box}_max", "number_input_box", max_)
-
-        return wrapper
-
-    if not WidgetRegistry.is_registered(widget_name=keys[0], widget_category="number_input_box"):
-        # the widgets need to be added to the config
-        # add the ones that are not disabled first, then the disabled one last
-
-        # we need to give them some initial values
-        initial_range = {
-            "add_ints": [(3, 100), (3, 100)],
-            "subtract_ints": [(3, 100), (3, 100)],
-            "mult_ints": [(3, 12), (3, 12)],
-            "div_ints": [(3, 12), (3, 12)],
-        }
-
-        if disabled_box == "c":
-            a_min, a_max, b_min, b_max = sum(initial_range[type_], ())
-            c_min, c_max = Question.calc_theoretical_range(
-                type_=type_[:-5],
-                ranges_=( (a_min, a_max), (b_min, b_max) ),
-                pos_answers_only=WidgetRegistry.get_widget_value("pos_answers_only", "checkbox")
-            )
-
-
-            active = [
-                (a_min, f"{type_}_a_min"),
-                (a_max, f"{type_}_a_max"),
-                (b_min, f"{type_}_b_min"),
-                (b_max, f"{type_}_b_max"),
-                      ]
-            disabled = [
-                (c_min, f"{type_}_c_min"),
-                (c_max, f"{type_}_c_max"),
-            ]
-
-        else:
-            b_min, b_max, c_min, c_max = sum(initial_range[type_], ())
-            a_min, a_max = Question.calc_theoretical_range(
-                type_=type_[:-5],
-                ranges_=( (b_min, b_max), (c_min, c_max) ),
-                pos_answers_only=WidgetRegistry.get_widget_value("pos_answers_only", "checkbox")
-            )
-
-            active = [
-                (b_min, f"{type_}_b_min"),
-                (b_max, f"{type_}_b_max"),
-                (c_min, f"{type_}_c_min"),
-                (c_max, f"{type_}_c_max"),
-            ]
-            disabled = [
-                (a_min, f"{type_}_a_min"),
-                (a_max, f"{type_}_a_max"),
-            ]
-
-        for val, widget_name in active:
-
-            WidgetRegistry.register(
-                widget_name=widget_name,
-                widget_category="number_input_box",
-                **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": False},
-                extra_callback=update_disabled_boxes_on_change(type_, disabled_box)
-            )
-
-        for val, widget_name in disabled:
-
-            WidgetRegistry.register(
-                widget_name=widget_name,
-                widget_category="number_input_box",
-                **{"step": 1, "label_visibility": "collapsed", "value": val, "disabled": True},
-            )
-
     with range_display_cols[1]:
         make_number_boxes(type_=type_, position_ = "a")
 
@@ -217,16 +123,6 @@ def render_range_inputs(type_, symbol="+"):
 
     with range_display_cols[5]:
         make_number_boxes(type_=type_, position_="c")
-
-    if type_ == "subtract_ints":
-        if WidgetRegistry.get_widget_value(
-                widget_name="pos_answers_only",
-                widget_category="checkbox",
-                arg="extra_callback") is None:
-            #need a callback to update the answer range when the pos_answers_only checkbox is toggled
-            WidgetRegistry.set_widget_value(widget_name="pos_answers_only", widget_category="checkbox",
-                                            arg="extra_callback",
-                                            updated_arg_value=update_disabled_boxes_on_change(type_="subtract_ints", disabled_box ="c"))
 
 
 def make_number_boxes(type_, position_):
