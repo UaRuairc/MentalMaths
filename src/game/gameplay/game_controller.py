@@ -13,7 +13,6 @@ from typing import Optional
 
 def start_game():
     st.session_state["Game"] = Game()
-    st.rerun()
 
 @st.fragment(run_every=2)
 def game_countdown_timer(verbosity=0):

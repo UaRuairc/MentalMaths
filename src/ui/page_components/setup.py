@@ -173,8 +173,8 @@ def display_start_button_and_help_messages(settings_containers):
     with settings_containers["start_button"]:
         col1, col2 = st.columns([1, 4], vertical_alignment="center")
         with col1:
-            if st.button("start_game", disabled=disable_start_button_condition, help=help_message):
-                start_game()
+            st.button("start_game", disabled=disable_start_button_condition, help=help_message, on_click=start_game)
+
         with col2:
             if help_message:
                 st.info(help_message)
