@@ -5,8 +5,6 @@ class WidgetRegistry:
     """
     Handles widget config generation and mutation.
     """
-    def __init__(self, config):
-        self.config = config
 
     @staticmethod
     def register(widget_name: str, widget_category: str, **overrides) -> bool:
