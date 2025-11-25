@@ -2,7 +2,7 @@ import streamlit as st
 
 from src.database.connection import init_connection
 from src.ui.widgets.registry import WidgetRegistry
-from src.config.defaults import OPERATOR_SYMBOLS, WIDGET_CALLABLES, PROBLEM_TYPE_INDEX_MAP, DEFAULT_WIDGETS
+from src.config.defaults import OPERATOR_SYMBOLS, WIDGET_CALLABLES, PROBLEM_TYPE_INDEX_MAP, DEFAULT_WIDGETS_V_02
 
 from src.utils import file_log
 from collections import defaultdict
@@ -54,7 +54,7 @@ def register_default_widget_configs(suppress=True):
         return defaultdict(tree)
     st.session_state["config"] = tree()
 
-    for widget_category, widgets in DEFAULT_WIDGETS.items():
+    for widget_category, widgets in DEFAULT_WIDGETS_V_02.items():
         for widget_name, widget_config in widgets.items():
             WidgetRegistry.register(
                 widget_name=widget_name,

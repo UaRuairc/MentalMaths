@@ -59,7 +59,7 @@ def _init_custom_widgets():
     from src.ui.widgets.widgets import custom_input
     WIDGET_CALLABLES["custom"]["number_input_box"] = custom_input
 
-DEFAULT_WIDGETS = {
+DEFAULT_WIDGETS_V_01 = {
 
         "checkbox": {
             "add_ints": {"label": "addition"},
@@ -69,35 +69,15 @@ DEFAULT_WIDGETS = {
             "pos_answers_only": {"label": "positive answers only?"},
             "fade_problem": {"label": "fade problem after set number of seconds?"},
         },
-        #"slider": {
-            #"add_ints_left": "left digit range",
-            #"subtract_ints_left": "left digit range",
-            #"mult_ints_left": "left digit range",
-            #"div_ints_left": "divisor range",
-            #"add_ints_right": "right digit range",
-            #"subtract_ints_right": "right digit range",
-            #"mult_ints_right": "right digit range",
-            #"div_ints_right": "quotient range"
-        #},
-
-        "segmented_control": {
-            "problem_types": {
-                "options": SEGMENTED_CONTROL_OPTIONS["problem_types"],
-                "value": [0],
-                "format_func": lambda option: SEGMENTED_CONTROL_OPTIONS["problem_types"][option],
-                "selection_mode": "multi"
-            },
-            "duration": {
-                "options": SEGMENTED_CONTROL_OPTIONS["duration"],
-                "value": DEFAULT_DURATION_INDEX,
-                "format_func":  lambda option: SEGMENTED_CONTROL_OPTIONS["duration"][option],
-                "extra_callback": update_duration_box_on_change,
-            },
-
-
-        },
-
         "slider": {
+            "add_ints_left": "left digit range",
+            "subtract_ints_left": "left digit range",
+            "mult_ints_left": "left digit range",
+            "div_ints_left": "divisor range",
+            "add_ints_right": "right digit range",
+            "subtract_ints_right": "right digit range",
+            "mult_ints_right": "right digit range",
+            "div_ints_right": "quotient range",
             **{f"{op}_ints_{side}":
                 {
                     "label": f"{side} digit range",
@@ -105,8 +85,17 @@ DEFAULT_WIDGETS = {
                     "max_value": 200,
                     "value": (1, 9),
                 }
-               for op in OPERATORS for side in ["left", "right"]},
+               for op in OPERATORS for side in ["left", "right"]}
+        },
+
+        "segmented_control": {
+            "duration": {
+                "options": SEGMENTED_CONTROL_OPTIONS["duration"],
+                "value": DEFAULT_DURATION_INDEX,
+                "format_func":  lambda option: SEGMENTED_CONTROL_OPTIONS["duration"][option],
+                "extra_callback": update_duration_box_on_change,
             },
+        },
         "number_input_box": {
             "duration": {
                 "label": "Duration in seconds",
@@ -117,5 +106,39 @@ DEFAULT_WIDGETS = {
             "game_input_box": {"framework": "custom"},
         },
     }
+
+DEFAULT_WIDGETS_V_02 = {
+    "checkbox": {
+        "pos_answers_only": {
+            "label": "positive answers only?",
+        },
+        "fade_problem": {
+            "label": "fade problem after set number of seconds?"
+        },
+    },
+    "segmented_control": {
+        "problem_types": {
+            "options": SEGMENTED_CONTROL_OPTIONS["problem_types"],
+            "value": [0,1,2,3],
+            "format_func": lambda option: SEGMENTED_CONTROL_OPTIONS["problem_types"][option],
+            "selection_mode": "multi"
+        },
+        "duration": {
+            "options": SEGMENTED_CONTROL_OPTIONS["duration"],
+            "value": DEFAULT_DURATION_INDEX,
+            "format_func":  lambda option: SEGMENTED_CONTROL_OPTIONS["duration"][option],
+            "extra_callback": update_duration_box_on_change,
+        },
+    },
+    "number_input_box": {
+        "duration": {
+            "label": "Duration in seconds",
+            "value": int(SEGMENTED_CONTROL_OPTIONS["duration"][DEFAULT_DURATION_INDEX]),
+            "disabled": lambda: st.session_state["config"]["segmented_control"]["duration"]["value"] != 3,
+            "step": 1
+        },
+        "game_input_box": {"framework": "custom"},
+    },
+}
 
 
