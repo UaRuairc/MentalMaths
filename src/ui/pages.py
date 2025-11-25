@@ -33,13 +33,10 @@ def game_page_ui():
     """
 
     st.title("Running game")
-    st.write(f"Score: {st.session_state["game_score"]}")
-
     game = st.session_state["Game"]
-
-    user_response = render_exercise()
-
-    game.validate_answer(user_response)
+    game.validate_answer()
+    st.write(f"Score: {st.session_state["game_score"]}")
+    render_exercise()
 
     if WidgetRegistry.get_widget_value(widget_name="fade_problem", widget_category="checkbox"):
         if st.button("Show problem again"):

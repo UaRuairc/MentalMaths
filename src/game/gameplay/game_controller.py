@@ -180,10 +180,10 @@ class Game:
 
         if self.last_event == "user_answer_validated":
             self.next_question()
-            st.rerun()
+            return
 
         if self.last_event == "user_answer_invalidated":
-            st.rerun()
+            return
 
         if self.last_event == "button_interaction":
         #if payload["button"] == "reveal_problem":
@@ -204,9 +204,10 @@ class Game:
 
         return
 
-    def validate_answer(self, user_response):
+    def validate_answer(self):
         """check if user got the answer correct"""
 
+        user_response = WidgetRegistry.get_widget_value("game_input_box", "number_input_box", "user_response")
         if not user_response or user_response == self.last_user_response:
             return
 
