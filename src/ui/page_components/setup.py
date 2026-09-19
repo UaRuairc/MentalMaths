@@ -50,7 +50,7 @@ def render_modifier_settings(settings_containers):
             WidgetRegistry.register(
                 widget_name="enable_db",
                 widget_category="checkbox",
-                **{"value": True},
+                **{"value": False},
             )
 
         modifier_ui_positioning = {

@@ -79,6 +79,11 @@ def user_auth():
     are_cookies_ready = isinstance(st.session_state["cookies"], dict)
     login_handler = SupabaseLogin()
 
+    if login_handler.supabase() is None:
+        with login_container:
+            st.caption("Login unavailable: Supabase isn't configured.")
+        return
+
     logged_in = login_handler.already_logged_in() or login_handler.attempt_user_restoration(cookie_manager, are_cookies_ready)
     if logged_in:
         display_already_logged_in_placeholder(login_handler, container=login_container)
