@@ -3,7 +3,7 @@
 
 An interactive mental maths game built in Python, currently using UI app framework [Streamlit](https://streamlit.io/).
 
-Goal: To create an application using LLM integration, suggesting ways for the user to optimise their mental maths training
+Goal: To get to the heart of what improves mental arithmetic, and to build a trainer that puts it into practice with the help of LLM integration.
 
 -----------------------
 
@@ -23,6 +23,8 @@ Progress:
 Short-term To-do's:
 
 - [ ] Build statistics dashboard / post-game screen
+- [ ] Design experiments to be used alongside LLMs to see if the data generated is sufficient.
+
 
 -----------------------
 ## Project Structure
@@ -131,6 +133,10 @@ cd ..
 ```powershell
 python -m streamlit run .\app.py --server.address localhost
 ```
+
+#### Supabase:
+Supabase is not required to run the project. But it is easy to setup, especially with the 
+
 -----------------------
 ## Additional Info
 
